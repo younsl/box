@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+  namespace: default
+  labels:
+    app: petclinic
+spec:
+  replicas: 2
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: petclinic
+  template:
+    metadata:
+      name: petclinic
+      namespace: default
+      labels:
+        app: petclinic
+    spec:
+      initContainers:
+      - name: volume-mount-hack
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /runner-log"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: host-log-volume
+          mountPath: /runner-log
+          subPathExpr: $(POD_NAME)
+      containers:
+      - name: petclinic
+        ## Docker Hub 이미지 받기
+        image: euffk/petclinic:0.0.1
+        ## Docker Hub 이미지 받기
+        imagePullPolicy: Always
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: host-log-volume
+          mountPath: /var/log/spring
+          subPathExpr: $(POD_NAME)
+        command: ["/usr/bin/java"]
+        args: ["-jar", "petclinic.jar"]
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          failureThreshold: 3
+          periodSeconds: 10
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /manage/health
+            port: 8080
+          failureThreshold: 1
+          initialDelaySeconds: 30
+      volumes:
+      - name: host-log-volume
+        hostPath:
+          path: /logs
+          type: DirectoryOrCreate
+      terminationGracePeriodSeconds: 30

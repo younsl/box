@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: petclinic-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  ### 호스트 이름 바꾸기
+  - host: test.com
+  ### 호스트 이름 바꾸기
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: petclinic-service
+          servicePort: 80
