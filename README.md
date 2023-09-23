@@ -8,7 +8,7 @@
 ## Summary
 
 Clutter box with scripts and code snippets.  
-It also includes assets from [tech blogs](https://github.com/younsl/younsl.github.io).
+It also includes some assets from [tech blog](https://github.com/younsl/younsl.github.io).
 
 ## Contents
 
