@@ -7,7 +7,8 @@
 
 ## Summary
 
-Clutter box with scripts and code snippets.
+Clutter box with scripts and code snippets.  
+It also includes assets from [tech blogs](https://github.com/younsl/younsl.github.io).
 
 ## Contents
 
