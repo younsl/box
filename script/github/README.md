@@ -1,12 +1,10 @@
-
 # github
 
-Github Cloud 관련 자동화 스크립트 모음
+개인용 깃허브 클라우드 스크립트
 
 ## 스크립트 목록
 
-### remove-workflows-run.sh
-
-특정 레포지터리의 workflows run에 대한 전체 기록을 삭제하는 스크립트입니다.  
-
-- **참고자료** : [Stack overflow](https://stackoverflow.com/questions/57927115/delete-a-workflow-from-github-actions)
+| Script name | Description |
+|-------------|-------------|
+| commit_history_cleaner.sh | Commit log(history) 전체 삭제 |
+| remove-workflows-run.sh | Workflow 실행기록 전체 삭제 |
