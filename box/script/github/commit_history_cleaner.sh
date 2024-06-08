@@ -26,7 +26,8 @@ delete_and_create_branch() {
 
     git checkout --orphan "$branch_name"
     git add -A
-    git commit -am "kickoff: Initial commit"
+    git commit -am "Initial commit" \
+      -m "Initialize repository to clean all commit history using commit history cleaner script"
 
     git branch -D "$base_branch" || true
     git branch -m "$base_branch"
