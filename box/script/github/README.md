@@ -6,5 +6,5 @@
 
 | Script name | Description |
 |-------------|-------------|
-| commit_history_cleaner.sh | Commit log(history) 전체 삭제 |
+| commit-history-cleaner.sh | Commit log(history) 전체 삭제 |
 | remove-workflows-run.sh | Workflow 실행기록 전체 삭제 |
