@@ -20,7 +20,7 @@ argocd      argocd-server        Deployment/argocd-server        memory: <unknow
 
 EKS Module을 사용하여 EKS 클러스터를 관리하는 경우, 테라폼 코드에서 `configuration_values` 값을 통해 Autoscaling을 설정할 수 있습니다.
 
-```json
+```terraform
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
