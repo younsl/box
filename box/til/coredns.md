@@ -57,6 +57,8 @@ EKS 콘솔에서 coredns 에드온의 Advanced configuration는 다음과 같이
 }
 ```
 
+&nbsp;
+
 ## 참고자료
 
 [Autoscaling CoreDNS](https://docs.aws.amazon.com/eks/latest/userguide/coredns-autoscaling.html#coredns-autoscaling-prereqs)
