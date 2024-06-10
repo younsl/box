@@ -26,4 +26,5 @@ VOLUME $HOME_DIR/github/younsl/younsl.github.io:/app
 EXPOSE 1313
 
 # 컨테이너 실행 시 실행할 명령어
-CMD ["hugo", "server", "-t", "etch", "--bind", "0.0.0.0"]
+ENTRYPOINT ["hugo", "server"]
+CMD ["-t", "etch", "--bind", "0.0.0.0"]
