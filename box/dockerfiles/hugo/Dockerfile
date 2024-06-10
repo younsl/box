@@ -1,5 +1,5 @@
 # 베이스 이미지 설정
-FROM alpine:3.18
+FROM alpine:3.20.0
 
 # 메타데이터 라벨 추가
 LABEL maintainer="Younsung Lee <cysl@kakao.com>"
