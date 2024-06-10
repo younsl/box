@@ -14,7 +14,7 @@ select_option() {
 build_docker_image() {
     printf "\n"
     echo "Building docker image ..."
-    docker build -t hugo .
+    docker build -t hugo:dev .
     echo "Docker image built successfully."
 }
 
@@ -26,7 +26,7 @@ run_docker_container() {
             --name hugo \
             -p 1313:1313 \
             -v $local_repo_path:/app \
-            hugo:latest
+            hugo:dev
 
         printf "\n"
         echo "Docker container is now running."
