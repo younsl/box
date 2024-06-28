@@ -4,6 +4,8 @@
 
 EKS 에드온으로 관리되는 `coredns`에 오토스케일링이 적용하면 [CPA](https://github.com/kubernetes-sigs/cluster-proportional-autoscaler)<sup>Cluster Proportional Autoscaler</sup>에 의해 `coredns` 파드 개수가 조절됩니다.
 
+Cluster Proportional Autoscaler는 클러스터의 크기(예: 노드 수, CPU 코어 수 등)에 비례하여 CoreDNS 파드를 자동으로 스케일링합니다. 클러스터의 규모가 커지면 CPA가 그에 맞춰 CoreDNS 파드 수를 자동으로 조정하여 적절한 성능을 유지합니다.
+
 CoreDNS의 자동 크기 조정은 Amazon EKS에서 관리하는 클러스터 Control Plane의 새로운 구성 요소인 Cluster Proportional Autoscaler에 의해 수행됩니다.
 
 결과적으로 `kubectl get hpa -n kube-system`으로 조회해도 CoreDNS 관련 HPA 리소스가 조회되지 않는게 맞습니다.
