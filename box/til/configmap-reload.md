@@ -43,7 +43,7 @@ checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sh
 
 `_helpers.tpl`의 kafka-connect-ui.configmap.checksum 템플릿에서 계산된 checksum 값을 pod annotation에 넣도록 `deployment.yaml`을 변경합니다.
 
-```
+```yaml
 spec:
   template:
     metadata:
