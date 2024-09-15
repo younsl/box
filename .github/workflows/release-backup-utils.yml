@@ -24,15 +24,20 @@ jobs:
         id: image_check
         run: |
           echo "Checking if image with tag ${{ env.BACKUP_UTILS_VERSION }} exists on ghcr.io ..."
-          IMAGE_TAG_EXISTS=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_TOKEN }}" \
-            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/manifests/${{ env.BACKUP_UTILS_VERSION }} | jq -r '.errors | length')
           
-          if [[ "$IMAGE_TAG_EXISTS" == "0" ]]; then
+          # Check the image manifest with curl and get the status code
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GHCR_TOKEN }}" \
+            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/manifests/${{ env.BACKUP_UTILS_VERSION }})
+
+          if [[ "$STATUS_CODE" == "200" ]]; then
             echo "Image with tag ${{ env.BACKUP_UTILS_VERSION }} already exists."
             echo "image_exists=true" >> $GITHUB_OUTPUT
-          else
+          elif [[ "$STATUS_CODE" == "404" ]]; then
             echo "Image with tag ${{ env.BACKUP_UTILS_VERSION }} not found."
             echo "image_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Unexpected status code $STATUS_CODE received."
+            exit 1
           fi
   
   # Job 2: Build and push the container image if it does not exist
