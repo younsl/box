@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/box/dockerfiles"
+    schedule:
+      interval: "daily"
+      timezone: "Asia/Seoul"
+    labels:
+      - "docker-dependencies"

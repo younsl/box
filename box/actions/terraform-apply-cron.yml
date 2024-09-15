@@ -1,0 +1,66 @@
+name: Run terraform apply by cron
+
+on:
+  schedule:
+    # KST 오전 1시에 실행
+    - cron:  '0 16 * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    name: Run terraform apply
+    runs-on: [self-hosted, linux]
+    defaults:
+      run:
+        working-directory: <YOUR/TERRAFORM/DIRECTORY/PATH>
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+    
+    - name: Setup Terraform
+      uses: actions/setup-terraform@v3
+      with:
+        terraform_version: '1.2.0'
+
+    - name: Configure AWS Credentials
+      uses: actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: 'ap-northeast-2'
+
+    - name: Print pwd
+      run: |
+        pwd
+
+    - name: Terraform fmt
+      id: fmt
+      run: terraform fmt -check
+      continue-on-error: true
+  
+    - name: Terraform init
+      id: init
+      run: terraform init
+      
+    - name: Terraform validate
+      id: validate
+      run: terraform validate -no-color
+      
+    - name: Terraform plan
+      id: plan
+      run: terraform plan -input=false
+      continue-on-error: true
+
+    - name: Terraform apply
+      id: apply
+      run: terraform apply -input=false -auto-approve
