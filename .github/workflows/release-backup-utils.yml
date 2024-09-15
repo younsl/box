@@ -1,0 +1,76 @@
+name: Build and push container image (amd64)
+run-name: 🚚 [backup-utils] Build and push container image
+
+on:
+  workflow_dispatch:
+    inputs:
+      BACKUP_UTILS_VERSION:
+        description: 'Version of github-backup-utils to use'  # 입력 필드 설명
+        required: true  # 필수 입력 항목
+        default: '3.14.0'  # 기본값
+
+env:
+  BACKUP_UTILS_VERSION: ${{ github.event.inputs.BACKUP_UTILS_VERSION }}
+  IMAGE_NAME: younsl/backup-utils
+
+jobs:
+  # Job 1: Check if the image with the tag already exists on GitHub Container Registry
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      image_exists: ${{ steps.image_check.outputs.image_exists }}
+    steps:
+      - name: Check if image exists on GitHub Container Registry
+        id: image_check
+        run: |
+          echo "Checking if image with tag ${{ env.BACKUP_UTILS_VERSION }} exists on ghcr.io ..."
+          IMAGE_TAG_EXISTS=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_TOKEN }}" \
+            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/manifests/${{ env.BACKUP_UTILS_VERSION }} | jq -r '.errors | length')
+          
+          if [[ "$IMAGE_TAG_EXISTS" == "0" ]]; then
+            echo "Image with tag ${{ env.BACKUP_UTILS_VERSION }} already exists."
+            echo "image_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Image with tag ${{ env.BACKUP_UTILS_VERSION }} not found."
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+          fi
+  
+  # Job 2: Build and push the container image if it does not exist
+  release:
+    runs-on: ubuntu-latest
+    needs: check
+    if: ${{ needs.check.outputs.image_exists == 'false' }}  # Only run if the image doesn't exist
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Download and extract github-backup-utils
+      - name: Download and extract github-backup-utils
+        run: |
+          echo "Downloading github-backup-utils version ${{ env.BACKUP_UTILS_VERSION }} ..."
+          curl -L -o github-backup-utils-${{ env.BACKUP_UTILS_VERSION }}.tar.gz \
+            https://github.com/github/backup-utils/releases/download/v${{ env.BACKUP_UTILS_VERSION }}/github-backup-utils-v${{ env.BACKUP_UTILS_VERSION }}.tar.gz
+          
+          echo "Extracting github-backup-utils tarball..."
+          tar -xzf github-backup-utils-${{ env.BACKUP_UTILS_VERSION }}.tar.gz
+      
+      # Step 3: Build the Docker image for amd64
+      - name: Build container image (amd64)
+        run: |
+          echo "Building Docker image for amd64 architecture: ghcr.io/${{ env.IMAGE_NAME }}:${{ env.BACKUP_UTILS_VERSION }} ..."
+          docker build \
+            --platform linux/amd64 \
+            -t ghcr.io/${{ env.IMAGE_NAME }}:${{ env.BACKUP_UTILS_VERSION }} github-backup-utils-v${{ env.BACKUP_UTILS_VERSION }}
+      
+      # Step 4: Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "Logging in to GitHub Container Registry ..."
+          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      
+      # Step 5: Push the Docker image to GitHub Container Registry for amd64
+      - name: Push container image (amd64)
+        run: |
+          echo "Pushing Docker image ghcr.io/${{ env.IMAGE_NAME }}:${{ env.BACKUP_UTILS_VERSION }} to ghcr.io ..."
+          docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ env.BACKUP_UTILS_VERSION }}
