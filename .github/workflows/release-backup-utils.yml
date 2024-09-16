@@ -26,7 +26,7 @@ jobs:
           echo "Checking if image with tag ${{ env.BACKUP_UTILS_VERSION }} exists on ghcr.io ..."
 
           # Fetch the list of tags from GitHub Container Registry
-          ENCODED_TOKEN=$(echo -n "${{ secrets.GHCR_TOKEN }}" | base64)
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
           TAG_EXISTS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
             https://ghcr.io/v2/${{ env.IMAGE_NAME }}/tags/list \
             | jq -r --arg TAG "${{ env.BACKUP_UTILS_VERSION }}" '.tags[] | select(. == $TAG)')
@@ -72,7 +72,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: |
           echo "Logging in to GitHub Container Registry ..."
-          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       
       # Step 5: Push the Docker image to GitHub Container Registry for amd64
       - name: Push container image (amd64)
