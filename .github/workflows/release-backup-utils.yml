@@ -13,6 +13,10 @@ env:
   BACKUP_UTILS_VERSION: ${{ github.event.inputs.BACKUP_UTILS_VERSION }}
   IMAGE_NAME: younsl/backup-utils
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # Job 1: Check if the image with the tag already exists on GitHub Container Registry
   check:
