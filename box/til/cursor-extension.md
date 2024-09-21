@@ -3,11 +3,11 @@
 On the old machine:
 
 ```bash
-cursor --list-extensions > cursor-extensions.list
+cursor --list-extensions > extensions.list
 ```
 
 On the new machine:
 
 ```bash
-cursor vscode-extensions.list | xargs -L 1 cursor --install-extension
+cursor extensions.list | xargs -L 1 cursor --install-extension
 ```
