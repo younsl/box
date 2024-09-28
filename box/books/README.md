@@ -4,7 +4,7 @@
 
 ## 책 목록
 
-| 제목 | 저자 | 출판사 | 출판년도 | 분야 |
-|-----|-----|------|--------|-----|
-| Cloud Native DevOps with Kubernetes | John Arundal & Justin Domingus | O Reiley | 2019년 2월 | `Kubernetes` |
-| CKAD Test Preparation | Sebastian Goasguen | O Reiley | 확인불가 | `Kubernetes` |
+| 제목 | 저자 | 출판사 | 출판년도 | 분야 | 비고 |
+|-----|-----|------|--------|-----|-----|
+| Cloud Native DevOps with Kubernetes | John Arundal & Justin Domingus | O Reiley | 2019년 2월 | `Kubernetes` | [다운로드](https://github.com/younsl/box/raw/main/box/books/CKAD%20Test%20Preparation.pdf) |
+| CKAD Test Preparation | Sebastian Goasguen | OReiley | 확인불가 | `Kubernetes` | [다운로드](https://github.com/younsl/box/raw/main/box/books/Cloud%20Native%20Devops%20with%20Kubernetes.pdf) |
