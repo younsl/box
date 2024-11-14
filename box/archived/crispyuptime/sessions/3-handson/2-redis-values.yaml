@@ -1,0 +1,19 @@
+architecture: replication
+cluster:
+  enabled: true
+  replicas: 3
+auth:
+  enabled: true
+  password: password
+master:
+  persistence:
+    enabled: false
+    storageClass: standard
+    size: 8Gi
+sentinel:
+  enabled: true
+  replicas: 2
+
+# Ref: https://github.com/bitnami/charts/issues/14327#issuecomment-1732543394
+volumePermissions:
+  enabled: true
