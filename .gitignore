@@ -89,4 +89,4 @@ terraform.rc
 commit-history-cleaner.sh
 
 # Ignore original script file
-!box/script/github/commit-history-cleaner.sh
+!box/script/github/commit-history-cleaner/commit-history-cleaner.sh

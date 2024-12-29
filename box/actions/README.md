@@ -10,6 +10,10 @@ An Actions Workflow to set locale in runner environment.
 
 > It is designed to run in a **GitHub Enterprise Server** environment.
 
+> [!WARNING]
+> AWS CodeCommit is officially deprecated for new customers as of July 25, 2024. Existing customers can continue to use the service, but no new features will be introduced.
+> For more information, refer to the [AWS Blog Post](https://aws.amazon.com/ko/blogs/devops/how-to-migrate-your-aws-codecommit-repository-to-another-git-provider/).
+
 An Actions Workflow to synchronize a repository located on GitHub Cloud or GitHub Enterprise Server to AWS CodeCommit.
 
 ### System Architecture
