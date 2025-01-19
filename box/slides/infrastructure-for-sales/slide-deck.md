@@ -10,7 +10,7 @@ style: |
 footer: "© 2025 Younsung Lee. All rights reserved."
 ---
 
-# Infrastructure for Sales
+## Infrastructure for Sales
 
 세일즈 및 프리세일즈를 위한 인프라 강의 by Younsung Lee
 
