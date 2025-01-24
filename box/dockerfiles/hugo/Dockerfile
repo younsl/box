@@ -1,30 +1,36 @@
-# 베이스 이미지 설정
 FROM alpine:3.20.0
 
-# 메타데이터 라벨 추가
-LABEL maintainer="Younsung Lee <cysl@kakao.com>"
-LABEL version="1.0"
-LABEL description="Docker image for running Hugo blog server"
-LABEL runtime="docker-desktop"
+LABEL maintainer="Younsung Lee <cysl@kakao.com>" \
+      version="1.0" \
+      description="Docker image for running Hugo blog server" \
+      runtime="docker-desktop" \
+      build-date="2025-01-25"
 
-# 환경변수 설정
-# ARG는 ENV와 다르게 build 타이밍에만 사용되며, 이미지에 포함되지 않습니다.
-ARG HOME_DIR=/Users/younsung.lee
+ARG HUGO_VERSION=0.142.0
+ARG ARCH=arm64
 
+# IMPORTANT:
+# To fix the issue "/bin/sh: /usr/local/bin/hugo: not found" during the container build process, 
+# you must install the libc6-compat and g++ packages in the alpine image.
+# See: https://github.com/gohugoio/hugo/issues/4939#issuecomment-484956006
 RUN apk update && \
     apk add --no-cache \
-        hugo \
-        git
+        git \
+        wget \
+        libc6-compat \
+        g++ && \
+    wget -O hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-${ARCH}.tar.gz && \
+    tar -xzvf hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz && \
+    rm hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz && \
+    mv hugo /usr/local/bin/ && \
+    chmod +x /usr/local/bin/hugo && \
+    ls -l /usr/local/bin/ && \
+    /usr/local/bin/hugo version
 
-# 작업 디렉토리 설정
 WORKDIR /app
+VOLUME /app
 
-# 컨테이너 내부에 마운트할 로컬 디렉토리 설정
-VOLUME $HOME_DIR/github/younsl/younsl.github.io:/app
-
-# 포트 열기 (Hugo 서버 기본 포트)
 EXPOSE 1313
 
-# 컨테이너 실행 시 실행할 명령어
 ENTRYPOINT ["hugo", "server"]
-CMD ["-t", "etch", "--bind", "0.0.0.0"]
+CMD ["-t", "nostyleplease", "--bind", "0.0.0.0"]
