@@ -21,7 +21,9 @@ After the container starts successfully, open your browser and go to [http://loc
 
 ## Important Notes
 
-When using Alpine Linux as base image, you must install `libc6-compat` and `g++` packages using apk(alpine package manager) to resolve the `/bin/sh: /usr/local/bin/hugo: not found` error during container build. Add the following commands in your dockerfile if you are using `alpine` image:
+When using Alpine Linux as base image, you must install `libc6-compat` and `g++` packages using apk(alpine package manager) to resolve the `/bin/sh: /usr/local/bin/hugo: not found` error during container build.
+
+Add the following commands in your dockerfile if you are using `alpine` image:
 
 ```dockerfile
 FROM alpine:3.20.0
