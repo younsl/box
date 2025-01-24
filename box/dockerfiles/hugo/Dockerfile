@@ -1,13 +1,17 @@
 FROM alpine:3.20.0
 
 LABEL maintainer="Younsung Lee <cysl@kakao.com>" \
-      version="1.0" \
-      description="Docker image for running Hugo blog server" \
-      runtime="docker-desktop" \
+      version="1.1.0" \
+      description="Lightweight Docker image for running a Hugo blog server for local development" \
+      repository="https://github.com/younsl/box" \
+      homepage="https://younsl.github.io" \
+      runtime="docker-desktop, podman" \
       build-date="2025-01-25"
 
 ARG HUGO_VERSION=0.142.0
+ARG OS=linux
 ARG ARCH=arm64
+ARG HUGO_PACKAGE_NAME=${HUGO_VERSION}_${OS}-${ARCH}
 
 # IMPORTANT:
 # To fix the issue "/bin/sh: /usr/local/bin/hugo: not found" during the container build process, 
@@ -19,9 +23,9 @@ RUN apk update && \
         wget \
         libc6-compat \
         g++ && \
-    wget -O hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-${ARCH}.tar.gz && \
-    tar -xzvf hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz && \
-    rm hugo_extended_${HUGO_VERSION}-linux-${ARCH}.tar.gz && \
+    wget -O hugo_extended_${HUGO_PACKAGE_NAME}.tar.gz https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_PACKAGE_NAME}.tar.gz && \
+    tar -xzvf hugo_extended_${HUGO_PACKAGE_NAME}.tar.gz && \
+    rm hugo_extended_${HUGO_PACKAGE_NAME}.tar.gz && \
     mv hugo /usr/local/bin/ && \
     chmod +x /usr/local/bin/hugo && \
     ls -l /usr/local/bin/ && \

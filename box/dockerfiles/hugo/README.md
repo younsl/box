@@ -7,8 +7,8 @@ Hugo server for local development
 ```bash
 docker build -t hugo:dev .
 
-LOCAL_REPO_PATH=<YOUR_HUGO_BLOG_REPO_PATH>
-docker run -d --name hugo -p 1313:1313 -v ${LOCAL_REPO_PATH}:/app hugo:dev
+SOURCE=/path/to/your/hugo/blog/repo # or `SOURCE=$(pwd)` if you are in the repo directory
+docker run -d --name hugo -p 1313:1313 -v ${SOURCE}:/app hugo:dev
 ```
 
 You can check the container status using `docker ps`.
