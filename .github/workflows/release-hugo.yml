@@ -1,5 +1,5 @@
-name: Build and push container image (m1)
-run-name: 🚚 [hugo] Build and push container image
+name: Release hugo image
+run-name: 🚚 [hugo] Release hugo image (arm64)
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04-arm
     outputs:
       image_exists: ${{ steps.image_check.outputs.image_exists }}
     steps:
@@ -39,7 +39,7 @@ jobs:
           fi
 
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04-arm
     needs: check
     if: ${{ needs.check.outputs.image_exists == 'false' }}
     steps:

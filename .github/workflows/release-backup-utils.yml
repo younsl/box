@@ -1,5 +1,5 @@
-name: Build and push container image (amd64)
-run-name: 🚚 [backup-utils] Build and push container image
+name: Release backup-utils image
+run-name: 🚚 [backup-utils] Release backup-utils image (amd64)
 
 on:
   workflow_dispatch:
