@@ -1,0 +1,64 @@
+name: Build and push container image (m1)
+run-name: 🚚 [hugo] Build and push container image
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: younsl/hugo
+  HUGO_VERSION: 0.142.0
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  check:
+    runs-on: macos-latest
+    outputs:
+      image_exists: ${{ steps.image_check.outputs.image_exists }}
+    steps:
+      - name: Check if image exists on GitHub Container Registry
+        id: image_check
+        run: |
+          echo "Checking if image with tag ${{ env.HUGO_VERSION }} exists on ghcr.io ..."
+
+          # Fetch the list of tags from GitHub Container Registry
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
+          TAG_EXISTS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
+            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/tags/list \
+            | jq -r --arg TAG "${{ env.HUGO_VERSION }}" '.tags[] | select(. == $TAG)')
+
+          # Check if the tag exists
+          if [[ -n "$TAG_EXISTS" ]]; then
+            echo "Image with tag ${{ env.HUGO_VERSION }} already exists."
+            echo "image_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Image with tag ${{ env.HUGO_VERSION }} not found."
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    runs-on: macos-latest
+    needs: check
+    if: ${{ needs.check.outputs.image_exists == 'false' }}
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry (ghcr.io)
+        id: login
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build
+        id: build
+        run: |
+          docker build \
+            -t ghcr.io/${{ env.IMAGE_NAME }}:${{ env.HUGO_VERSION }} \
+            -f box/dockerfiles/hugo/Dockerfile .
+
+      - name: Push
+        id: push
+        run: |
+          docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ env.HUGO_VERSION }}
