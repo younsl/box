@@ -38,7 +38,7 @@ jobs:
             echo "image_exists=false" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  release:
     runs-on: ubuntu-24.04-arm
     needs: check
     if: ${{ needs.check.outputs.image_exists == 'false' }}
