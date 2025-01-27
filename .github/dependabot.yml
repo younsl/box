@@ -1,5 +1,14 @@
 version: 2
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "actions"
+  
   - package-ecosystem: "docker"
     directory: "/box/dockerfiles"
     schedule:
