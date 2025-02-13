@@ -53,6 +53,12 @@ Scale-zero로 러너 컴퓨팅 비용 절감하기
 
 ---
 
+### 웹훅의 여정
+
+![Webhook 이벤트가 웹훅 서버까지 도달하는 과정](./assets/5.png)
+
+---
+
 ### HorizontalRunnerAutoscaler 설정
 
 ```yaml
