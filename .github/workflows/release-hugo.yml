@@ -6,7 +6,7 @@ on:
 
 env:
   IMAGE_NAME: younsl/hugo
-  HUGO_VERSION: 0.143.0
+  HUGO_VERSION: 0.144.0
 
 permissions:
   contents: read

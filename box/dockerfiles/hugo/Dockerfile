@@ -8,7 +8,7 @@ LABEL maintainer="Younsung Lee <cysl@kakao.com>" \
       runtime="docker-desktop, podman" \
       build-date="2025-01-25"
 
-ARG HUGO_VERSION=0.143.0
+ARG HUGO_VERSION=0.144.0
 ARG OS=linux
 ARG ARCH=arm64
 ARG HUGO_PACKAGE_NAME=${HUGO_VERSION}_${OS}-${ARCH}
