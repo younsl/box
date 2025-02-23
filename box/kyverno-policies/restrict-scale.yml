@@ -1,0 +1,29 @@
+# Reference: https://kyverno.io/policies/other/restrict-scale/restrict-scale/
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-scale
+  annotations:
+    kyverno.io/kyverno-version: 1.13.1
+spec:
+  admission: true
+  background: false
+  emitWarning: false
+  failurePolicy: Fail
+  validationFailureAction: Enforce
+  rules:
+    - name: create-max-one
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet/scale
+              names:
+                - "logstash"
+      skipBackgroundRequests: true
+      validate:
+        message: "The replica count for this StatefulSet may not exceed 1."
+        pattern:
+          spec:
+            replicas: "<2"
