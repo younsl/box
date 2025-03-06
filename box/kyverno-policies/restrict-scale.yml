@@ -1,0 +1,53 @@
+# Reference: https://kyverno.io/policies/other/restrict-scale/restrict-scale/
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-scale
+  annotations:
+    kyverno.io/kyverno-version: 1.13.1
+    younsl.github.io/battle-tested: "true"
+    younsl.github.io/battle-tested-since: "2025-02-28T00:00:00+09:00"
+spec:
+  admission: true
+  background: false
+  emitWarning: false
+  failurePolicy: Fail
+  # validationFailureActions will be deprecated in the future.
+  # Please use failureAction instead.
+  validationFailureAction: Enforce
+  rules:
+    - name: create-max-one
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet/scale
+                - StatefulSet
+              names:
+                - "logstash"
+      skipBackgroundRequests: true
+      validate:
+        failureAction: Enforce
+        allowExistingViolations: false
+        message: "The replica count for this StatefulSet may not exceed 1."
+        pattern:
+          spec:
+            replicas: "<2"
+    - name: create-max-twenty
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment/scale
+                - Deployment
+              names:
+                - "example-distributed-job-pod-*"
+      skipBackgroundRequests: true
+      validate:
+        failureAction: Enforce
+        allowExistingViolations: false
+        message: "The replica count for this Deployment may not exceed 20."
+        pattern:
+          spec:
+            replicas: "<21"
