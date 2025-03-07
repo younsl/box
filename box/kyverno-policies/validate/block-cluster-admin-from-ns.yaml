@@ -1,0 +1,44 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-cluster-admin-from-ns
+  annotations:
+    kyverno.io/kyverno-version: 1.13.1
+    younsl.xyz/battle-tested: "true"
+    younsl.xyz/battle-tested-since: "2025-03-07T00:00:00+09:00"
+spec:
+  admission: true
+  background: false
+  emitWarning: false
+  failurePolicy: Fail
+  rules:
+  - match:
+      any:
+      - clusterRoles:
+        - cluster-admin
+        resources:
+          kinds:
+          - '*'
+        # POLICY NOTE:
+        # You need to set the target username to block from this policy.
+        # Please add {{SessionName}} keyword to divide individual user sessions
+        # in aws-auth ConfigMap.
+        subjects:
+        - kind: User
+          name: CHANGE_KUBERNETES_USERNAME@EXAMPLE.COM
+    name: block-cluster-admin-from-ns
+    skipBackgroundRequests: true
+    validate:
+      allowExistingViolations: true
+      deny:
+        conditions:
+          any:
+          - key: '{{ request.operation || ''BACKGROUND'' }}'
+            operator: AnyIn
+            value:
+            - CREATE
+            - UPDATE
+            - DELETE
+      failureAction: Enforce
+      message: The cluster-admin 'CHANGE_KUBERNETES_USERNAME@EXAMPLE.COM' user cannot touch testnamespace Namespace.
+  validationFailureAction: Audit
