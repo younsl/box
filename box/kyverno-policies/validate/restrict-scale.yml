@@ -6,13 +6,14 @@ metadata:
   name: restrict-scale
   annotations:
     kyverno.io/kyverno-version: 1.13.1
-    younsl.github.io/battle-tested: "true"
-    younsl.github.io/battle-tested-since: "2025-02-28T00:00:00+09:00"
+    younsl.xyz/battle-tested: "true"
+    younsl.xyz/battle-tested-since: "2025-02-28T00:00:00+09:00"
 spec:
   admission: true
   background: false
   emitWarning: false
   failurePolicy: Fail
+  # POLICY NOTE:
   # validationFailureActions will be deprecated in the future.
   # Please use failureAction instead.
   validationFailureAction: Enforce
