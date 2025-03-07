@@ -13,9 +13,9 @@ spec:
   background: false
   emitWarning: false
   failurePolicy: Fail
-  # POLICY NOTE:
-  # validationFailureActions will be deprecated in the future.
-  # Please use failureAction instead.
+  # DEPRECATION WARNING:
+  # `validationFailureActions` will be deprecated in the future.
+  # Please use `failureAction` instead.
   validationFailureAction: Enforce
   rules:
     - name: create-max-one
@@ -31,7 +31,7 @@ spec:
       validate:
         failureAction: Enforce
         allowExistingViolations: false
-        message: "The replica count for this StatefulSet may not exceed 1."
+        message: The replica count for this StatefulSet may not exceed 1.
         pattern:
           spec:
             replicas: "<2"
@@ -48,7 +48,7 @@ spec:
       validate:
         failureAction: Enforce
         allowExistingViolations: false
-        message: "The replica count for this Deployment may not exceed 20."
+        message: The replica count for this Deployment may not exceed 20.
         pattern:
           spec:
             replicas: "<21"
