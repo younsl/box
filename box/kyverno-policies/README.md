@@ -4,6 +4,10 @@
 
 Collection of Kyverno policies for Kubernetes cluster security and governance. These policies are tested and verified in production environments.
 
+Overview of Kyverno and Kyverno policies:
+
+![kyverno and kyverno policies](./assets/1.png)
+
 ## Best Practices for Enterprise-grade Kubernetes
 
 For enterprise-grade Kubernetes clusters using [Kyverno](https://github.com/kyverno/kyverno) as a policy engine, it is **highly recommended** to manage all policy custom resources using the official [kyverno-policies](https://github.com/kyverno/kyverno/tree/main/charts/kyverno-policies) helm chart provided by Kyverno. This approach ensures consistent deployment, versioning, and maintenance of security policies across your infrastructure.
