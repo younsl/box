@@ -55,4 +55,6 @@ curl -v https://collector.newrelic.com/jserrors/ping
 
 ![](./assets/nr-1.png)
 
-EOD.
+## 더 나아가서
+
+[Groundskeeper](https://github.com/newrelic/nr1-groundskeeper)를 사용하면 서비스 전반의 모든 APM 에이전트에 대한 프로그래밍 언어, 버전 등 전체 정보를 쉽게 수집하고 볼 수 있습니다.
