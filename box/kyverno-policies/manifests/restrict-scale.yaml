@@ -1,4 +1,3 @@
-# Reference: https://kyverno.io/policies/other/restrict-scale/restrict-scale/
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -6,8 +5,9 @@ metadata:
   name: restrict-scale
   annotations:
     kyverno.io/kyverno-version: 1.13.1
-    younsl.xyz/battle-tested: "true"
-    younsl.xyz/battle-tested-since: "2025-02-28T00:00:00+09:00"
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-02-28T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/restrict-scale/restrict-scale/
 spec:
   admission: true
   background: false

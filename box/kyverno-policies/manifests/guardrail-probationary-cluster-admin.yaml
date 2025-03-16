@@ -1,4 +1,3 @@
-# Reference: https://kyverno.io/policies/other/block-cluster-admin-from-ns/block-cluster-admin-from-ns/
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -6,8 +5,9 @@ metadata:
   name: guardrail-probationary-cluster-admin
   annotations:
     kyverno.io/kyverno-version: 1.13.1
-    younsl.xyz/battle-tested: "true"
-    younsl.xyz/battle-tested-since: "2025-03-07T00:00:00+09:00"
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-03-07T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/block-cluster-admin-from-ns/block-cluster-admin-from-ns/
 spec:
   admission: true
   background: false

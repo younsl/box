@@ -5,8 +5,9 @@ metadata:
   name: cleanup-nsenter-pods
   annotations:
     kyverno.io/kyverno-version: 1.13.1
-    younsl.xyz/battle-tested: "true"
-    younsl.xyz/battle-tested-since: "2025-03-07T00:00:00+09:00"
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-03-16T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/cleanup-nsenter-pods/cleanup-nsenter-pods/
 spec:
   conditions:
     all:
