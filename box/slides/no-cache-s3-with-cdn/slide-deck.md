@@ -92,7 +92,8 @@ S3와 CloudFront 간 데이터 전송(DTO)은 무료. CloudFront에서 사용자
 - [Amazon CloudFront Pricing: How to Approach it and Save Money?](https://www.stormit.cloud/blog/amazon-cloudfront-pricing-how-to-approach-it-and-save-money/)
 - [관리형 캐시 정책 사용](https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html)
 - [CloudFront 엣지 서버의 위치 및 IP 주소 범위](https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/LocationsOfEdgeServers.html)
-- [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/?nc1=h_ls)
+- [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/?nc1=h_ls) :label: finops
+- [Amazon CloudFront, 한국에서 최대 26% 데이터 전송 요금 할인](https://aws.amazon.com/ko/blogs/korea/cloudfront-price-cut-data-transfer-out-to-internet-in-korea/) :label: finops
 
 ---
 
