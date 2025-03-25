@@ -15,6 +15,12 @@ metadata:
     kyverno.younsl.xyz/battle-tested-since: "2025-03-25T00:00:00+09:00"
     kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/add-ndots/add-ndots/
 spec:
+  admission: true
+  background: true
+  # When spec.rules[*].validate[*].failureAction is set to Audit,
+  # set spec.emitWarning to true to show audit policy violation in admission response warnings.
+  emitWarning: true
+  failurePolicy: Fail
   rules:
     - name: check-dnsconfig-ndots
       match:
@@ -23,7 +29,7 @@ spec:
             kinds:
             - Pod
             namespaces:
-            - <YOUR_TARGET_NAMESPACE>
+            - my-target-namespace
       validate:
         failureAction: Audit
         allowExistingViolations: false
