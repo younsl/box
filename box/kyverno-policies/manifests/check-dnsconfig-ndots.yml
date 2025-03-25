@@ -1,0 +1,38 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: check-dnsconfig-ndots
+  annotations:
+    policies.kyverno.io/title: Check dnsConfig ndots
+    policies.kyverno.io/category: Networking
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.13.0
+    policies.kyverno.io/description: >-
+      Validates if Pod's dnsConfig.options.ndots is set to 2 or lower to prevent unnecessary 
+      DNS queries to CoreDNS and ensure stable cluster DNS operations.
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-03-25T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/add-ndots/add-ndots/
+spec:
+  rules:
+    - name: check-dnsconfig-ndots
+      match:
+        any:
+        - resources:
+            kinds:
+            - Pod
+            namespaces:
+            - <YOUR_TARGET_NAMESPACE>
+      validate:
+        failureAction: Audit
+        allowExistingViolations: false
+        message: >-
+          dnsConfig.options.ndots=2 or lower setting is required to prevent unnecessary DNS lookups to CoreDNS.
+          Current configuration may cause unnecessary DNS query overhead in the cluster.
+        pattern:
+          spec:
+            dnsConfig:
+              options:
+              - name: ndots
+                value: "2"
