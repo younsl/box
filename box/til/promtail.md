@@ -4,6 +4,10 @@
 
 promtail 표준 설정파일
 
+## 주의사항
+
+Promtail은 공식적으로 지원종료(Deprecated) 되었으며 사용을 권장하지 않습니다. Grafana Alloy로 마이그레이션을 권장합니다. 자세한 사항은 [#3614](https://github.com/grafana/helm-charts/issues/3614) 이슈를 참고하세요.
+
 ## 설정파일
 
 ### `ec2-promtail.yaml`
