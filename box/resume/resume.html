@@ -104,7 +104,17 @@
     }
     @media print {
       @page {
-        margin: 15mm 15mm; /* 여백 축소: 상하 15mm, 좌우 15mm */
+        margin: 1in 1in 1.2in 1.2in !important;
+        size: A4;
+
+        /* Remove header and footer only for print */
+        /* You must set also `--print-to-pdf-no-header` in the headless chrome command */
+        @top-left { content: ""; }
+        @top-center { content: ""; }
+        @top-right { content: ""; }
+        @bottom-left { content: ""; }
+        @bottom-center { content: ""; }
+        @bottom-right { content: ""; }
       }
       
       body {
@@ -164,7 +174,7 @@
   </div>
 
   <div class="job">
-    <div class="title">DevOps Engineer @ <a href="https://seedglobal.co">Greenlabs Financial</a> <span class="domain-label">Payment</span></div>
+    <div class="title">DevOps Engineer @ <a href="https://seedglobal.co">Greenlabs Financial</a> <span class="domain-label">Payments</span></div>
     <div class="date">Sep 5, 2022 ― Apr 7, 2023 <small>(7 mos)</small></div>
     <div class="technologies">AWS, Kubernetes, Istio, Observability, CI/CD, Terraform, MLOps, Infrastructure Ops</div>
     <ul>
@@ -198,7 +208,7 @@
 
   <h2>Projects</h2>
   <ul>
-    <li><strong><a href="/charts/">Charts</a></strong>: Battle-tested helm charts for Kubernetes.</li>
+    <li><strong><a href="https://younsl.xyz/charts/">Charts</a></strong>: Battle-tested helm charts for Kubernetes.</li>
     <li><strong><a href="https://github.com/younsl/gss">GSS</a></strong>: Scanner for scheduled workflows in GitHub Enterprise Server. Built with Go.</li>
   </ul>
 

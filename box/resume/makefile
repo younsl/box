@@ -1,43 +1,64 @@
+# Makefile for resume HTML to PDF conversion
+
 # OS detection
 UNAME_S := $(shell uname -s)
+
+# Variables
+RESUME_HTML := resume.html
+OUTPUT_PDF := resume.pdf
 
 # Default target
 .PHONY: all
 all: open
 
-# Open resume.html
-.PHONY: open
-open:
+# OS-specific browser commands
 ifeq ($(UNAME_S),Darwin)  # macOS
-	open -a "Google Chrome" resume.html
+    BROWSER_CMD := open -a "Google Chrome"
+    PRINT_CMD := /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --headless --disable-gpu --print-to-pdf-no-header --print-to-pdf=$(OUTPUT_PDF) $(RESUME_HTML)
 else ifeq ($(UNAME_S),Linux)  # Linux
-	if command -v google-chrome > /dev/null; then \
-		google-chrome resume.html; \
-	elif command -v chromium-browser > /dev/null; then \
-		chromium-browser resume.html; \
-	else \
-		echo "Chrome or Chromium browser not found."; \
-	fi
-else
-	echo "Unsupported operating system."
+    BROWSER_CMD := google-chrome
+    PRINT_CMD := google-chrome --headless --disable-gpu --print-to-pdf-no-header --print-to-pdf=$(OUTPUT_PDF) $(RESUME_HTML)
+else  # Windows or other
+    BROWSER_CMD := echo "Unsupported OS for automated commands"
+    PRINT_CMD := echo "Unsupported OS for automated commands"
 endif
 
-# Export to PDF (additional feature)
+# Open resume in Chrome
+.PHONY: open
+open:
+	@echo "Opening $(RESUME_HTML) in Chrome..."
+	$(BROWSER_CMD) $(RESUME_HTML)
+
+# Generate PDF (headless Chrome)
 .PHONY: pdf
 pdf:
-	@echo "To export as PDF, open resume.html in Chrome and press Ctrl+P or Cmd+P to print, then select 'Save as PDF'."
-	$(MAKE) open
+	@echo "Generating PDF from $(RESUME_HTML)..."
+	$(PRINT_CMD)
+	@if [ $$? -eq 0 ]; then \
+		echo "PDF generated successfully: $(OUTPUT_PDF)"; \
+	else \
+		echo "For manual PDF creation:"; \
+		echo "1. Open $(RESUME_HTML) in Chrome"; \
+		echo "2. Press Ctrl+P or Cmd+P"; \
+		echo "3. Change destination to 'Save as PDF'"; \
+		echo "4. Click Save"; \
+		$(MAKE) open; \
+	fi
 
-# Help
+# Clean generated files
+.PHONY: clean
+clean:
+	@echo "Removing generated PDF files..."
+	rm -f *.pdf
+
+# Show help
 .PHONY: help
 help:
-	@echo "Usage:"
-	@echo "  make - Open resume.html in Chrome"
-	@echo "  make open - Open resume.html in Chrome"
-	@echo "  make pdf - Show PDF export instructions and open in Chrome"
-	@echo "  make help - Display help"
-
-# Failure message
-.PHONY: failed
-failed:
-	@echo "Command execution failed. Please make sure Chrome is installed."
+	@echo "Resume HTML Makefile"
+	@echo "--------------------"
+	@echo "Available targets:"
+	@echo "  make         - Open resume.html in Chrome"
+	@echo "  make open    - Open resume.html in Chrome"
+	@echo "  make pdf     - Generate PDF from resume.html (requires Chrome)"
+	@echo "  make clean   - Remove generated PDF files"
+	@echo "  make help    - Show this help message"
