@@ -1,2 +1,3 @@
 # This file is generated and modified by the ol command.
 2025-04-25 23:14:45 KST | 오늘은 oneliner를 만들었음. 매일마다 한줄씩 가볍게 남기기
+2025-04-26 18:02:51 KST | OpenTelemetry가 Observability의 표준이므로 딥다이브할 필요가 있음

@@ -41,8 +41,13 @@ The required configuration key is '%s' (e.g., %s: "Asia/Seoul").`,
 	},
 	Args: cobra.ExactArgs(1), // Expect exactly one argument: the message
 	Run: func(cmd *cobra.Command, args []string) {
-		message := args[0]
-		logMessage(message)
+		// Trim leading/trailing whitespace and newlines from the input message FIRST
+		message := strings.TrimSpace(args[0])
+		if message == "" {
+			log.Warn("Cannot log an empty message after trimming whitespace.")
+			return // Do not log if the message becomes empty
+		}
+		logMessage(message) // Pass the trimmed message
 	},
 }
 
@@ -113,152 +118,98 @@ func initConfig() {
 	log.Debugf("Default timezone set to: %s", settings.DefaultTimezone)
 }
 
-func logMessage(message string) {
-	// --- Timezone and Timestamp ---
+func logMessage(message string) { // message is already trimmed
+	// Setup timezone, timestamp, log entry, and header
 	timezoneStr := viper.GetString(settings.KeyTimezone)
 	location, err := time.LoadLocation(timezoneStr)
 	if err != nil {
 		log.Warnf("Error loading timezone '%s': %v. Using %s.", timezoneStr, err, settings.DefaultTimezone)
 		location = time.UTC
-		timezoneStr = settings.DefaultTimezone
 	}
 	now := time.Now().In(location)
 	timestamp := now.Format("2006-01-02 15:04:05 MST")
-	logEntry := fmt.Sprintf("%s | %s\n", timestamp, message)
+	logEntry := fmt.Sprintf("%s | %s\n", timestamp, message) // logEntry ALWAYS ends with \n
 	header := "# This file is generated and modified by the ol command.\n"
 	headerBytes := []byte(header)
 
-	// --- File Path and Directory ---
+	// Determine log file path and ensure directory exists
 	baseLogFileName := fmt.Sprintf(settings.LogFileNameFormat, now.Year())
 	logFilePath, err := settings.GetDataFilePath(baseLogFileName)
 	if err != nil {
 		log.Errorf("Error determining log file path: %v", err)
 		return
 	}
-
 	logDirPath := filepath.Dir(logFilePath)
-	if err := os.MkdirAll(logDirPath, 0755); err != nil { // Ensure directory exists
+	if err := os.MkdirAll(logDirPath, 0755); err != nil {
 		log.Errorf("Error creating data directory '%s': %v", logDirPath, err)
 		return
 	}
 
-	// --- Check File Status and Header ---
-	var needsHeaderPrepended bool
-	var originalContent []byte
+	// Open file with necessary flags for robust appending and checks
+	file, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Errorf("Error opening/creating log file '%s': %v", logFilePath, err)
+		return
+	}
+	defer file.Close()
 
-	_, statErr := os.Stat(logFilePath)
-	fileExists := !os.IsNotExist(statErr)
-
-	if fileExists && statErr == nil {
-		// File exists, check for header
-		readFile, err := os.Open(logFilePath)
-		if err != nil {
-			log.Errorf("Error opening existing log file '%s' for reading: %v", logFilePath, err)
-			return // Cannot proceed without reading
-		}
-
-		// Read just enough for the header check
-		firstBytes := make([]byte, len(headerBytes))
-		n, readErr := io.ReadFull(readFile, firstBytes) // Use ReadFull for predictable read size
-
-		// Check if the first part matches the header
-		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
-			// Unexpected error reading the file start
-			readFile.Close() // Close before returning
-			log.Errorf("Error reading start of log file '%s': %v", logFilePath, readErr)
-			return
-		}
-
-		if n < len(headerBytes) || !bytes.Equal(firstBytes, headerBytes) {
-			// Header is missing or file is smaller than header
-			needsHeaderPrepended = true
-			log.Debugf("Header missing or incomplete in '%s'. Prepending header.", logFilePath)
-
-			// We need the original content to rewrite the file
-			// Reset reader to beginning
-			_, err = readFile.Seek(0, io.SeekStart)
-			if err != nil {
-				readFile.Close()
-				log.Errorf("Error seeking to start of log file '%s': %v", logFilePath, err)
-				return
-			}
-			originalContent, err = io.ReadAll(readFile)
-			if err != nil {
-				readFile.Close()
-				log.Errorf("Error reading entire existing log file '%s': %v", logFilePath, err)
-				return // Cannot proceed without original content
-			}
-		} else {
-			log.Debugf("Header found in '%s'. Appending normally.", logFilePath)
-		}
-
-		readFile.Close() // Close the read file handle
-
-	} else if !fileExists {
-		log.Debugf("Log file '%s' does not exist. Will create with header.", logFilePath)
-		// File doesn't exist, header will be added by append logic below
-	} else {
-		// Stat error other than NotExist
-		log.Errorf("Error checking log file status '%s': %v", logFilePath, statErr)
-		return // Cannot determine file state
+	// Get file info
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Errorf("Error getting file info for '%s': %v", logFilePath, err)
+		return
 	}
 
-	// --- Write to File ---
-	if needsHeaderPrepended {
-		// Open for writing, truncating the file
-		writeFile, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			log.Errorf("Error opening log file '%s' for writing (prepending header): %v", logFilePath, err)
-			return
+	// Handle Header and Preceding Newline
+	if fileInfo.Size() == 0 {
+		// File is new or empty, write header
+		if _, err := file.Write(headerBytes); err != nil {
+			log.Errorf("Error writing header to new log file '%s': %v. Aborting.", logFilePath, err)
+			return // Stop if header write fails on new file
 		}
-		defer writeFile.Close()
-
-		// Write Header
-		if _, err := writeFile.Write(headerBytes); err != nil {
-			log.Errorf("Error writing header to log file '%s': %v", logFilePath, err)
-			return // Abort if header write fails
-		}
-		// Write New Log Entry
-		if _, err := writeFile.WriteString(logEntry); err != nil {
-			log.Errorf("Error writing new log entry to file '%s' after header: %v", logFilePath, err)
-			return // Abort if new entry write fails
-		}
-		// Write Original Content
-		if _, err := writeFile.Write(originalContent); err != nil {
-			log.Errorf("Error writing original content back to log file '%s': %v", logFilePath, err)
-			// Log error but consider the main operation (adding new log) successful
-		}
-		log.Infof("Prepended header and logged to %s", logFilePath)
-
+		log.Debugf("Added header to new log file: %s", logFilePath)
+		// No preceding newline needed right after header
 	} else {
-		// Standard append logic (handles file creation automatically)
-		appendFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Errorf("Error opening log file '%s' for appending: %v", logFilePath, err)
-			return
-		}
-		defer appendFile.Close()
-
-		// Add header ONLY if the file did not exist before this operation
-		if !fileExists {
-			if _, err := appendFile.Write(headerBytes); err != nil {
-				log.Errorf("Error writing header to new log file '%s': %v", logFilePath, err)
-				// Continue to write log entry anyway
-			} else {
-				log.Debugf("Added header to new log file: %s", logFilePath)
-			}
+		// File exists and is not empty. Check header presence (optional warning)
+		headerCheckBytes := make([]byte, len(headerBytes))
+		bytesRead, readErr := file.ReadAt(headerCheckBytes, 0)
+		if readErr != nil && readErr != io.EOF {
+			log.Warnf("Could not read start of '%s' to check header: %v", logFilePath, readErr)
+		} else if bytesRead < len(headerBytes) || !bytes.Equal(headerCheckBytes[:bytesRead], headerBytes) {
+			log.Warnf("Existing log file '%s' does not start with the expected header.", logFilePath)
+			// We don't rewrite the file, just warn.
 		}
 
-		// Write New Log Entry
-		if _, err := appendFile.WriteString(logEntry); err != nil {
-			log.Errorf("Error writing log entry to file '%s': %v", logFilePath, err)
-		} else {
-			// Adjust log message based on whether header was already present or added now
-			if fileExists {
-				log.Infof("Appended log to %s", logFilePath)
-			} else {
-				log.Infof("Created new log file and logged to %s", logFilePath)
-			}
+		// Check if a preceding newline is needed before appending the new log entry
+		lastByte := make([]byte, 1)
+		_, readErr = file.ReadAt(lastByte, fileInfo.Size()-1) // Read the actual last byte
+
+		needsPrecedingNewline := false
+		if readErr != nil {
+			// Couldn't read last byte, safest bet is to add a newline
+			log.Warnf("Could not read last byte of '%s': %v. Adding preceding newline.", logFilePath, readErr)
+			needsPrecedingNewline = true
+		} else if lastByte[0] != '\n' {
+			// Last byte is not a newline
+			log.Debugf("Last byte of '%s' is not '\\n'. Adding preceding newline.", logFilePath)
+			needsPrecedingNewline = true
 		}
+
+		if needsPrecedingNewline {
+			// Write the newline (O_APPEND ensures it goes to the end)
+			if _, err := file.WriteString("\n"); err != nil {
+				log.Errorf("Error writing preceding newline to '%s': %v. Aborting log entry.", logFilePath, err)
+				return // Stop if writing the separator fails
+			}
+			// Optional: Sync after writing separator if experiencing issues
+			// if err := file.Sync(); err != nil { log.Warnf(...) }
+		}
+	}
+
+	// Append the actual log entry (which already ends with \n)
+	if _, err := file.WriteString(logEntry); err != nil {
+		log.Errorf("Error writing log entry to '%s': %v", logFilePath, err)
+	} else {
+		log.Infof("Logged to %s", logFilePath)
 	}
 }
