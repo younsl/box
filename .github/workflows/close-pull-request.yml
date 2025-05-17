@@ -1,9 +1,9 @@
 name: Close Pull Requests
-run-name: Close pull requests
+run-name: Close PR #${{ github.event.pull_request.number }} automatically by @${{ github.actor }}
 
 on:
-  schedule:
-    - cron: '0 * * * *'
+  pull_request:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
