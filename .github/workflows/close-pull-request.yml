@@ -1,6 +1,7 @@
 name: Close Pull Requests
 run-name: Close PR #${{ github.event.pull_request.number }} automatically by @${{ github.actor }}
 
+# test
 on:
   pull_request:
     types: [opened]
