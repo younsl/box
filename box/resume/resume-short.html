@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1>Younsung Lee</h1>
+      <div class="job-title">DevOps Engineer</div>
+    </div>
+    <div class="header-bottom">
+      <div class="subtitle">Specializing in Kubernetes and Cloud Native technologies</div>
+      <div class="contact">
+        <a href="https://github.com/younsl">GitHub</a>, <a href="https://younsl.xyz">Blog</a>, <a href="mailto:cysl@kakao.com">cysl@kakao.com</a>
+      </div>
+    </div>
+  </div>
+
+  <h2>Experience</h2>
+  <div class="job">
+    <div class="job-header">
+      <div class="title">DevOps Engineer @ <a href="https://coinone.co.kr">Coinone</a> <span class="domain-label">Crypto</span></div>
+      <div class="date">May 30, 2023 ― Present <small>(2 yrs)</small></div>
+    </div>
+    <div class="technologies">AWS, GCP, Kubernetes, Observability, CI/CD, Terraform, Infrastructure Ops</div>
+    <ul>
+      <li>Managed 6 EKS clusters (v1.24-v1.32) and migrated node groups from AL2 to AL2023 using Terraform</li>
+      <li>Implemented KEDA for TPS-based pod autoscaling across 8+ microservices in production environment</li>
+      <li>Built modular Terraform infrastructure for core resources across 4+ AWS accounts, reducing provisioning time by 50%</li>
+      <li>Designed secure cross-cloud authentication between AWS EKS and GCP using Workload Identity Federation</li>
+      <li>Maintained Linkerd service mesh, Kyverno policy engine and CI/CD pipelines (GitHub Actions, ArgoCD)</li>
+      <li>Developed a containerized microservice named GSS to scan and monitor all scheduled workflows in GitHub Enterprise Server <a href="https://github.com/younsl/gss">*</a></li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-header">
+      <div class="title">DevOps Engineer @ <a href="https://seedglobal.co">Greenlabs Financial</a> <span class="domain-label">Payments</span></div>
+      <div class="date">Sep 5, 2022 ― Apr 7, 2023 <small>(7 mos)</small></div>
+    </div>
+    <div class="technologies">AWS, Kubernetes, Istio, Observability, CI/CD, Terraform, MLOps, Infrastructure Ops</div>
+    <ul>
+      <li>Built multi-account AWS infrastructure for electronic finance business license #2022-483 in 3 months <a href="https://www.fsc.go.kr/po040200/79214?srchCtgry=&curPage=&srchKey=&srchText=&srchBeginDt=&srchEndDt">*</a></li>
+      <li>Managed 2 EKS clusters (v1.24-v1.25) and optimized infrastructure, reducing monthly AWS costs by 30%</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-header">
+      <div class="title">Cloud Engineer @ <a href="https://watcha.team">Watcha</a> <span class="domain-label">OTT</span></div>
+      <div class="date">Feb 14, 2022 ― Aug 5, 2022 <small>(6 mos)</small></div>
+    </div>
+    <div class="technologies">AWS, Kubernetes, CI/CD, Terraform, Infrastructure Ops</div>
+    <ul>
+      <li>Implemented Kubernetes-based infrastructure on AWS for OTT platform using Terraform</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-header">
+      <div class="title">System Engineer @ <a href="https://kdn.com">KDN</a> <span class="domain-label">Energy</span></div>
+      <div class="date">Dec 16, 2013 ― Feb 11, 2022 <small>(8 yrs 2 mos)</small></div>
+    </div>
+    <div class="technologies">On-premise, Linux administration, VMware Cluster administration, Storage administration, Backup and Recovery</div>
+    <ul>
+      <li>Managed VMware clusters (30+ hosts) with 150+ Linux VMs for mission-critical energy infrastructure</li>
+      <li>Automated operational tasks with Python/Bash and implemented high availability configurations</li>
+      <li>Provided technical support for virtualization and implemented backup/recovery using EMC Networker</li>
+    </ul>
+  </div>
+
+  <h2>Projects</h2>
+  <ul>
+    <li><strong><a href="https://github.com/younsl/idled">idled</a></strong>: CLI tool to analyze idle resources in AWS. Built with Go.</li>
+    <li><strong><a href="https://github.com/younsl/gss">gss</a></strong>: Scanner for scheduled workflows in GitHub Enterprise Server. Built with Go.</li>
+    <li><strong><a href="https://younsl.xyz/charts/">charts</a></strong>: Battle-tested helm charts for Kubernetes.</li>
+  </ul>
+
+  <h2>Education</h2>
+  <div class="job">
+    <div class="job-header">
+      <div class="title">BSE, ICT Applied @<a href="https://www.chosun.ac.kr/index.do">Chosun University</a></div>
+      <div class="date">Mar 2018 ― Feb 2022</div>
+    </div>
+  </div>
+
+  <h2>Certifications</h2>
+  <ul>
+    <li><a href="https://training.linuxfoundation.org/certification/certified-gitops-associate-cgoa/">Certified GitOps Associate</a> <span class="cert-date">2025.04.20 ― 2027.04.20</span></li>
+    <li><a href="https://training.linuxfoundation.org/certification/certified-it-associate/">Linux Foundation Certified IT Associate</a> <span class="cert-date">2024.11.29 ― 2026.11.29</span></li>
+    <li><a href="https://training.linuxfoundation.org/certification/kubernetes-cloud-native-associate/">Kubernetes and Cloud Native Associate</a> <span class="cert-date">2024.11.29 ― 2026.11.29</span></li>
+    <li>AWS Certified Solutions Architect - Professional <span class="cert-date">2023.05.21 ― 2026.05.21</span></li>
+    <li>AWS Certified Developer - Associate <span class="cert-date">2023.05.18 ― 2026.05.18</span></li>
+    <li>AWS Certified SysOps Administrator - Associate <span class="cert-date">2023.05.13 ― 2026.05.13</span></li>
+    <li>AWS Certified Cloud Practitioner <span class="cert-date">2023.05.04 ― 2026.05.04</span></li>
+    <li><a href="https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/">Certified Kubernetes Administrator</a> <span class="cert-date">2022.09.13 ― 2025.09.13</span></li>
+    <li>AWS Certified Solutions Architect - Associate <span class="cert-date">2020.06.26 ― 2026.05.21</span></li>
+  </ul>
+</body>
+</html>

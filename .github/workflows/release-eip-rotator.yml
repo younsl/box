@@ -1,0 +1,58 @@
+name: Release eip-rotator
+run-name: Release eip-rotator ${{ github.ref_name }} triggered by @${{ github.actor }}
+
+on:
+  push:
+    tags:
+      - 'eip-rotator/[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        id: clone
+        uses: actions/checkout@v3
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: './box/scripts/eip-rotator'
+          severity: error
+
+      - name: Extract version from tag
+        id: extract
+        run: |
+          VERSION_TAG="${{ github.ref_name }}"
+          VERSION="${VERSION_TAG#eip-rotator/}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Release with softprops/action-gh-release
+        id: release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: eip-rotator ${{ steps.extract.outputs.version }}
+          generate_release_notes: true
+          tag_name: ${{ github.ref_name }}
+          files: |
+            box/scripts/eip-rotator/eip-rotator.sh
+          body: |
+            eip-rotator is a script that rotates the Elastic IP address of the instance to avoid rate limit of 3rd party service (e.g. Slack, Discord, etc.).
+
+            ## Installation
+
+            Download the command line tool from the release page or use the following command:
+
+            <details>
+            <summary>Install eip-rotator</summary>
+
+            ```bash
+            curl -L -o eip-rotator.sh https://github.com/younsl/box/releases/download/${{ github.ref_name }}/eip-rotator.sh
+            chmod +x eip-rotator.sh
+            ```
+            
+            </details>
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
