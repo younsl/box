@@ -1,33 +1,64 @@
 # JDK Version Scanner
 
-## Overview
+Kubernetes 클러스터에서 실행 중인 Pod들의 Java 버전을 스캔하는 도구입니다.
 
-This tool scans pods within specified Kubernetes namespaces (defaults to `default`) to identify installed Java Development Kit (JDK) versions. It filters out pods managed by DaemonSets.
+## 기능
 
-## Usage
+- 여러 네임스페이스의 Pod 동시 스캔
+- DaemonSet Pod 필터링
+- 병렬 처리 (configurable goroutine 수)
+- 타임아웃 설정
+- Graceful shutdown
+- 상세한 결과 출력
 
-**(Optional)** Modify the `targetNamespaces` constant in `main.go` to target specific namespaces (comma-separated).
-
-Run the script:
+## 설치
 
 ```bash
-go run main.go
+go build -o jdk-scanner ./cmd/scanner
 ```
 
-## Output Example
-
-The script outputs a table listing the pods and their detected Java versions, followed by a summary.
+## 사용법
 
 ```bash
-Checking pods in namespace: default
-Scanning pod 1 of 97: Checking Java version for pod example-pod-67c49d5ff8-sxm2z
-...
-INDEX  NAMESPACE  POD                           JAVA_VERSION
-1      default    example-pod-67c49d5ff8-sxm2z  21.0.2
-2      default    example-pod-6974df45d-sv4cq   17.0.4.1
-...    ...        ...                           ...
-97     default    example-pod-7b64fc9986-ncmh6  17.0.9
-Total pods scanned: 343
-Pods using JDK: 97
-Time taken: 2m 34s
+# 기본 사용법 (default 네임스페이스)
+./jdk-scanner
+
+# 여러 네임스페이스 스캔
+./jdk-scanner -namespaces="default,kube-system,monitoring"
+
+# 고급 옵션
+./jdk-scanner \
+  -namespaces="default,app" \
+  -max-goroutines=30 \
+  -timeout=60s \
+  -skip-daemonset=false \
+  -verbose
+```
+
+## 옵션
+
+- `-namespaces`: 스캔할 네임스페이스 (쉼표로 구분)
+- `-max-goroutines`: 최대 동시 실행 goroutine 수 (기본: 20)
+- `-timeout`: kubectl 명령 타임아웃 (기본: 30s)
+- `-skip-daemonset`: DaemonSet Pod 건너뛰기 (기본: true)
+- `-verbose`: 상세 로그 출력 (기본: false)
+
+## 요구사항
+
+- `kubectl` 명령어가 설치되어 있어야 함
+- Kubernetes 클러스터에 접근 권한이 있어야 함
+- Pod에서 `java -version` 명령어 실행 가능해야 함
+
+## 출력 예시
+
+```
+INDEX   NAMESPACE   POD                    JAVA_VERSION
+1       default     app-deployment-abc123  11.0.16
+2       default     api-service-def456     1.8.0_292
+3       monitoring  prometheus-ghi789      17.0.2
+
+Scan Summary:
+Total pods scanned: 15
+Pods using JDK: 3
+Time taken: 1m 23s
 ```
