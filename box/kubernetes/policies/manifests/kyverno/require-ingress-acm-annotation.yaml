@@ -1,0 +1,41 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-ingress-acm-annotation
+  annotations:
+    policies.kyverno.io/title: Require Ingress ACM Annotation
+    policies.kyverno.io/category: AWS, Security
+    policies.kyverno.io/severity: medium
+    kyverno.io/kyverno-version: 1.13.0
+    kyverno.io/kubernetes-version: "1.30"
+    policies.kyverno.io/subject: Ingress
+    policies.kyverno.io/description: >-
+      Ingresses using the AWS Load Balancer Controller must include the
+      alb.ingress.kubernetes.io/certificate-arn annotation to specify the ACM certificate ARN.
+      This ensures the certificate for HTTPS communication is properly configured.
+spec:
+  background: true
+  failurePolicy: Fail
+  emitWarning: true
+  rules:
+  - name: has-acm-annotation-test
+    match:
+      any:
+      - resources:
+          kinds:
+          - Ingress
+    preconditions:
+      all:
+        - key: "{{ request.object.metadata.annotations.\"alb.ingress.kubernetes.io/scheme\" }}"
+          operator: NotEquals
+          value: internet-facing
+    validate:
+      allowExistingViolations: true
+      failureAction: Audit
+      pattern:
+        metadata:
+          annotations:
+            alb.ingress.kubernetes.io/certificate-arn: "?*"
+      message: >-
+        Ingress must have the 'alb.ingress.kubernetes.io/certificate-arn' annotation.
+        Ingresses with the 'internet-facing' scheme are excluded as TLS termination might be handled externally (e.g., by Cloudflare).
