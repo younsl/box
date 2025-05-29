@@ -2,7 +2,7 @@
 
 ## Summary
 
-System diagram written in Mermaid. All diagrams are related to KEDA.
+System diagram written in [Mermaid](https://mermaid.js.org/). All diagrams are related to KEDA.
 
 ## Mermaid diagrams
 
