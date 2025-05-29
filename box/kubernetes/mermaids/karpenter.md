@@ -79,3 +79,23 @@ flowchart LR
   e1@{ animate: true }
   e2@{ animate: true }
 ```
+
+&nbsp;
+
+### Figure 3
+
+```mermaid
+---
+title: "Figure 3. Chart structure of Karpenter"
+---
+flowchart LR
+  admin["fa:fa-user-gear Cluster Admin"]
+  subgraph "Cluster"
+    subgraph "kube-system"
+      kc["karpenter chart"]
+      knpc["karpenter-nodepool chart"]
+    end
+  end
+
+  admin --> kc & knpc
+```
