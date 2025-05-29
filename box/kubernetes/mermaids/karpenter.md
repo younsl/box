@@ -86,16 +86,32 @@ flowchart LR
 
 ```mermaid
 ---
-title: "Figure 3. Chart structure of Karpenter"
+title: "Figure 3. Helm chart structure of Karpenter"
 ---
 flowchart LR
-  admin["fa:fa-user-gear Cluster Admin"]
+  admin("👨🏻‍💼 Cluster Admin")
   subgraph "Cluster"
     subgraph "kube-system"
-      kc["karpenter chart"]
-      knpc["karpenter-nodepool chart"]
+      subgraph "karpenter chart"
+        kc["`karpenter
+          Main chart`"]
+        knpc["`karpenter-nodepool chart
+              Subchart`"]
+      end
+
+      kcp["`**Pod**
+            karpenter controller`"]
+      np["`**Custom Resource**
+          nodepool`"]
+      ec2nc["`**Custom Resource**
+              ec2nodeclass`"]
     end
   end
 
-  admin --> kc & knpc
+  admin --helm install--> kc & knpc
+  kc --> kcp
+  knpc --> np & ec2nc
+
+  style kc fill:darkblue
+  style knpc fill:darkblue
 ```
