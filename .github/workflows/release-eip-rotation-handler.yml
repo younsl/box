@@ -1,0 +1,179 @@
+name: Release
+run-name: Release eip-rotation-handler ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'eip-rotation-handler/[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  set-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - id: extract
+        run: echo "version=${GITHUB_REF_NAME#eip-rotation-handler/}" >> $GITHUB_OUTPUT
+
+  build-container:
+    runs-on: ubuntu-24.04
+    needs: set-version
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: box/kubernetes/eip-rotation-handler
+    env:
+      VERSION: ${{ needs.set-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        env:
+          IMAGE_DESCRIPTION: "AWS EIP rotation handler for Kubernetes"
+        with:
+          # Explicitly set context to child directory for monorepo structure
+          context: box/kubernetes/eip-rotation-handler
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            COMMIT=${{ github.sha }}
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+
+  helm-package:
+    runs-on: ubuntu-24.04
+    needs: [set-version, build-container]
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: box/kubernetes/eip-rotation-handler
+    env:
+      VERSION: ${{ needs.set-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Helm chart version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}/" deploy/helm/eip-rotation-handler/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: ${VERSION}/" deploy/helm/eip-rotation-handler/Chart.yaml
+
+      - name: Package and push Helm chart
+        run: |
+          helm package deploy/helm/eip-rotation-handler --destination ./charts/
+          helm push charts/eip-rotation-handler-${VERSION}.tgz oci://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: [set-version, build-container, helm-package]
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.set-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating changelog from $PREVIOUS_TAG to HEAD"
+            CHANGELOG=$(git log --oneline --format="- %s" ${PREVIOUS_TAG}..HEAD 2>/dev/null || echo "- Initial release")
+          else
+            echo "No previous tag found, this is the initial release"
+            CHANGELOG="- Initial release"
+          fi
+          
+          # Output to GitHub env
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "Generated changelog:"
+          echo "$CHANGELOG"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: eip-rotation-handler ${{ env.VERSION }}
+          body: |
+            [eip-rotation-handler](https://github.com/younsl/box/kubernetes/eip-rotation-handler) is an AWS Elastic IP rotation handler for Kubernetes.
+
+            ## Installation
+
+            eip-rotation-handler chart is available on GitHub Container Registry(ghcr.io) to keep best practices and OCI compatibility.
+
+            ### Helm Chart
+
+            ```bash
+            # Install eip-rotation-handler from GHCR OCI registry
+            helm install eip-rotation-handler \
+              oci://ghcr.io/${{ github.repository }}/eip-rotation-handler \
+              --version ${{ env.VERSION }} \
+              --namespace eip-rotation-handler \
+              --create-namespace
+
+            # Upgrade existing eip-rotation-handler release
+            helm upgrade eip-rotation-handler \
+              oci://ghcr.io/${{ github.repository }}/eip-rotation-handler \
+              --version ${{ env.VERSION }} \
+              --namespace eip-rotation-handler
+            ```
+
+            ## Changes
+
+            ${{ env.CHANGELOG }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }} 
