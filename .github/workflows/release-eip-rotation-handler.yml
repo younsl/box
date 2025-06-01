@@ -1,5 +1,5 @@
-name: Release
-run-name: Release eip-rotation-handler ${{ github.ref_name }}
+name: Release eip-rotation-handler image and helm chart
+run-name: Release eip-rotation-handler image and helm chart ${{ github.ref_name }}
 
 on:
   push:
