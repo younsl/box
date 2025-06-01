@@ -37,15 +37,15 @@ func NewEC2Client(ctx context.Context, region string, logger *logrus.Logger) (*E
 	}, nil
 }
 
-// AllocateAddress allocates new EIP
-func (c *EC2Client) AllocateAddress(ctx context.Context) (*string, error) {
+// AllocateAddress allocates new EIP and returns public IP and allocation ID
+func (c *EC2Client) AllocateAddress(ctx context.Context) (publicIP *string, allocationID *string, err error) {
 	input := &ec2.AllocateAddressInput{
-		Domain: types.DomainIdentifierVpc,
+		Domain: types.DomainTypeVpc,
 	}
 
 	result, err := c.client.AllocateAddress(ctx, input)
 	if err != nil {
-		return nil, c.handleEC2Error("ec2:AllocateAddress", "failed to allocate EIP", err)
+		return nil, nil, c.handleEC2Error("ec2:AllocateAddress", "failed to allocate EIP", err)
 	}
 
 	c.logger.WithFields(logrus.Fields{
@@ -53,7 +53,7 @@ func (c *EC2Client) AllocateAddress(ctx context.Context) (*string, error) {
 		"allocation_id": aws.ToString(result.AllocationId),
 	}).Info("Successfully allocated new EIP")
 
-	return result.PublicIp, nil
+	return result.PublicIp, result.AllocationId, nil
 }
 
 // AssociateAddress connects EIP to instance
@@ -148,17 +148,13 @@ func (c *EC2Client) isPermissionError(err error) bool {
 
 // logPermissionError logs permission errors with details
 func (c *EC2Client) logPermissionError(action string, err error) {
-	c.logger.WithFields(logrus.Fields{
-		"error":                err.Error(),
-		"action":               action,
-		"region":               c.region,
-		"required_permissions": requiredEC2Permissions,
-		"solution":             "Add the required EC2 permissions to your EKS worker node IAM role",
-	}).Error("PERMISSION_DENIED: IAM role lacks required EC2 permissions")
-}
-
-// GetInstanceID gets EC2 instance ID
-func (c *EC2Client) GetInstanceID(ctx context.Context, metadataURL string) (string, error) {
-	// Instance ID query logic using IMDS is in metadata package
-	return "", fmt.Errorf("implement in metadata package")
+	if c.isPermissionError(err) {
+		c.logger.WithFields(logrus.Fields{
+			"error":                err.Error(),
+			"action":               action,
+			"region":               c.region,
+			"required_permissions": requiredEC2Permissions,
+			"solution":             "Add the required EC2 permissions to your EKS worker node IAM role",
+		}).Error("PERMISSION_DENIED: IAM role lacks required EC2 permissions")
+	}
 }

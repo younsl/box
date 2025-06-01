@@ -170,12 +170,15 @@ func (h *Handler) performRotation(ctx context.Context, rotationCount int) {
 
 	// Step 4: Allocate new Elastic IP
 	rotationLogger.Info("Step 4/6: Allocating new Elastic IP")
-	newIP, err := h.ec2Client.AllocateAddress(ctx)
+	newIP, newAllocationID, err := h.ec2Client.AllocateAddress(ctx)
 	if err != nil {
 		rotationLogger.WithError(err).Error("FAILED - Step 4/6: Failed to allocate new EIP")
 		return
 	}
-	rotationLogger.WithField("new_ip", *newIP).Info("SUCCESS - Step 4/6: Successfully allocated new EIP")
+	rotationLogger.WithFields(logrus.Fields{
+		"new_ip":            *newIP,
+		"new_allocation_id": *newAllocationID,
+	}).Info("SUCCESS - Step 4/6: Successfully allocated new EIP")
 
 	// Step 5: Associate new EIP to instance
 	rotationLogger.WithFields(logrus.Fields{
@@ -186,20 +189,28 @@ func (h *Handler) performRotation(ctx context.Context, rotationCount int) {
 
 	if err := h.ec2Client.AssociateAddress(ctx, instanceID, *newIP); err != nil {
 		rotationLogger.WithFields(logrus.Fields{
-			"new_ip":      *newIP,
-			"instance_id": instanceID,
-			"error":       err.Error(),
+			"new_ip":            *newIP,
+			"new_allocation_id": *newAllocationID,
+			"instance_id":       instanceID,
+			"error":             err.Error(),
 		}).Error("FAILED - Step 5/6: Failed to associate new EIP, attempting rollback")
 
 		// Rollback: Release newly allocated EIP
-		rotationLogger.WithField("new_ip", *newIP).Warn("ROLLBACK: Releasing newly allocated EIP")
-		if releaseErr := h.ec2Client.ReleaseAddress(ctx, *newIP); releaseErr != nil {
+		rotationLogger.WithFields(logrus.Fields{
+			"new_ip":            *newIP,
+			"new_allocation_id": *newAllocationID,
+		}).Warn("ROLLBACK: Releasing newly allocated EIP")
+		if releaseErr := h.ec2Client.ReleaseAddress(ctx, *newAllocationID); releaseErr != nil {
 			rotationLogger.WithFields(logrus.Fields{
-				"new_ip":         *newIP,
-				"rollback_error": releaseErr.Error(),
+				"new_ip":            *newIP,
+				"new_allocation_id": *newAllocationID,
+				"rollback_error":    releaseErr.Error(),
 			}).Error("CRITICAL: Failed to release EIP during rollback - manual cleanup required")
 		} else {
-			rotationLogger.WithField("new_ip", *newIP).Info("SUCCESS: Successfully rolled back new EIP allocation")
+			rotationLogger.WithFields(logrus.Fields{
+				"new_ip":            *newIP,
+				"new_allocation_id": *newAllocationID,
+			}).Info("SUCCESS: Successfully rolled back new EIP allocation")
 		}
 		return
 	}
