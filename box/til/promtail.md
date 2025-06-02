@@ -8,7 +8,10 @@ promtail 표준 설정파일
 
 ### 시스템 아키텍처
 
-내 경우 Kuberntes Worker Node가 아닌 Standalone EC2 Instance의 로그를 수집하기 위해 해당 설정파일을 작성했습니다. (Loki 구성은 간결함을 위해 일부 컴포넌트 파드를 생략했습니다.)
+제 사용사례의 경우, 로그 수집대상이 Kuberntes Worker Node가 아닌 Standalone EC2 Instance의 로그를 수집하기 위해 해당 설정파일을 작성했습니다.
+
+> [!NOTE]
+> Loki 시스템 아키텍처는 간결함을 위해 Distributor, Querier 등 일부 컴포넌트를 생략했습니다.
 
 ```mermaid
 ---
