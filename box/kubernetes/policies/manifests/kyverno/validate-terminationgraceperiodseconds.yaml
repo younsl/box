@@ -1,0 +1,41 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ensure-pod-terminationgraceperiod-under-120s
+  annotations:
+    policies.kyverno.io/title: Validate Pod terminationGracePeriodSeconds
+    policies.kyverno.io/category: Best Practices, EKS Spot
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Ensures Pods have a `terminationGracePeriodSeconds` less than 120.
+      This is crucial for graceful shutdown on Spot Instances, which provide a 2-minute (120s)
+      interruption notice. Setting this value to 120s or more may prevent
+      graceful termination. If not set, the default is usually 30s, which is fine.
+    kyverno.io/kyverno-version: "1.13.1"
+    kyverno.younsl.xyz/battle-tested: "false"
+    kyverno.younsl.xyz/reference: "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
+spec:
+  admission: true
+  background: false
+  emitWarning: true
+  failurePolicy: Fail
+  # DEPRECATION WARNING:
+  # `validationFailureActions` will be deprecated in the future.
+  # Please use `failureAction` instead.
+  rules:
+    - name: validate-terminationgraceperiodseconds-under-120s
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        allowExistingViolations: true
+        failureAction: Audit
+        message: >-
+          Pod's terminationGracePeriodSeconds must be less than the spot instance interruption notice period (120 seconds).
+          Current settings may prevent graceful Pod shutdown.
+        pattern:
+          spec:
+            =(terminationGracePeriodSeconds): "<120"
