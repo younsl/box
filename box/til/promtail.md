@@ -4,9 +4,50 @@
 
 promtail 표준 설정파일
 
+## 배경지식
+
+### 시스템 아키텍처
+
+내 경우 Kuberntes Worker Node가 아닌 Standalone EC2 Instance의 로그를 수집하기 위해 해당 설정파일을 작성했습니다. (Loki 구성은 간결함을 위해 일부 컴포넌트 파드를 생략했습니다.)
+
+```mermaid
+---
+title: Logging Architecture from promtail to Loki on Kubernetes Cluster
+---
+flowchart LR
+  subgraph "EC2 Instance"
+    logfile["/var/log/**/*.log"]
+    dockersd["/var/run/docker.sock"]
+    p[promtail daemon]
+  end
+
+  subgraph "Kubernetes Cluster"
+    subgraph "Loki"
+      lg["`**Pod**
+      loki-gateway`"]
+      i["`**Pod**
+      loki-ingester`"]
+    end
+  end
+
+  alb["`**ALB**
+  Internal`"]
+  s["`**Object Storage**
+  S3 Bucket`"]
+  s@{ shape: cyl }
+
+  p --Filesystem--> logfile
+  p --Unix Domain Socket--> dockersd
+  p e1@--Send logs to Loki--> alb e2@--> lg --> i --> s
+
+  style p fill:darkorange, color:white, stroke:#333, stroke-width:2px
+  e1@{ animate: true }
+  e2@{ animate: true }
+```
+
 ## 주의사항
 
-Promtail은 공식적으로 지원종료(Deprecated) 되었으며 사용을 권장하지 않습니다. Grafana Alloy로 마이그레이션을 권장합니다. 자세한 사항은 [#3614](https://github.com/grafana/helm-charts/issues/3614) 이슈를 참고하세요.
+Promtail은 2025년 2월 13일에 LTS(Long Term Support)로 지원이 종료되었습니다. 더 이상 사용을 권장하지 않으며 Grafana Alloy로 마이그레이션을 권장합니다. 자세한 사항은 [#3614](https://github.com/grafana/helm-charts/issues/3614) 이슈를 참고하세요.
 
 ## 설정파일
 
@@ -96,6 +137,11 @@ scrape_configs:
           container_severity: level
 ```
 
+- `<ACCOUNT_ID>`는 AWS 계정 ID입니다.
+- `<INSTANCE_PROFILE_NAME>`은 EC2 Instance Profile 이름입니다.
+
+&nbsp;
+
 `docker_sd_configs`에서 사용 가능한 meta labels:
 
 ```bash
@@ -116,4 +162,4 @@ __meta_docker_port_public: the external port if a port-mapping exists
 __meta_docker_port_public_ip: the public IP if a port-mapping exists
 ```
 
-자세한 사항은 [promtail 공식문서](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) 참고
+자세한 Configuration 옵션은 [promtail 공식문서](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs)를 참고하세요.
