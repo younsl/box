@@ -74,7 +74,6 @@ jobs:
           # See: https://github.com/docker/build-push-action/tree/v6/?tab=readme-ov-file#customizing
           provenance: false
           sbom: false
-          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
 
   helm-package:
     runs-on: ubuntu-24.04
