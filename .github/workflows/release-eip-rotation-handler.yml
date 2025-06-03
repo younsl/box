@@ -63,7 +63,6 @@ jobs:
           IMAGE_DESCRIPTION: "AWS EIP rotation handler for Kubernetes"
         with:
           context: box/kubernetes/eip-rotation-handler
-          file: ./Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
