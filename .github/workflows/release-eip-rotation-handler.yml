@@ -19,9 +19,6 @@ jobs:
         run: echo "version=${GITHUB_REF_NAME#eip-rotation-handler/}" >> $GITHUB_OUTPUT
 
   build-container:
-    strategy:
-      matrix:
-        platform: [linux/amd64, linux/arm64]
     runs-on: ubuntu-24.04
     needs: set-version
     permissions:
@@ -32,6 +29,7 @@ jobs:
         working-directory: box/kubernetes/eip-rotation-handler
     env:
       VERSION: ${{ needs.set-version.outputs.version }}
+      IMAGE_DESCRIPTION: "AWS EIP rotation handler for Kubernetes"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,21 +57,20 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.18.0
-        env:
-          IMAGE_DESCRIPTION: "AWS EIP rotation handler for Kubernetes"
         with:
           context: box/kubernetes/eip-rotation-handler
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
             VERSION=${{ env.VERSION }}
             COMMIT=${{ github.sha }}
-          # Disable provenance and sbom to delete unknown/unknown manifest
-          # See: https://github.com/docker/build-push-action/tree/v6/?tab=readme-ov-file#customizing
           provenance: false
           sbom: false
+          outputs: type=image,name=target
 
   helm-package:
     runs-on: ubuntu-24.04
@@ -130,28 +127,6 @@ jobs:
           name: helm-chart-tgz
           path: ./helm-chart
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get previous tag
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
-          if [ -n "$PREVIOUS_TAG" ]; then
-            echo "Generating changelog from $PREVIOUS_TAG to HEAD"
-            CHANGELOG=$(git log --oneline --format="- %s" ${PREVIOUS_TAG}..HEAD 2>/dev/null || echo "- Initial release")
-          else
-            echo "No previous tag found, this is the initial release"
-            CHANGELOG="- Initial release"
-          fi
-          
-          # Output to GitHub env
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          
-          echo "Generated changelog:"
-          echo "$CHANGELOG"
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -192,11 +167,8 @@ jobs:
               --namespace eip-rotation-handler \
               --values <YOUR_VALUES_FILE>.yaml
             ```
-
-            ## Changes
-
-            ${{ env.CHANGELOG }}
           draft: false
           prerelease: false
+          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./helm-chart/eip-rotation-handler-${{ env.VERSION }}.tgz 
