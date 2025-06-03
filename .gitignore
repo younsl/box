@@ -102,3 +102,8 @@ box/slides/*/*.html
 #----------------------------------
 **/kk/*.yaml
 !**/kk/example.yaml
+
+#----------------------------------
+# cryptopunk-generator
+#----------------------------------
+!**/cryptopunk-generator/pkg/config
