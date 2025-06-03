@@ -54,6 +54,13 @@ jobs:
           images: ghcr.io/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
+          # OCI Image Spec:
+          # https://github.com/opencontainers/image-spec/blob/main/annotations.md
+          labels: |
+            maintainer=${{ github.actor }}
+            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.18.0
@@ -62,9 +69,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: |
-            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             VERSION=${{ env.VERSION }}
             COMMIT=${{ github.sha }}
