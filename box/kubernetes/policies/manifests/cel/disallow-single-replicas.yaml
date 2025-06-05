@@ -1,0 +1,44 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: disallow-single-replicas
+  annotations:
+    policy.admissionregistration.k8s.io/category: Best Practices
+    policy.admissionregistration.k8s.io/severity: Medium
+    policy.admissionregistration.k8s.io/subject: Deployment,StatefulSet,ReplicaSet
+    policy.admissionregistration.k8s.io/k8s-min-version: 1.32.0
+    policy.admissionregistration.k8s.io/description: >-
+      This policy disallows the creation or update of resources with a single replica.
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   ["apps"]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["deployments", "statefulsets", "replicasets"]
+  validations:
+    - expression: "object.spec.replicas > 1"
+      message: >-
+        Single replica detected for Deployment, StatefulSet, or ReplicaSet.
+        To ensure high availability and resilience against potential node failures or disruptions,
+        please configure at least 2 replicas.
+      # The currently supported reasons are: Unauthorized, Forbidden, Invalid, RequestEntityTooLarge.
+      reason: Invalid
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: disallow-single-replicas-binding
+spec:
+  policyName: disallow-single-replicas
+  validationActions: [Warn]
+  matchResources:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - default
+            # - your-other-namespace
+    objectSelector: {}
