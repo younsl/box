@@ -14,7 +14,7 @@
 - [ ] **화**: CI/CD 파이프라인 최적화 케이스 스터디
 - [ ] **수**: [AWS](https://aws.amazon.com/blogs/) / [Azure](https://azure.microsoft.com/en-us/blog/) 신규 서비스 체크
 - [ ] **목**: Docker/컨테이너 보안 학습
-- [ ] **금**: 주간 학습 내용 정리 및 다음주 계획
+- [ ] **금**: [roadmap.sh/devops](https://roadmap.sh/devops) 커리어 패스 체크 + 주간 학습 내용 정리
 
 ## 7:35 - 8:00 | 개인 프로젝트 & 샤워 & 출발 준비 (25분)
 - [ ] [GitHub](https://github.com/) 이슈 체크 또는 간단 커밋 (5분)
