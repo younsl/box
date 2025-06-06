@@ -40,4 +40,3 @@
 - **[Pocket](https://getpocket.com/)**: 나중에 읽을 아티클 저장  
 - **[Notion](https://www.notion.so/)**: 학습 내용 간단 정리
 - **[GitHub Mobile](https://github.com/mobile)**: 이동 중 코드/이슈 체크
-
