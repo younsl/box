@@ -1,0 +1,84 @@
+{{- if eq .Values.deploymentMode "daemonset" }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "eip-rotation-handler.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eip-rotation-handler.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "eip-rotation-handler.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "eip-rotation-handler.selectorLabels" . | nindent 8 }}
+      {{- with .Values.daemonset.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "eip-rotation-handler.serviceAccountName" . }}
+      {{- end }}
+      hostNetwork: {{ .Values.daemonset.hostNetwork }}
+      dnsPolicy: {{ .Values.daemonset.dnsPolicy }}
+      {{- with .Values.daemonset.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.daemonset.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.daemonset.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ include "eip-rotation-handler.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: health
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: LOG_LEVEL
+          value: {{ .Values.logging.level | quote }}
+        - name: ROTATION_INTERVAL_MINUTES
+          value: {{ .Values.rotation.intervalMinutes | quote }}
+        - name: METADATA_URL
+          value: {{ .Values.metadata.url | quote }}
+        - name: IMDS_VERSION
+          value: {{ .Values.metadata.imdsVersion | default "auto" }}
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        {{- with .Values.env.extra }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.daemonset.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.daemonset.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.daemonset.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.daemonset.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      restartPolicy: Always 
+{{- end }} 

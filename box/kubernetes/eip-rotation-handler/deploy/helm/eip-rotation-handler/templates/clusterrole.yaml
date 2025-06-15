@@ -1,0 +1,13 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "eip-rotation-handler.fullname" . }}
+  labels:
+    {{- include "eip-rotation-handler.labels" . | nindent 4 }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+rules: []
+{{- end }}
