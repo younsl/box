@@ -197,6 +197,15 @@ li {
   text-decoration: underline;
 }
 
+.arrow-link {
+  color: var(--color-text-light);
+  text-decoration: underline;
+}
+
+.arrow-link:hover {
+  color: var(--color-text-muted);
+}
+
 /* ===== FOOTER ===== */
 .footer {
   display: block;
