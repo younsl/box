@@ -1,0 +1,153 @@
+nameOverride: ""
+fullnameOverride: ""
+
+# Deployment mode configuration
+# Supported modes: daemonset (default)
+deploymentMode: daemonset
+
+#--------------------------------------------------#
+# IMDS(Instance Metadata Service) Mode             #
+#--------------------------------------------------#
+
+# Image configuration
+image:
+  repository: ghcr.io/younsl/eip-rotation-handler
+  pullPolicy: Always
+  # Use Chart.AppVersion by default (set to specific tag to override)
+  tag: ~
+
+# Rotation configuration
+rotation:
+  intervalMinutes: 10
+
+# Logging configuration
+logging:
+  level: info
+
+# Instance Metadata Service(IMDS) configuration
+metadata:
+  url: http://169.254.169.254/latest/meta-data
+  imdsVersion: auto
+
+# ServiceAccount configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Automount API credentials for the service account
+  automountServiceAccountToken: false
+
+# RBAC configuration
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+# DaemonSet configuration
+daemonset:
+  # Node affinity for targeting specific nodes located in public subnet
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerm:
+          matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - linux
+            - key: node-type
+              operator: In
+              values:
+                - public
+  
+  # Tolerations for scheduling on tainted nodes
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+  
+  # Pod annotations
+  podAnnotations:
+    prometheus.io/scrape: "false"
+  
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+        - ALL
+  
+  # Host network configuration
+  hostNetwork: true
+
+  dnsPolicy: ClusterFirstWithHostNet
+  dnsConfig: {}
+    # nameservers:
+    #   - "8.8.8.8"
+    #   - "8.8.4.4"
+    # searches:
+    #   - "cluster.local"
+    #   - "svc.cluster.local"
+    # options:
+    #   - name: "ndots"
+    #     value: "2"
+    #   - name: "timeout"
+    #     value: "2"
+    #   - name: "attempts"
+    #     value: "2"
+  
+  # Resource configuration
+  # CPU limits are not recommended - they can cause Kubernetes CPU throttling
+  # leading to application performance degradation. Only memory limits are recommended.
+  # Reference: https://home.robusta.dev/blog/stop-using-cpu-limits
+  resources:
+    requests:
+      cpu: 10m
+      memory: 20Mi
+    limits:
+      # cpu: 20m
+      memory: 40Mi
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Environment variables
+env:
+  # Additional environment variables
+  extra: []
+  # Example:
+  # - name: CUSTOM_VAR
+  #   value: "custom-value"
+  # - name: AWS_REGION
+  #   value: "us-east-1"  # Override auto-detected region if needed
+
+# Labels to add to all resources
+labels: {}
+
+# Additional annotations to add to all resources
+annotations: {}
