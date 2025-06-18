@@ -32,3 +32,8 @@ resume/
 ├── resume.html    # Main resume with embedded JavaScript
 └── style.css      # Responsive styling and print optimization
 ```
+
+## Open Source Activity
+
+- [My issues](https://github.com/issues/created?q=is%3Aissue%20author%3A%40me%20sort%3Aupdated-desc)
+- [My pull requests](https://github.com/pulls?q=is%3Apr+author%3Ayounsl+archived%3Afalse+)
