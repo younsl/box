@@ -1,11 +1,12 @@
 !/bin/sh
-# realtime_connection_monitor.sh
+# traffic_distribution_test.sh - Tests Service trafficDistribution Local AZ communication
 
 SERVICE_NAME="<SERVICE>.<NAMESPACE>.svc.cluster.local"
 TOTAL_CHECKS=20
 
-echo "=== Real-time Connection Monitor ==="
+echo "=== Traffic Distribution Test ==="
 echo "Service: $SERVICE_NAME"
+echo "Testing Local AZ communication..."
 echo "Press Ctrl+C to stop"
 echo ""
 
