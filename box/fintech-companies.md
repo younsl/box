@@ -24,7 +24,6 @@
 | Payment | 카카오페이 | On-premise, AWS, Kubernetes | On-site | [채용](https://kakaopay.career.greetinghr.com/) | - |
 | Payment | 페이히어 | AWS, Kubernetes, Istio | 확인필요 | [채용](https://careers.payhere.in/recruit) | - |
 | Payment | 쿠팡페이 | AWS, Azure, Kubernetes | 확인필요 | [채용](https://www.coupang.jobs/kr/jobs/?department=Coupang+Pay&department=Coupang+Pay+Tech) | - |
-| Tax | 삼쩜삼 | AWS, ECS | On-site | [채용](https://jobisnvillains.com/recruit) | - |
 
 [^1]: 2025년 10월부터는 주 5일 오피스 근무로 변경될 예정
 
