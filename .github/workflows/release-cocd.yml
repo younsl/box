@@ -1,0 +1,109 @@
+name: Release cocd
+run-name: 📦 Release cocd ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'cocd/*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#cocd/}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Build binaries
+        working-directory: box/tools/cocd
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          COMMIT="${{ github.sha }}"
+          DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          
+          LDFLAGS="-ldflags \"-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}\""
+          
+          # Create bin directory
+          mkdir -p bin
+          
+          # Build for different architectures
+          GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o bin/cocd-linux-amd64 cmd/cocd/main.go
+          GOOS=linux GOARCH=arm64 go build ${LDFLAGS} -o bin/cocd-linux-arm64 cmd/cocd/main.go
+          GOOS=darwin GOARCH=amd64 go build ${LDFLAGS} -o bin/cocd-darwin-amd64 cmd/cocd/main.go
+          GOOS=darwin GOARCH=arm64 go build ${LDFLAGS} -o bin/cocd-darwin-arm64 cmd/cocd/main.go
+          
+          # Create checksums
+          cd bin
+          sha256sum * > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: cocd ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          body: |
+            cocd {{ steps.version.outputs.version }} is now available.
+
+            ## Changes
+            
+            See the commit history for detailed changes.
+            
+            ## Downloads
+            
+            cocd does not support Windows or FreeBSD at this time.
+
+            supports the following platforms and architectures:
+            
+            | Platform | Arch | Binary |
+            |----------|------|--------|
+            | Linux | amd64 | `cocd-linux-amd64` |
+            | Linux | arm64 | `cocd-linux-arm64` |
+            | macOS | amd64 | `cocd-darwin-amd64` |
+            | macOS | arm64 | `cocd-darwin-arm64` |
+            
+            Verify downloads with `checksums.txt`.
+
+            ## Installation
+
+            Installation procedure for your platform dynamically:
+
+            ```bash
+            # Get arch and os currently running on the machine
+            ARCH=$(arch)
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/cocd-$OS-$ARCH
+            chmod +x cocd-$OS-$ARCH
+            sudo mv cocd-$OS-$ARCH /usr/local/bin/cocd
+            ```
+          files: |
+            box/tools/cocd/bin/cocd-*
+            box/tools/cocd/bin/checksums.txt
+          draft: false
+          generate_release_notes: true
+          prerelease: false
