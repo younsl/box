@@ -115,6 +115,25 @@ Many tools integrate with AWS services:
 
 Set AWS credentials via environment or IAM roles before working with AWS-integrated tools.
 
+## Performance Optimization Guidelines
+
+When working on performance optimizations, especially for external API interactions:
+
+### Anti-Patterns to Avoid
+- **Premature Optimization**: Don't add complex performance logic without measuring actual problems
+- **Aggressive Backpressure**: Avoid large delay multipliers (>1.5x) that hurt user experience  
+- **Low Thresholds**: Use realistic thresholds based on actual server characteristics
+- **Unpredictable Behavior**: Prefer fixed, predictable delays over dynamic adaptive delays
+
+### Recommended Approach
+1. **Measure First**: Profile and measure before optimizing
+2. **Start Simple**: Use fixed delays and simple rate limiting
+3. **Test Thoroughly**: Test under various load conditions including server slowdowns
+4. **Monitor User Impact**: Always consider user experience over theoretical optimization
+
+### Reference
+See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case study on PerformanceOptimizer anti-patterns.
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.

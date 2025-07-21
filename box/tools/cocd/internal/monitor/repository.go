@@ -11,6 +11,18 @@ import (
 	ghclient "github.com/younsl/cocd/internal/github"
 )
 
+const (
+	// Repository cache configuration
+	DefaultRepoCacheExpiry = 60 * time.Minute // Extended cache for GHES performance
+	DefaultPerPage         = 30               // Repositories per page for GHES load reduction
+	
+	// Repository filtering constants
+	DefaultMaxAge = 7 * 24 * time.Hour // Recent activity window for focused scanning
+	
+	// Memory usage constants
+	BytesToMB = 1024 * 1024 // Conversion factor for memory display
+)
+
 // RepositoryManager handles repository caching and filtering
 type RepositoryManager struct {
 	client          *ghclient.Client
@@ -23,7 +35,7 @@ type RepositoryManager struct {
 func NewRepositoryManager(client *ghclient.Client) *RepositoryManager {
 	return &RepositoryManager{
 		client:          client,
-		repoCacheExpiry: 60 * time.Minute, // Extended cache for GHES performance
+		repoCacheExpiry: DefaultRepoCacheExpiry,
 	}
 }
 
@@ -42,7 +54,7 @@ func (rm *RepositoryManager) GetRepositoriesWithCache(ctx context.Context) ([]*g
 			Type: "all",
 			ListOptions: github.ListOptions{
 				Page:    page,
-				PerPage: 30, // Further reduced for GHES load
+				PerPage: DefaultPerPage,
 			},
 		}
 
@@ -102,16 +114,16 @@ func (rm *RepositoryManager) GetActiveRepositories(ctx context.Context, maxRepos
 		return nil, err
 	}
 
-	// Always limit to 100 repositories maximum for balanced performance
-	if maxRepos > 100 {
-		maxRepos = 100
+	// Always limit to maximum repositories for balanced performance
+	if maxRepos > MaxActiveRepositories {
+		maxRepos = MaxActiveRepositories
 	}
 
-	// Filter for active repositories (recent pushes within 7 days for better targeting)
+	// Filter for active repositories (recent pushes for better targeting)
 	filter := RepoFilter{
 		IncludeArchived: false,
 		IncludeDisabled: false,
-		MaxAge:          7 * 24 * time.Hour,
+		MaxAge:          DefaultMaxAge,
 	}
 	
 	activeRepos := rm.FilterRepositories(allRepos, filter)
@@ -162,8 +174,8 @@ func (rm *RepositoryManager) GetSmartRepositories(ctx context.Context, maxRepos 
 			continue
 		}
 		
-		// Must have recent activity (last 7 days for focused scanning)
-		if repo.PushedAt == nil || time.Since(repo.PushedAt.Time) > 7*24*time.Hour {
+		// Must have recent activity for focused scanning
+		if repo.PushedAt == nil || time.Since(repo.PushedAt.Time) > DefaultMaxAge {
 			continue
 		}
 
@@ -253,8 +265,8 @@ func (rm *RepositoryManager) GetMemoryUsage() string {
 	runtime.ReadMemStats(&m)
 	
 	// Convert bytes to MB
-	allocMB := m.Alloc / 1024 / 1024
-	sysMB := m.Sys / 1024 / 1024
+	allocMB := m.Alloc / BytesToMB
+	sysMB := m.Sys / BytesToMB
 	
 	return fmt.Sprintf("%dMB/%dMB", allocMB, sysMB)
 }

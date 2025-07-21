@@ -9,19 +9,23 @@ import (
 	"github.com/younsl/cocd/internal/scanner"
 )
 
+const (
+	// Worker delay configuration for GHES load balancing
+	BaseWorkerDelay      = 500 * time.Millisecond // Base delay between worker operations
+	WorkerDelayIncrement = 200 * time.Millisecond // Additional delay per worker ID
+)
+
 // WorkerPool manages concurrent repository scanning
 type WorkerPool struct {
 	maxWorkers int
 	scanner    scanner.Scanner
-	perfOptimizer *PerformanceOptimizer
 }
 
 // NewWorkerPool creates a new worker pool
 func NewWorkerPool(maxWorkers int, sc scanner.Scanner) *WorkerPool {
 	return &WorkerPool{
-		maxWorkers:    maxWorkers,
-		scanner:       sc,
-		perfOptimizer: NewPerformanceOptimizer(),
+		maxWorkers: maxWorkers,
+		scanner:    sc,
 	}
 }
 
@@ -39,23 +43,13 @@ func (wp *WorkerPool) ScanRepositories(ctx context.Context, repos []*github.Repo
 	for i := 0; i < wp.maxWorkers; i++ {
 		go func(workerID int) {
 			for repo := range repoChan {
-				var jobs []scanner.JobStatus
-				var err error
-				
-				scanErr := wp.perfOptimizer.WithPerformanceTracking(ctx, func(ctx context.Context) error {
-					jobs, err = wp.scanner.ScanRepository(ctx, repo)
-					return err
-				})
-				
-				if scanErr != nil {
-					err = scanErr
-				}
+				jobs, err := wp.scanner.ScanRepository(ctx, repo)
 				
 				resultChan <- scanner.RepoScanResult{Jobs: jobs, Err: err}
 				
-				baseDelay := time.Duration(300 + (workerID*100)) * time.Millisecond
-				adaptiveDelay := wp.perfOptimizer.GetOptimalDelay(baseDelay)
-				time.Sleep(adaptiveDelay)
+				// Simple fixed delay based on worker ID
+				delay := BaseWorkerDelay + time.Duration(workerID)*WorkerDelayIncrement
+				time.Sleep(delay)
 			}
 		}(i)
 	}
