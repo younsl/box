@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "actions"
+
+  - package-ecosystem: "docker"
+    directory: "/box/dockerfiles"
+    schedule:
+      interval: "daily"
+      timezone: "Asia/Seoul"
+    labels:
+      - "docker-dependencies"
+
+  - package-ecosystem: "docker"
+    directory: "/box/kubernetes/eip-rotation-handler/"
+    schedule:
+      interval: "daily"
+      timezone: "Asia/Seoul"
+    labels:
+      - "docker-dependencies"
