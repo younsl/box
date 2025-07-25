@@ -7,19 +7,16 @@ import (
 	ghclient "github.com/younsl/cocd/internal/github"
 )
 
-// RecentJobsScanner scans for recent jobs
 type RecentJobsScanner struct {
 	client *ghclient.Client
 }
 
-// NewRecentJobsScanner creates a new recent jobs scanner
 func NewRecentJobsScanner(client *ghclient.Client) *RecentJobsScanner {
 	return &RecentJobsScanner{
 		client: client,
 	}
 }
 
-// ScanRepository scans a single repository for recent jobs
 func (s *RecentJobsScanner) ScanRepository(ctx context.Context, repo *github.Repository) ([]JobStatus, error) {
 	if repo.GetArchived() || repo.GetDisabled() {
 		return nil, nil
@@ -29,7 +26,7 @@ func (s *RecentJobsScanner) ScanRepository(ctx context.Context, repo *github.Rep
 
 	opts := &github.ListWorkflowRunsOptions{
 		ListOptions: github.ListOptions{
-			PerPage: 20,
+			PerPage: 10,
 		},
 	}
 

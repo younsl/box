@@ -9,43 +9,37 @@ import (
 )
 
 const (
-	// Monitor configuration
-	DefaultWorkerPoolSize    = 2                  // Default number of workers for scanning
-	DefaultScanTimeout       = 60 * time.Second  // Timeout for pending jobs scan
-	DefaultRecentScanTimeout = 90 * time.Second  // Timeout for recent jobs scan
+	DefaultWorkerPoolSize    = 2
+	DefaultScanTimeout       = 60 * time.Second
+	DefaultRecentScanTimeout = 90 * time.Second
 	
-	// Repository limits
-	MaxSmartRepositories  = 100 // Maximum repositories for smart scanning
-	MaxActiveRepositories = 100 // Maximum repositories for recent activity scanning
-	MaxRecentJobs         = 200 // Maximum number of recent jobs to return
+	MaxSmartRepositories  = 100
+	MaxActiveRepositories = 100
+	MaxRecentJobs         = 100
 	
-	// Cache cleanup configuration
-	CacheCleanupInterval = 5 * time.Minute // Interval for cache cleanup routine
+	CacheCleanupInterval = 5 * time.Minute
+	
+	MinScanInterval         = 10 * time.Second
+	MaxScanInterval         = 60 * time.Second
+	ScanIntervalIncrement   = 5 * time.Second
 )
 
-// Monitor coordinates repository scanning and job monitoring
 type Monitor struct {
-	// Core components
 	client         *ghclient.Client
 	repoManager    *RepositoryManager
 	progressTracker *ProgressTracker
 	envCache       *EnvironmentCache
 	
-	// Scanners
 	smartScanner  *scanner.SmartScanner
 	recentScanner *scanner.RecentJobsScanner
 	
-	// Configuration
 	environment string
 	interval    time.Duration
 	
-	// Worker pool
 	smartWorkerPool *WorkerPool
 }
 
-// NewMonitor creates a new monitor instance
 func NewMonitor(client *ghclient.Client, environment string, interval int) *Monitor {
-	// Initialize components
 	repoManager := NewRepositoryManager(client)
 	progressTracker := NewProgressTracker()
 	envCache := NewEnvironmentCache(client)
@@ -68,17 +62,14 @@ func NewMonitor(client *ghclient.Client, environment string, interval int) *Moni
 	}
 }
 
-// GetProgressTracker returns the progress tracker
 func (m *Monitor) GetProgressTracker() *ProgressTracker {
 	return m.progressTracker
 }
 
-// GetClient returns the GitHub client
 func (m *Monitor) GetClient() *ghclient.Client {
 	return m.client
 }
 
-// GetScanProgress returns the current scan progress with cache and memory info
 func (m *Monitor) GetScanProgress() ScanProgress {
 	progress := m.progressTracker.GetProgress()
 	progress.CacheStatus = m.repoManager.GetCacheStatus()
@@ -86,17 +77,14 @@ func (m *Monitor) GetScanProgress() ScanProgress {
 	return progress
 }
 
-// GetUpdateInterval returns the monitoring interval in seconds
 func (m *Monitor) GetUpdateInterval() int {
 	return int(m.interval.Seconds())
 }
 
-// GetPendingJobs returns pending jobs using smart scanning
 func (m *Monitor) GetPendingJobs(ctx context.Context) ([]scanner.JobStatus, error) {
 	return m.GetPendingJobsWithProgress(ctx, nil)
 }
 
-// GetPendingJobsWithProgress returns pending jobs with progress reporting using smart scanning
 func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan chan<- ScanProgress) ([]scanner.JobStatus, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultScanTimeout)
 	defer cancel()
@@ -133,18 +121,14 @@ func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan c
 }
 
 
-// GetRecentJobs returns recent jobs
 func (m *Monitor) GetRecentJobs(ctx context.Context) ([]scanner.JobStatus, error) {
 	return m.GetRecentJobsWithProgress(ctx, nil)
 }
 
-// GetRecentJobsWithProgress returns recent jobs with progress reporting
 func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan chan<- ScanProgress) ([]scanner.JobStatus, error) {
-	// Create a context with optimized timeout
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
 	defer cancel()
 
-	// Get active repositories for faster initial results (Recent Jobs Fast Mode)
 	activeRepos, err := m.repoManager.GetActiveRepositories(timeoutCtx, MaxActiveRepositories)
 	if err != nil {
 		return nil, err
@@ -157,27 +141,22 @@ func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan ch
 
 	repoStats := CalculateRepoStats(allRepos)
 
-	// Initialize progress tracking for recent jobs scan
 	m.progressTracker.InitializeProgress(ScanModeRecent, len(allRepos), len(activeRepos), DefaultWorkerPoolSize, repoStats)
 	
 	if progressChan != nil {
 		progressChan <- m.progressTracker.GetProgress()
 	}
 
-	// Create worker pool for recent jobs scanning
 	recentWorkerPool := NewWorkerPool(DefaultWorkerPoolSize, m.recentScanner)
 	
-	// Scan repositories
 	progress := m.progressTracker.GetProgress()
 	jobs, err := recentWorkerPool.ScanRepositories(timeoutCtx, activeRepos, progressChan, &progress)
 	if err != nil {
 		return nil, err
 	}
 
-	// Sort by creation time (most recent first)
 	SortJobsByTime(jobs, true)
 
-	// Limit to most recent jobs
 	jobs = LimitJobs(jobs, MaxRecentJobs)
 
 	m.progressTracker.SetIdle()
@@ -185,7 +164,6 @@ func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan ch
 	return jobs, nil
 }
 
-// StartMonitoring starts continuous monitoring with smart scanning
 func (m *Monitor) StartMonitoring(ctx context.Context, jobChan chan<- []scanner.JobStatus) {
 	go m.startCacheCleanup(ctx)
 	
@@ -226,7 +204,6 @@ func (m *Monitor) StartMonitoring(ctx context.Context, jobChan chan<- []scanner.
 	}
 }
 
-// startCacheCleanup starts the cache cleanup routine
 func (m *Monitor) startCacheCleanup(ctx context.Context) {
 	ticker := time.NewTicker(CacheCleanupInterval)
 	defer ticker.Stop()

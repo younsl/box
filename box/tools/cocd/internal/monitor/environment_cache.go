@@ -11,31 +11,25 @@ import (
 	ghclient "github.com/younsl/cocd/internal/github"
 )
 
-// EnvironmentCache manages environment detection with caching to reduce API calls
 type EnvironmentCache struct {
 	client      *ghclient.Client
 	rateLimiter *RateLimiter
 	mu          sync.RWMutex
 	
-	// Cache for repository environments
 	repoEnvs map[string][]string
 	repoEnvsTTL map[string]time.Time
 	
-	// Cache for workflow run environments
 	runEnvs map[string]string
 	runEnvsTTL map[string]time.Time
 	
-	// Cache for deployment environments
 	deploymentEnvs map[string][]DeploymentEnv
 	deploymentEnvsTTL map[string]time.Time
 	
-	// Cache TTL settings
 	repoEnvCacheTTL   time.Duration
 	runEnvCacheTTL    time.Duration
 	deploymentCacheTTL time.Duration
 }
 
-// DeploymentEnv represents deployment environment information
 type DeploymentEnv struct {
 	Environment string
 	SHA         string
@@ -44,7 +38,6 @@ type DeploymentEnv struct {
 	CreatedAt   time.Time
 }
 
-// NewEnvironmentCache creates a new environment cache
 func NewEnvironmentCache(client *ghclient.Client) *EnvironmentCache {
 	return &EnvironmentCache{
 		client:      client,
@@ -56,14 +49,12 @@ func NewEnvironmentCache(client *ghclient.Client) *EnvironmentCache {
 		deploymentEnvs: make(map[string][]DeploymentEnv),
 		deploymentEnvsTTL: make(map[string]time.Time),
 		
-		// Conservative TTL settings to reduce GHES load
-		repoEnvCacheTTL:   10 * time.Minute,  // Repository environments change infrequently
-		runEnvCacheTTL:    2 * time.Minute,   // Workflow run environments are more dynamic
-		deploymentCacheTTL: 1 * time.Minute,  // Deployment states change frequently
+		repoEnvCacheTTL:   10 * time.Minute,
+		runEnvCacheTTL:    2 * time.Minute,
+		deploymentCacheTTL: 1 * time.Minute,
 	}
 }
 
-// GetRepositoryEnvironments gets environments for a repository with caching
 func (ec *EnvironmentCache) GetRepositoryEnvironments(ctx context.Context, repo string) ([]string, error) {
 	ec.mu.RLock()
 	if envs, exists := ec.repoEnvs[repo]; exists {
@@ -74,7 +65,6 @@ func (ec *EnvironmentCache) GetRepositoryEnvironments(ctx context.Context, repo 
 	}
 	ec.mu.RUnlock()
 	
-	// Fetch from API with rate limiting
 	if err := ec.rateLimiter.AcquireEnvironments(ctx); err != nil {
 		return nil, err
 	}
@@ -92,7 +82,6 @@ func (ec *EnvironmentCache) GetRepositoryEnvironments(ctx context.Context, repo 
 		}
 	}
 	
-	// Cache the result
 	ec.mu.Lock()
 	ec.repoEnvs[repo] = envs
 	ec.repoEnvsTTL[repo] = time.Now().Add(ec.repoEnvCacheTTL)
@@ -101,7 +90,6 @@ func (ec *EnvironmentCache) GetRepositoryEnvironments(ctx context.Context, repo 
 	return envs, nil
 }
 
-// GetWorkflowRunEnvironment gets environment for a workflow run with caching and deployment detection
 func (ec *EnvironmentCache) GetWorkflowRunEnvironment(ctx context.Context, repo string, runID int64) (string, error) {
 	cacheKey := fmt.Sprintf("%s:%d", repo, runID)
 	
@@ -114,13 +102,11 @@ func (ec *EnvironmentCache) GetWorkflowRunEnvironment(ctx context.Context, repo 
 	}
 	ec.mu.RUnlock()
 	
-	// Detect environment using multiple methods
 	env, err := ec.detectEnvironmentForRun(ctx, repo, runID)
 	if err != nil {
 		return "", err
 	}
 	
-	// Cache the result
 	ec.mu.Lock()
 	ec.runEnvs[cacheKey] = env
 	ec.runEnvsTTL[cacheKey] = time.Now().Add(ec.runEnvCacheTTL)
@@ -129,15 +115,12 @@ func (ec *EnvironmentCache) GetWorkflowRunEnvironment(ctx context.Context, repo 
 	return env, nil
 }
 
-// detectEnvironmentForRun detects environment using optimized API calls
 func (ec *EnvironmentCache) detectEnvironmentForRun(ctx context.Context, repo string, runID int64) (string, error) {
-	// Method 1: Check recent deployments for this repository
 	env, err := ec.detectFromRecentDeployments(ctx, repo, runID)
 	if err == nil && env != "" {
 		return env, nil
 	}
 	
-	// Method 2: Check workflow run details and jobs
 	env, err = ec.detectFromWorkflowRun(ctx, repo, runID)
 	if err == nil && env != "" {
 		return env, nil
@@ -146,9 +129,7 @@ func (ec *EnvironmentCache) detectEnvironmentForRun(ctx context.Context, repo st
 	return "", nil
 }
 
-// detectFromRecentDeployments detects environment from recent deployments
 func (ec *EnvironmentCache) detectFromRecentDeployments(ctx context.Context, repo string, runID int64) (string, error) {
-	// Get workflow run details first with rate limiting
 	if err := ec.rateLimiter.AcquireWorkflowRuns(ctx); err != nil {
 		return "", err
 	}
@@ -159,13 +140,11 @@ func (ec *EnvironmentCache) detectFromRecentDeployments(ctx context.Context, rep
 		return "", err
 	}
 	
-	// Get recent deployments with caching
 	deployments, err := ec.getRecentDeployments(ctx, repo)
 	if err != nil {
 		return "", err
 	}
 	
-	// Match deployment SHA with workflow run SHA
 	runSHA := run.GetHeadSHA()
 	for _, deployment := range deployments {
 		if deployment.SHA == runSHA {
@@ -176,15 +155,12 @@ func (ec *EnvironmentCache) detectFromRecentDeployments(ctx context.Context, rep
 	return "", nil
 }
 
-// detectFromWorkflowRun detects environment from workflow run and jobs
 func (ec *EnvironmentCache) detectFromWorkflowRun(ctx context.Context, repo string, runID int64) (string, error) {
-	// Get repository environments
 	repoEnvs, err := ec.GetRepositoryEnvironments(ctx, repo)
 	if err != nil {
 		return "", err
 	}
 	
-	// Get workflow run details with rate limiting
 	if err := ec.rateLimiter.AcquireWorkflowRuns(ctx); err != nil {
 		return "", err
 	}
@@ -195,7 +171,6 @@ func (ec *EnvironmentCache) detectFromWorkflowRun(ctx context.Context, repo stri
 		return "", err
 	}
 	
-	// Get jobs for this run (only if we have waiting jobs) with rate limiting
 	if err := ec.rateLimiter.AcquireWorkflowJobs(ctx); err != nil {
 		return "", err
 	}
@@ -208,12 +183,10 @@ func (ec *EnvironmentCache) detectFromWorkflowRun(ctx context.Context, repo stri
 		return "", err
 	}
 	
-	// Check if any job is waiting and try to match with repository environments
 	for _, job := range jobs.Jobs {
 		if job.GetStatus() == "waiting" {
 			jobName := job.GetName()
 			
-			// Try to match job name with repository environments
 			for _, env := range repoEnvs {
 				if strings.Contains(strings.ToLower(jobName), strings.ToLower(env)) {
 					return env, nil
@@ -222,7 +195,6 @@ func (ec *EnvironmentCache) detectFromWorkflowRun(ctx context.Context, repo stri
 		}
 	}
 	
-	// Fallback: try to match workflow name with environments
 	workflowName := run.GetName()
 	for _, env := range repoEnvs {
 		if strings.Contains(strings.ToLower(workflowName), strings.ToLower(env)) {
@@ -233,7 +205,6 @@ func (ec *EnvironmentCache) detectFromWorkflowRun(ctx context.Context, repo stri
 	return "", nil
 }
 
-// getRecentDeployments gets recent deployments with caching
 func (ec *EnvironmentCache) getRecentDeployments(ctx context.Context, repo string) ([]DeploymentEnv, error) {
 	ec.mu.RLock()
 	if deployments, exists := ec.deploymentEnvs[repo]; exists {
@@ -244,7 +215,6 @@ func (ec *EnvironmentCache) getRecentDeployments(ctx context.Context, repo strin
 	}
 	ec.mu.RUnlock()
 	
-	// Fetch recent deployments from API with rate limiting
 	if err := ec.rateLimiter.AcquireDeployments(ctx); err != nil {
 		return nil, err
 	}
@@ -252,7 +222,7 @@ func (ec *EnvironmentCache) getRecentDeployments(ctx context.Context, repo strin
 	
 	opts := &github.DeploymentsListOptions{
 		ListOptions: github.ListOptions{
-			PerPage: 20, // Limit to reduce API load
+			PerPage: 20,
 		},
 	}
 	
@@ -267,12 +237,11 @@ func (ec *EnvironmentCache) getRecentDeployments(ctx context.Context, repo strin
 			Environment: deployment.GetEnvironment(),
 			SHA:         deployment.GetSHA(),
 			Ref:         deployment.GetRef(),
-			State:       "pending", // Default state for pending deployments
+			State:       "pending",
 			CreatedAt:   deployment.GetCreatedAt().Time,
 		})
 	}
 	
-	// Cache the result
 	ec.mu.Lock()
 	ec.deploymentEnvs[repo] = deploymentEnvs
 	ec.deploymentEnvsTTL[repo] = time.Now().Add(ec.deploymentCacheTTL)
@@ -281,14 +250,12 @@ func (ec *EnvironmentCache) getRecentDeployments(ctx context.Context, repo strin
 	return deploymentEnvs, nil
 }
 
-// CleanupExpiredCache removes expired cache entries
 func (ec *EnvironmentCache) CleanupExpiredCache() {
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
 	
 	now := time.Now()
 	
-	// Cleanup repository environments cache
 	for repo, ttl := range ec.repoEnvsTTL {
 		if now.After(ttl) {
 			delete(ec.repoEnvs, repo)
@@ -296,7 +263,6 @@ func (ec *EnvironmentCache) CleanupExpiredCache() {
 		}
 	}
 	
-	// Cleanup workflow run environments cache
 	for key, ttl := range ec.runEnvsTTL {
 		if now.After(ttl) {
 			delete(ec.runEnvs, key)
@@ -304,7 +270,6 @@ func (ec *EnvironmentCache) CleanupExpiredCache() {
 		}
 	}
 	
-	// Cleanup deployment environments cache
 	for repo, ttl := range ec.deploymentEnvsTTL {
 		if now.After(ttl) {
 			delete(ec.deploymentEnvs, repo)
@@ -313,7 +278,6 @@ func (ec *EnvironmentCache) CleanupExpiredCache() {
 	}
 }
 
-// GetCacheStats returns cache statistics
 func (ec *EnvironmentCache) GetCacheStats() map[string]int {
 	ec.mu.RLock()
 	defer ec.mu.RUnlock()
