@@ -1,0 +1,58 @@
+name: Mirror GHE to AWS CodeCommit
+run-name: 🪩 Mirror GHE to AWS CodeCommit on ${{ github.ref_name }} branch
+
+on:
+  # 모든 브랜치에 대해 푸시 이벤트가 발생하면 워크플로우를 트리거합니다.
+  push:
+    branches:
+      - '*'
+  
+  # `workflow_dispatch` 이벤트를 사용하여 수동으로 워크플로우를 실행할 수 있습니다.
+  # GitHub UI를 통해 이 워크플로우를 수동으로 트리거할 수 있게 됩니다.
+  # 이는 특정 조건이나 시점에 워크플로우를 실행하고 싶을 때 유용합니다.
+  workflow_dispatch:
+
+env:
+  CODECOMMIT_HTTPS_URL: 'https://git-codecommit.ap-northeast-2.amazonaws.com/v1/repos/<ENTER_YOUR_CODECOMMIT_REPOSITORY_NAME>'
+ 
+jobs:
+  mirror:
+    runs-on: [self-hosted, linux, build]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Configure AWS credentials
+        uses: actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Install awscli
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+      
+      - name: Check cli tools
+        id: check_cli
+        run: |
+          echo "Check git cli version installed in Actions Runner ..."
+          git --version
+          
+          echo "Check awscli version installed in Actions Runner ..."
+          aws --version
+          echo "success=false" >> $GITHUB_OUTPUT
+
+      - name: Mirror push to AWS CodeCommit
+        if: steps.check_cli.outputs.success == 'true'
+        run: |
+          echo "Mirror push from github enterprise to codecommit ..."
+          git config --global --add safe.directory /github/workspace
+          git config --global credential.'https://git-codecommit.ap-northeast-2.amazonaws.com'.helper '!aws codecommit credential-helper $@'
+          git config --global credential.UseHttpPath true
+          git remote add codecommit $CODECOMMIT_HTTPS_URL
+          git push codecommit --mirror
