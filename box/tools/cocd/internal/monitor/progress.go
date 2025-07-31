@@ -1,0 +1,169 @@
+package monitor
+
+import (
+	"sync"
+	"time"
+
+	"github.com/google/go-github/v60/github"
+)
+
+type ProgressTracker struct {
+	mu       sync.RWMutex
+	progress ScanProgress
+}
+
+func NewProgressTracker() *ProgressTracker {
+	now := time.Now()
+	return &ProgressTracker{
+		progress: ScanProgress{
+			ScanMode: ScanModeIdle,
+			CurrentStateStart: &now,
+			StateDuration: 0,
+		},
+	}
+}
+
+func (pt *ProgressTracker) GetProgress() ScanProgress {
+	pt.mu.RLock()
+	defer pt.mu.RUnlock()
+	return pt.progress
+}
+
+func (pt *ProgressTracker) UpdateProgress(progress ScanProgress) {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	pt.progress = progress
+}
+
+func (pt *ProgressTracker) SetMode(mode string) {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	if pt.progress.ScanMode != mode {
+		now := time.Now()
+		pt.progress.CurrentStateStart = &now
+		pt.progress.StateDuration = 0
+	}
+	
+	pt.progress.ScanMode = mode
+}
+
+func (pt *ProgressTracker) SetIdle() {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	now := time.Now()
+	pt.progress = ScanProgress{
+		ScanMode: ScanModeIdle,
+		CurrentStateStart: &now,
+		StateDuration: 0,
+	}
+}
+
+func (pt *ProgressTracker) InitializeProgress(mode string, totalRepos, activeRepos, maxWorkers int, repoStats RepoStats) {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	limitedRepos := activeRepos
+	if limitedRepos > 100 {
+		limitedRepos = 100
+	}
+	
+	now := time.Now()
+	var stateStart *time.Time
+	if pt.progress.ScanMode != mode {
+		stateStart = &now
+	} else {
+		stateStart = pt.progress.CurrentStateStart
+	}
+	
+	pt.progress = ScanProgress{
+		ActiveWorkers:     maxWorkers,
+		TotalRepos:        totalRepos,
+		CompletedRepos:    0,
+		ScanMode:          mode,
+		ActiveRepos:       activeRepos,
+		ArchivedRepos:     repoStats.Archived,
+		DisabledRepos:     repoStats.Disabled,
+		ValidRepos:        repoStats.Valid,
+		LimitedRepos:      limitedRepos,
+		CurrentStateStart: stateStart,
+		StateDuration:     0,
+	}
+}
+
+func (pt *ProgressTracker) UpdateCompleted(completed int) {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	pt.progress.CompletedRepos = completed
+}
+
+type RepoStats struct {
+	Total    int
+	Archived int
+	Disabled int
+	Valid    int
+}
+
+func CalculateRepoStats(repos []*github.Repository) RepoStats {
+	stats := RepoStats{Total: len(repos)}
+	
+	for _, repo := range repos {
+		if repo.GetArchived() {
+			stats.Archived++
+		} else if repo.GetDisabled() {
+			stats.Disabled++
+		} else {
+			stats.Valid++
+		}
+	}
+	
+	return stats
+}
+
+func (pt *ProgressTracker) SendProgressUpdates(progressChan chan<- ScanProgress) {
+	if progressChan != nil {
+		progressChan <- pt.GetProgress()
+	}
+}
+
+func (pt *ProgressTracker) SetNextScanTimer(nextScanAt time.Time, cycleCount int, isFullScan bool) {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	pt.progress.NextScanAt = &nextScanAt
+	pt.progress.ScanCycleCount = cycleCount
+	pt.progress.IsNextScanFull = isFullScan
+	
+	pt.progress.ScanCountdown = int(time.Until(nextScanAt).Seconds())
+	if pt.progress.ScanCountdown < 0 {
+		pt.progress.ScanCountdown = 0
+	}
+}
+
+func (pt *ProgressTracker) UpdateScanCountdown() {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	if pt.progress.NextScanAt != nil {
+		pt.progress.ScanCountdown = int(time.Until(*pt.progress.NextScanAt).Seconds())
+		if pt.progress.ScanCountdown < 0 {
+			pt.progress.ScanCountdown = 0
+		}
+	}
+	
+	if pt.progress.CurrentStateStart != nil {
+		pt.progress.StateDuration = int(time.Since(*pt.progress.CurrentStateStart).Seconds())
+		if pt.progress.StateDuration < 0 {
+			pt.progress.StateDuration = 0
+		}
+	}
+}
+
+func (pt *ProgressTracker) SetScanCompleted() {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	now := time.Now()
+	pt.progress.LastScanAt = &now
+}
