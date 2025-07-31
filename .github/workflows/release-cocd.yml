@@ -99,6 +99,8 @@ jobs:
           body: |
             cocd ${{ steps.version.outputs.version }} is now available.
 
+            **cocd** is a TUI (Terminal User Interface) tool for managing GitHub deployments and environments directly from GitHub Actions workflows. It provides an interactive terminal interface for deployment status tracking, environment management, and deployment lifecycle operations within CI/CD pipelines.
+
             ## Changes
             
             See the commit history for detailed changes.
