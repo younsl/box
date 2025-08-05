@@ -8,6 +8,23 @@
 
 A TUI (Terminal User Interface) application for monitoring GitHub Actions jobs that are waiting for approval in production environments. Inspired by k9s, cocd provides an interactive interface to monitor your GitHub Actions workflows in real-time.
 
+## Features
+
+DevOps Engineers and SREs can use cocd to manage GitHub Actions workflows through a simple terminal interface:
+
+- **Approval waiting job monitoring** - Monitor GitHub Actions jobs waiting for approval
+- **Recent Actions job monitoring** - View recent workflow runs and their status
+- **Job approval** - Approve pending deployment jobs directly from the TUI
+- **Job cancellation** - Cancel running or pending jobs
+- **Real-time updates** - Live monitoring with configurable refresh intervals
+- **Multi-environment support** - Monitor different environments (prod, staging, dev)
+
 ## Architecture
 
 <img width="676" height="265" alt="image" src="https://github.com/user-attachments/assets/003b6092-f25a-4672-b10d-0b7526cae163" />
+
+## Documentation
+
+Comprehensive guides and references for using cocd effectively.
+
+- [Configuration](docs/configuration.md): Setup and configuration guide
