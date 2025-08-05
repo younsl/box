@@ -6,22 +6,23 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
 // BubbleApp is the main Bubble Tea application model
 type BubbleApp struct {
 	// Core dependencies
-	monitor *monitor.Monitor
+	monitor Monitor
 	config  *AppConfig
 	ctx     context.Context
 	cancel  context.CancelFunc
 	
 	// Component managers
-	viewManager    *ViewManager
-	uiComponents   *UIComponents
-	commandHandler *CommandHandler
+	viewManager    ViewManagerInterface
+	uiRenderer     UIRenderer
+	commandHandler CommandHandlerInterface
+	keyHandler     KeyHandler
+	jobService     JobService
 	
 	// Application state
 	jobs       []scanner.JobStatus
@@ -41,13 +42,15 @@ type BubbleApp struct {
 }
 
 // NewBubbleApp creates a new Bubble Tea application
-func NewBubbleApp(m *monitor.Monitor, config *AppConfig) *BubbleApp {
+func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 	ctx, cancel := context.WithCancel(context.Background())
 	
 	// Initialize component managers
 	viewManager := NewViewManager()
-	uiComponents := NewUIComponents(config)
+	uiRenderer := NewUIComponents(config)
 	commandHandler := NewCommandHandler(m, config)
+	keyHandler := NewKeyHandler(commandHandler)
+	jobService := NewJobService(commandHandler)
 	
 	app := &BubbleApp{
 		monitor:        m,
@@ -55,8 +58,10 @@ func NewBubbleApp(m *monitor.Monitor, config *AppConfig) *BubbleApp {
 		ctx:            ctx,
 		cancel:         cancel,
 		viewManager:    viewManager,
-		uiComponents:   uiComponents,
+		uiRenderer:     uiRenderer,
 		commandHandler: commandHandler,
+		keyHandler:     keyHandler,
+		jobService:     jobService,
 		jobsChan:       make(chan []scanner.JobStatus, 100),
 		loading:        true,
 	}
@@ -84,7 +89,7 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return app, nil
 		
 	case tea.KeyMsg:
-		return app.handleKeyPress(msg)
+		return app.keyHandler.HandleKeyPress(msg, app)
 		
 	case jobsMsg:
 		return app.handleJobsMessage(msg)
@@ -110,6 +115,11 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Refresh the current view to see updated status
 		return app.refreshCurrentView()
 		
+	case approvalSuccessMsg:
+		app.viewManager.HideApprovalConfirm()
+		// Refresh the current view to see updated status
+		return app.refreshCurrentView()
+		
 	default:
 		return app, nil
 	}
@@ -118,13 +128,20 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the UI
 func (app *BubbleApp) View() string {
 	if app.showHelp {
-		return app.uiComponents.RenderHelp(app.monitor)
+		return app.uiRenderer.RenderHelp(app.monitor)
 	}
 	
 	if app.viewManager.IsShowingCancelConfirm() {
 		if job := app.viewManager.GetCancelTargetJob(); job != nil {
 			selection := app.viewManager.GetCancelSelection()
-			return app.uiComponents.RenderCancelConfirm(*job, selection)
+			return app.uiRenderer.RenderCancelConfirm(*job, selection)
+		}
+	}
+	
+	if app.viewManager.IsShowingApprovalConfirm() {
+		if job := app.viewManager.GetApprovalTargetJob(); job != nil {
+			selection := app.viewManager.GetApprovalSelection()
+			return app.uiRenderer.RenderApprovalConfirm(*job, selection)
 		}
 	}
 	
@@ -163,9 +180,12 @@ func (app *BubbleApp) handleErrorMessage(msg errorMsg) (tea.Model, tea.Cmd) {
 	app.errorMsg = string(msg)
 	app.loading = false
 	
-	// Hide cancel confirmation popup if it's showing (in case of cancel workflow error)
+	// Hide cancel/approval confirmation popup if it's showing (in case of workflow error)
 	if app.viewManager.IsShowingCancelConfirm() {
 		app.viewManager.HideCancelConfirm()
+	}
+	if app.viewManager.IsShowingApprovalConfirm() {
+		app.viewManager.HideApprovalConfirm()
 	}
 	
 	return app, nil
@@ -191,128 +211,29 @@ func (app *BubbleApp) handleTickMessage(msg tickMsg) (tea.Model, tea.Cmd) {
 	return app, app.commandHandler.TickCmd()
 }
 
-// Key press handlers
-
-func (app *BubbleApp) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Handle cancel confirmation popup keys first
-	if app.viewManager.IsShowingCancelConfirm() {
-		switch msg.String() {
-		case "left":
-			// Select "No"
-			app.viewManager.SetCancelSelection(0)
-			return app, nil
-		case "right":
-			// Select "Yes"
-			app.viewManager.SetCancelSelection(1)
-			return app, nil
-		case "enter":
-			// Confirm current selection
-			if app.viewManager.IsCancelConfirmed() {
-				return app, app.commandHandler.CancelWorkflow(app.ctx, app.viewManager)
-			} else {
-				app.viewManager.HideCancelConfirm()
-				return app, nil
-			}
-		case "esc":
-			// Cancel the cancellation
-			app.viewManager.HideCancelConfirm()
-			return app, nil
-		case "y", "Y":
-			// Legacy support - direct confirm
-			return app, app.commandHandler.CancelWorkflow(app.ctx, app.viewManager)
-		case "n", "N":
-			// Legacy support - direct cancel
-			app.viewManager.HideCancelConfirm()
-			return app, nil
-		default:
-			return app, nil
-		}
-	}
-	
-	// If help is showing, any key closes it (except quit keys)
-	if app.showHelp {
-		switch msg.String() {
-		case "ctrl+c", "q":
-			app.cancel()
-			return app, tea.Quit
-		default:
-			app.showHelp = false
-			return app, nil
-		}
-	}
-	
-	switch msg.String() {
-	case "ctrl+c", "q":
-		app.cancel()
-		return app, tea.Quit
-		
-	case "h", "?":
-		app.showHelp = !app.showHelp
-		return app, nil
-		
-	case "esc":
-		return app, nil
-		
-	case "p":
-		return app.switchToPendingView()
-		
-	case "l":
-		return app.switchToRecentView()
-		
-	case "r":
-		return app.refreshCurrentView()
-		
-	case "c":
-		// Show cancel confirmation for selected job
-		return app.showCancelConfirmation()
-		
-	case "up", "k":
-		return app.moveCursorUp()
-		
-	case "down", "j":
-		return app.moveCursorDown()
-		
-	case "enter":
-		// Enter key - no action for now
-		return app, nil
-		
-	case "o":
-		// Open GitHub Actions page in browser
-		return app, app.commandHandler.JumpToActions(app.viewManager, app.jobs, app.recentJobs)
-		
-	case "left":
-		return app.navigatePageLeft()
-		
-	case "right":
-		return app.navigatePageRight()
-		
-	default:
-		return app, nil
-	}
-}
 
 // View switching methods
 
-func (app *BubbleApp) switchToPendingView() (tea.Model, tea.Cmd) {
-	app.viewManager.SwitchToView(ViewPending)
-	return app, nil
-}
-
-func (app *BubbleApp) switchToRecentView() (tea.Model, tea.Cmd) {
-	app.loading = true
-	app.viewManager.SwitchToView(ViewRecent)
-	// Initialize timer for recent jobs view
-	app.commandHandler.UpdateTimerForView(ViewRecent)
-	return app, app.commandHandler.LoadRecentJobs(app.ctx)
+func (app *BubbleApp) toggleView() (tea.Model, tea.Cmd) {
+	currentView := app.viewManager.GetCurrentView()
+	
+	if currentView == ViewPending {
+		// Switch to Recent view
+		app.loading = true
+		app.viewManager.SwitchToView(ViewRecent)
+		// Initialize timer for recent jobs view
+		app.commandHandler.UpdateTimerForView(ViewRecent)
+		return app, app.jobService.RefreshJobs(app.ctx, ViewRecent)
+	} else {
+		// Switch to Pending view
+		app.viewManager.SwitchToView(ViewPending)
+		return app, nil
+	}
 }
 
 func (app *BubbleApp) refreshCurrentView() (tea.Model, tea.Cmd) {
 	app.loading = true
-	if app.viewManager.GetCurrentView() == ViewPending {
-		return app, app.commandHandler.LoadPendingJobs(app.ctx)
-	} else {
-		return app, app.commandHandler.LoadRecentJobs(app.ctx)
-	}
+	return app, app.jobService.RefreshJobs(app.ctx, app.viewManager.GetCurrentView())
 }
 
 func (app *BubbleApp) showCancelConfirmation() (tea.Model, tea.Cmd) {
@@ -334,6 +255,28 @@ func (app *BubbleApp) showCancelConfirmation() (tea.Model, tea.Cmd) {
 	}
 	
 	app.viewManager.ShowCancelConfirm(selectedJob)
+	return app, nil
+}
+
+func (app *BubbleApp) showApprovalConfirmation() (tea.Model, tea.Cmd) {
+	jobs := app.getJobsForCurrentView()
+	if len(jobs) == 0 {
+		return app, nil
+	}
+	
+	cursor := app.viewManager.GetCursor()
+	if cursor >= len(jobs) {
+		return app, nil
+	}
+	
+	selectedJob := jobs[cursor]
+	
+	// Only allow approval for waiting jobs that need approval
+	if selectedJob.Status != "waiting" {
+		return app, nil
+	}
+	
+	app.viewManager.ShowApprovalConfirm(selectedJob)
 	return app, nil
 }
 
@@ -369,11 +312,11 @@ func (app *BubbleApp) renderMain() string {
 	var content strings.Builder
 	
 	// Header
-	content.WriteString(app.uiComponents.RenderHeader(app.monitor))
+	content.WriteString(app.uiRenderer.RenderHeader(app.monitor))
 	content.WriteString("\n")
 	
 	// View selector
-	content.WriteString(app.uiComponents.RenderViewSelector(
+	content.WriteString(app.uiRenderer.RenderViewSelector(
 		app.viewManager.GetCurrentView(),
 		len(app.jobs),
 		len(app.recentJobs),
@@ -383,19 +326,19 @@ func (app *BubbleApp) renderMain() string {
 	
 	// Job table
 	jobs := app.getJobsForCurrentView()
-	content.WriteString(app.uiComponents.RenderJobTable(jobs, app.viewManager.GetCursor(), app.viewManager))
+	content.WriteString(app.uiRenderer.RenderJobTable(jobs, app.viewManager.GetCursor(), app.viewManager))
 	content.WriteString("\n")
 	
 	// Pagination (only for Recent Jobs view)
 	if app.viewManager.GetCurrentView() == ViewRecent {
-		pagination := app.uiComponents.RenderPagination(app.viewManager.GetCurrentView(), app.viewManager, len(app.recentJobs), jobs)
+		pagination := app.uiRenderer.RenderPagination(app.viewManager.GetCurrentView(), app.viewManager, len(app.recentJobs), jobs)
 		if pagination != "" {
 			content.WriteString(pagination)
 		}
 	}
 	
 	// Status/Info
-	content.WriteString(app.uiComponents.RenderStatus(app.errorMsg))
+	content.WriteString(app.uiRenderer.RenderStatus(app.errorMsg))
 	
 	return content.String()
 }
@@ -403,14 +346,12 @@ func (app *BubbleApp) renderMain() string {
 // Helper methods
 
 func (app *BubbleApp) getJobsForCurrentView() []scanner.JobStatus {
-	switch app.viewManager.GetCurrentView() {
-	case ViewPending:
-		return app.viewManager.GetCombinedPendingJobs(app.jobs)
-	case ViewRecent:
-		return app.viewManager.GetPaginatedJobs(app.recentJobs)
-	default:
-		return []scanner.JobStatus{}
-	}
+	return app.jobService.GetJobsForView(
+		app.viewManager.GetCurrentView(),
+		app.jobs,
+		app.recentJobs,
+		app.viewManager,
+	)
 }
 
 func (app *BubbleApp) getMaxCursorPosition() int {
@@ -418,7 +359,7 @@ func (app *BubbleApp) getMaxCursorPosition() int {
 }
 
 // RunBubbleApp runs the Bubble Tea application
-func RunBubbleApp(m *monitor.Monitor, config *AppConfig) error {
+func RunBubbleApp(m Monitor, config *AppConfig) error {
 	app := NewBubbleApp(m, config)
 	
 	p := tea.NewProgram(app, tea.WithAltScreen())

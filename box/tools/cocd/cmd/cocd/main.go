@@ -113,10 +113,12 @@ func run(cmd *cobra.Command, args []string) error {
 		Org:         cfg.GitHub.Org,
 		Repo:        cfg.GitHub.Repo,
 		Environment: cfg.Monitor.Environment,
+		Timezone:    cfg.Monitor.Timezone,
 	}
 	
 	// Use Bubble Tea instead of tview for better key handling
-	if err := tui.RunBubbleApp(mon, tuiConfig); err != nil {
+	monitorAdapter := tui.NewMonitorAdapter(mon)
+	if err := tui.RunBubbleApp(monitorAdapter, tuiConfig); err != nil {
 		fmt.Printf("Error running application: %v\n", err)
 		return fmt.Errorf("failed to run application: %w", err)
 	}

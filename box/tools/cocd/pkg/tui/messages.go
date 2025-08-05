@@ -12,15 +12,9 @@ type (
 	recentJobsMsg   []scanner.JobStatus
 	errorMsg        string
 	tickMsg         time.Time
-	scanProgressMsg ScanProgress
-	updateUIMsg     struct{} // For forcing UI updates
+	scanProgressMsg struct{}
+	updateUIMsg        struct{} // For forcing UI updates
 	cancelSuccessMsg struct{} // For successful cancellation
+	approvalSuccessMsg struct{} // For successful approval
 )
 
-// ScanProgress represents the progress of repository scanning
-type ScanProgress struct {
-	ActiveWorkers int
-	TotalRepos    int
-	CompletedRepos int
-	CurrentView   string // "pending" or "recent"
-}

@@ -17,14 +17,14 @@ type UIComponents struct {
 }
 
 // NewUIComponents creates new UI components
-func NewUIComponents(config *AppConfig) *UIComponents {
+func NewUIComponents(config *AppConfig) UIRenderer {
 	return &UIComponents{
 		config: config,
 	}
 }
 
 // RenderHeader renders the header section
-func (ui *UIComponents) RenderHeader(monitor *monitor.Monitor) string {
+func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	serverName := ui.config.ServerURL
 	if serverName == "" || serverName == "https://api.github.com" {
 		serverName = "GitHub.com"
@@ -59,7 +59,7 @@ func (ui *UIComponents) RenderHeader(monitor *monitor.Monitor) string {
 }
 
 // RenderViewSelector renders the view selector
-func (ui *UIComponents) RenderViewSelector(currentView ViewType, pendingCount, recentCount int, vm *ViewManager) string {
+func (ui *UIComponents) RenderViewSelector(currentView ViewType, pendingCount, recentCount int, vm ViewManagerInterface) string {
 	pendingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 	recentStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 	
@@ -76,7 +76,7 @@ func (ui *UIComponents) RenderViewSelector(currentView ViewType, pendingCount, r
 }
 
 // RenderJobTable renders the job table
-func (ui *UIComponents) RenderJobTable(jobs []scanner.JobStatus, cursor int, vm *ViewManager) string {
+func (ui *UIComponents) RenderJobTable(jobs []scanner.JobStatus, cursor int, vm ViewManagerInterface) string {
 	var b strings.Builder
 	
 	// Calculate dynamic column widths based on content
@@ -134,7 +134,7 @@ func (ui *UIComponents) RenderStatus(errorMsg string) string {
 }
 
 // RenderPagination renders pagination dots positioned under the AGE column
-func (ui *UIComponents) RenderPagination(currentView ViewType, vm *ViewManager, totalJobs int, jobs []scanner.JobStatus) string {
+func (ui *UIComponents) RenderPagination(currentView ViewType, vm ViewManagerInterface, totalJobs int, jobs []scanner.JobStatus) string {
 	if currentView != ViewRecent || totalJobs == 0 {
 		return ""
 	}
@@ -187,7 +187,7 @@ func (ui *UIComponents) RenderPagination(currentView ViewType, vm *ViewManager, 
 }
 
 // RenderHelp renders the help screen
-func (ui *UIComponents) RenderHelp(monitor *monitor.Monitor) string {
+func (ui *UIComponents) RenderHelp(monitor Monitor) string {
 	helpStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("15")).
 		Padding(2, 4).
@@ -201,9 +201,9 @@ func (ui *UIComponents) RenderHelp(monitor *monitor.Monitor) string {
 
 KEY BINDINGS:
   q, Ctrl+C    Quit
-  p            Switch to Approval Waiting Jobs
-  l            Switch to Recent Jobs
+  t            Toggle between Approval Waiting Jobs and Recent Jobs
   r            Refresh current view
+  a            Approve selected deployment (with confirmation)
   c            Cancel selected workflow (with confirmation)
   h, ?         Toggle this help
   ↑/↓, k/j     Navigate jobs (k=up, j=down)
@@ -223,6 +223,109 @@ Result Limit         All waiting            Last 200 jobs
 Press any key to continue...`, intervalStr)
 	
 	return helpStyle.Render(help)
+}
+
+
+// RenderApprovalConfirm renders the approval confirmation popup
+func (ui *UIComponents) RenderApprovalConfirm(job scanner.JobStatus, selection int) string {
+	// Create a centered popup with a more professional design
+	confirmStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Padding(1, 2).
+		Border(lipgloss.DoubleBorder()).
+		BorderForeground(lipgloss.Color("2")).
+		Width(60).
+		Align(lipgloss.Center)
+	
+	title := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("2")).
+		Bold(true).
+		Align(lipgloss.Center).
+		Render("⚠️  Confirm Deployment Approval")
+	
+	jobInfo := fmt.Sprintf(
+		"Repository: %s\nWorkflow: %s\nStatus: %s",
+		job.Repository,
+		job.WorkflowName,
+		job.Status,
+	)
+	
+	warning := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("3")).
+		Align(lipgloss.Center).
+		Render("This will approve the deployment to production!")
+	
+	// Add approval message preview
+	ch := NewCommandHandler(nil, ui.config)
+	approvalMessage := ch.(*CommandHandler).generateApprovalMessage()
+	messagePreview := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("6")).
+		Background(lipgloss.Color("8")).
+		Padding(0, 1).
+		Align(lipgloss.Center).
+		Render(fmt.Sprintf("Message: %s", approvalMessage))
+	
+	// Create interactive Yes/No buttons with consistent width
+	buttonWidth := 8
+	
+	// Simple design with color only on selected button
+	var noButton, yesButton string
+	if selection == 0 { // No selected - green background
+		noButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Background(lipgloss.Color("2")).
+			Padding(0, 1).
+			Width(buttonWidth).
+			Align(lipgloss.Center).
+			Border(lipgloss.RoundedBorder()).
+			Bold(true).
+			Render("No")
+		yesButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Padding(0, 1).
+			Width(buttonWidth).
+			Align(lipgloss.Center).
+			Border(lipgloss.RoundedBorder()).
+			Render("Yes")
+	} else { // Yes selected - red background for approval
+		noButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Padding(0, 1).
+			Width(buttonWidth).
+			Align(lipgloss.Center).
+			Border(lipgloss.RoundedBorder()).
+			Render("No")
+		yesButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Background(lipgloss.Color("1")).
+			Padding(0, 1).
+			Width(buttonWidth).
+			Align(lipgloss.Center).
+			Border(lipgloss.RoundedBorder()).
+			Bold(true).
+			Render("Yes")
+	}
+	
+	// Create button container with proper spacing
+	buttonContainer := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		noButton,
+		strings.Repeat(" ", 4), // Space between buttons
+		yesButton,
+	)
+	
+	buttons := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Render(buttonContainer)
+	
+	instructions := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Align(lipgloss.Center).
+		Render("Use ←/→ to select, Enter to confirm, Esc to cancel")
+	
+	content := fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s", title, jobInfo, warning, messagePreview, buttons, instructions)
+	
+	return confirmStyle.Render(content)
 }
 
 // RenderCancelConfirm renders the cancel confirmation popup with interactive selection
@@ -393,7 +496,7 @@ func (ui *UIComponents) getTimerInfo(progress monitor.ScanProgress) string {
 }
 
 func (ui *UIComponents) getKeyBindings() string {
-	keyBindings := "Keys: [p]ending [l]ist [r]efresh [c]ancel [o]pen browser [h]elp [q]uit [↑↓] navigate"
+	keyBindings := "Keys: [t]oggle view [r]efresh [a]pprove [c]ancel [o]pen browser [h]elp [q]uit [↑↓] navigate"
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Render(keyBindings)
 }
 
@@ -431,7 +534,7 @@ func (ui *UIComponents) renderTableHeader(b *strings.Builder, repoWidth, jobWidt
 	b.WriteString("\n")
 }
 
-func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus, i, cursor int, vm *ViewManager, repoWidth, jobWidth, idWidth, statusWidth, branchWidth, actorWidth, ageWidth int) {
+func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus, i, cursor int, vm ViewManagerInterface, repoWidth, jobWidth, idWidth, statusWidth, branchWidth, actorWidth, ageWidth int) {
 	// Truncate and pad columns
 	repo := ui.padString(ui.truncate(job.Repository, repoWidth), repoWidth)
 	jobName := ui.padString(ui.truncate(job.Name, jobWidth), jobWidth)

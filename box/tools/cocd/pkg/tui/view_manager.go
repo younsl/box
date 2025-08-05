@@ -28,17 +28,20 @@ type ViewManager struct {
 	// Completed jobs tracking
 	completedJobs map[string]scanner.JobStatus
 	
-	// Loading state tracking
-	isLoading bool
 	
 	// Cancel confirmation popup state
 	showCancelConfirm bool
 	cancelTargetJob   *scanner.JobStatus
 	cancelSelection   int // 0 = No, 1 = Yes
+	
+	// Approval confirmation popup state
+	showApprovalConfirm bool
+	approvalTargetJob   *scanner.JobStatus
+	approvalSelection   int // 0 = No, 1 = Yes
 }
 
 // NewViewManager creates a new view manager
-func NewViewManager() *ViewManager {
+func NewViewManager() ViewManagerInterface {
 	return &ViewManager{
 		currentView:       ViewPending,
 		cursor:            0,
@@ -67,10 +70,6 @@ func (vm *ViewManager) GetCursor() int {
 	return vm.cursor
 }
 
-// SetCursor sets the cursor position
-func (vm *ViewManager) SetCursor(cursor int) {
-	vm.cursor = cursor
-}
 
 // MoveCursor moves the cursor up or down
 func (vm *ViewManager) MoveCursor(direction int, maxItems int) {
@@ -91,7 +90,11 @@ func (vm *ViewManager) GetPageInfo() (page int, perPage int) {
 
 // ChangePage changes the page for recent jobs
 func (vm *ViewManager) ChangePage(direction int, totalItems int) {
-	totalPages := vm.getTotalPages(totalItems)
+	totalPages := (totalItems + vm.recentJobsPerPage - 1) / vm.recentJobsPerPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	
 	newPage := vm.recentJobsPage + direction
 	
 	if newPage < 0 {
@@ -105,13 +108,6 @@ func (vm *ViewManager) ChangePage(direction int, totalItems int) {
 	vm.cursor = 0
 }
 
-// getTotalPages calculates total pages for recent jobs
-func (vm *ViewManager) getTotalPages(totalItems int) int {
-	if totalItems == 0 {
-		return 1
-	}
-	return (totalItems + vm.recentJobsPerPage - 1) / vm.recentJobsPerPage
-}
 
 // GetPaginatedJobs returns paginated jobs for recent view
 func (vm *ViewManager) GetPaginatedJobs(jobs []scanner.JobStatus) []scanner.JobStatus {
@@ -233,18 +229,6 @@ func (vm *ViewManager) isJobCompleted(job scanner.JobStatus) bool {
 	return exists
 }
 
-// GetViewTitle returns the title for the current view
-func (vm *ViewManager) GetViewTitle(jobCount int) string {
-	switch vm.currentView {
-	case ViewPending:
-		return fmt.Sprintf("Approval Waiting Jobs [%d]", jobCount)
-	case ViewRecent:
-		return fmt.Sprintf("Recent Jobs [%d]", jobCount)
-	default:
-		return "Unknown View"
-	}
-}
-
 // GetMaxCursorPosition returns the maximum cursor position for current view
 func (vm *ViewManager) GetMaxCursorPosition(pendingJobs, recentJobs []scanner.JobStatus) int {
 	switch vm.currentView {
@@ -282,15 +266,6 @@ func (vm *ViewManager) GetCancelTargetJob() *scanner.JobStatus {
 	return vm.cancelTargetJob
 }
 
-// ToggleCancelSelection toggles between Yes/No selection
-func (vm *ViewManager) ToggleCancelSelection() {
-	if vm.cancelSelection == 0 {
-		vm.cancelSelection = 1
-	} else {
-		vm.cancelSelection = 0
-	}
-}
-
 // SetCancelSelection sets the cancel selection (0 = No, 1 = Yes)
 func (vm *ViewManager) SetCancelSelection(selection int) {
 	if selection == 0 || selection == 1 {
@@ -306,4 +281,45 @@ func (vm *ViewManager) GetCancelSelection() int {
 // IsCancelConfirmed returns true if "Yes" is selected
 func (vm *ViewManager) IsCancelConfirmed() bool {
 	return vm.cancelSelection == 1
+}
+
+// ShowApprovalConfirm shows the approval confirmation popup
+func (vm *ViewManager) ShowApprovalConfirm(job scanner.JobStatus) {
+	vm.showApprovalConfirm = true
+	vm.approvalTargetJob = &job
+	vm.approvalSelection = 0 // Default to "No"
+}
+
+// HideApprovalConfirm hides the approval confirmation popup
+func (vm *ViewManager) HideApprovalConfirm() {
+	vm.showApprovalConfirm = false
+	vm.approvalTargetJob = nil
+	vm.approvalSelection = 0
+}
+
+// IsShowingApprovalConfirm returns whether approval confirmation is showing
+func (vm *ViewManager) IsShowingApprovalConfirm() bool {
+	return vm.showApprovalConfirm
+}
+
+// GetApprovalTargetJob returns the job to be approved
+func (vm *ViewManager) GetApprovalTargetJob() *scanner.JobStatus {
+	return vm.approvalTargetJob
+}
+
+// SetApprovalSelection sets the approval selection (0 = No, 1 = Yes)
+func (vm *ViewManager) SetApprovalSelection(selection int) {
+	if selection == 0 || selection == 1 {
+		vm.approvalSelection = selection
+	}
+}
+
+// GetApprovalSelection returns the current selection (0 = No, 1 = Yes)
+func (vm *ViewManager) GetApprovalSelection() int {
+	return vm.approvalSelection
+}
+
+// IsApprovalConfirmed returns true if "Yes" is selected
+func (vm *ViewManager) IsApprovalConfirmed() bool {
+	return vm.approvalSelection == 1
 }

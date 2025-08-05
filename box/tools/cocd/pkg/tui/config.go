@@ -7,4 +7,5 @@ type AppConfig struct {
 	Repo        string
 	Environment string
 	Token       string
+	Timezone    string
 }

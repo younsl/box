@@ -6,22 +6,37 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
 // CommandHandler handles all command operations
 type CommandHandler struct {
-	monitor *monitor.Monitor
+	monitor Monitor
 	config  *AppConfig
 }
 
 // NewCommandHandler creates a new command handler
-func NewCommandHandler(monitor *monitor.Monitor, config *AppConfig) *CommandHandler {
+func NewCommandHandler(monitor Monitor, config *AppConfig) CommandHandlerInterface {
 	return &CommandHandler{
 		monitor: monitor,
 		config:  config,
 	}
+}
+
+// generateApprovalMessage creates approval message with timestamp
+func (ch *CommandHandler) generateApprovalMessage() string {
+	timezone := ch.config.Timezone
+	if timezone == "" {
+		timezone = "UTC"
+	}
+	
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		loc = time.UTC
+	}
+	
+	timestamp := time.Now().In(loc).Format("2006-01-02 15:04:05 MST")
+	return fmt.Sprintf("Remote approved by cocd at %s", timestamp)
 }
 
 // StartMonitoring starts the background monitoring process
@@ -82,7 +97,7 @@ func (ch *CommandHandler) TickCmd() tea.Cmd {
 }
 
 // JumpToActions opens the selected job's GitHub Actions page in browser
-func (ch *CommandHandler) JumpToActions(vm *ViewManager, jobs, recentJobs []scanner.JobStatus) tea.Cmd {
+func (ch *CommandHandler) JumpToActions(vm ViewManagerInterface, jobs, recentJobs []scanner.JobStatus) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		var selectedJob *scanner.JobStatus
 		
@@ -131,7 +146,7 @@ func (ch *CommandHandler) UpdateTimerForView(viewType ViewType) {
 }
 
 // CancelWorkflow cancels the selected workflow run
-func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm *ViewManager) tea.Cmd {
+func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInterface) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		job := vm.GetCancelTargetJob()
 		if job == nil {
@@ -139,9 +154,14 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm *ViewManager) t
 		}
 		
 		// Get the GitHub client from monitor
-		client := ch.monitor.GetClient()
-		if client == nil {
+		clientInterface := ch.monitor.GetClient()
+		if clientInterface == nil {
 			return errorMsg("GitHub client not available")
+		}
+		
+		client := NewGitHubClientAdapter(clientInterface)
+		if client == nil {
+			return errorMsg("Failed to create GitHub client adapter")
 		}
 		
 		// Cancel the workflow run
@@ -151,5 +171,56 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm *ViewManager) t
 		}
 		
 		return cancelSuccessMsg{}
+	})
+}
+
+// ApproveDeployment approves the selected deployment
+func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerInterface) tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		job := vm.GetApprovalTargetJob()
+		if job == nil {
+			return errorMsg("No job selected for approval")
+		}
+		
+		// Get the GitHub client from monitor
+		clientInterface := ch.monitor.GetClient()
+		if clientInterface == nil {
+			return errorMsg("GitHub client not available")
+		}
+		
+		client := NewGitHubClientAdapter(clientInterface)
+		if client == nil {
+			return errorMsg("Failed to create GitHub client adapter")
+		}
+		
+		// First, get pending deployments to find the environment IDs
+		pendingDeployments, _, err := client.GetPendingDeployments(ctx, job.Repository, job.RunID)
+		if err != nil {
+			return errorMsg(fmt.Sprintf("Failed to get pending deployments: %v", err))
+		}
+		
+		if len(pendingDeployments) == 0 {
+			return errorMsg("No pending deployments found for this workflow")
+		}
+		
+		// Extract environment IDs
+		var environmentIDs []int64
+		for _, pd := range pendingDeployments {
+			if pd.Environment.ID != nil {
+				environmentIDs = append(environmentIDs, *pd.Environment.ID)
+			}
+		}
+		
+		if len(environmentIDs) == 0 {
+			return errorMsg("No environment IDs found in pending deployments")
+		}
+		
+		// Approve the deployment
+		_, err = client.ApprovePendingDeployment(ctx, job.Repository, job.RunID, environmentIDs, ch.generateApprovalMessage())
+		if err != nil {
+			return errorMsg(fmt.Sprintf("Failed to approve deployment: %v", err))
+		}
+		
+		return approvalSuccessMsg{}
 	})
 }
