@@ -1,0 +1,40 @@
+package tui
+
+import (
+	"context"
+	
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/younsl/cocd/internal/scanner"
+)
+
+// DefaultJobService implements the JobService interface
+type DefaultJobService struct {
+	commands CommandHandlerInterface
+}
+
+// NewJobService creates a new job service
+func NewJobService(commands CommandHandlerInterface) JobService {
+	return &DefaultJobService{
+		commands: commands,
+	}
+}
+
+// GetJobsForView returns jobs for the current view
+func (js *DefaultJobService) GetJobsForView(view ViewType, pendingJobs, recentJobs []scanner.JobStatus, vm ViewManagerInterface) []scanner.JobStatus {
+	switch view {
+	case ViewPending:
+		return vm.GetCombinedPendingJobs(pendingJobs)
+	case ViewRecent:
+		return vm.GetPaginatedJobs(recentJobs)
+	default:
+		return []scanner.JobStatus{}
+	}
+}
+
+// RefreshJobs refreshes jobs for the current view
+func (js *DefaultJobService) RefreshJobs(ctx context.Context, view ViewType) tea.Cmd {
+	if view == ViewPending {
+		return js.commands.LoadPendingJobs(ctx)
+	}
+	return js.commands.LoadRecentJobs(ctx)
+}

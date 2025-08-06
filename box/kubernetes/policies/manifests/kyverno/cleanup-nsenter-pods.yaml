@@ -1,0 +1,28 @@
+---
+apiVersion: kyverno.io/v2
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-nsenter-pods
+  annotations:
+    kyverno.io/kyverno-version: 1.13.1
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-03-16T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/cleanup-nsenter-pods/cleanup-nsenter-pods/
+spec:
+  conditions:
+    all:
+    # POLICY NOTE:
+    # nsenter pod is bare pod created by running node-shell command.
+    # it is a bare pod and should be deleted by cleanup policy.
+    - key: '{{ target.metadata.ownerReferences[] || `[]` }}'
+      operator: Equals
+      value: []
+  match:
+    any:
+    - resources:
+        kinds:
+        - Pod
+        selector:
+          matchLabels:
+            run: nsenter-*
+  schedule: 0 * * * *
