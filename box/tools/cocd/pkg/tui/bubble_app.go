@@ -220,7 +220,11 @@ func (app *BubbleApp) handleTickMessage(msg tickMsg) (tea.Model, tea.Cmd) {
 	
 	progress := app.monitor.GetScanProgress()
 	isScanning := progress.ScanMode != "Idle" && progress.ScanMode != "Completed"
-	if time.Since(app.lastUpdate) > 30*time.Second && !isScanning {
+	
+	// Only auto-refresh Recent Jobs if we're on Recent Jobs view
+	currentView := app.viewManager.GetCurrentView()
+	if time.Since(app.lastUpdate) > 30*time.Second && !isScanning && currentView == ViewRecent {
+		app.loading = true
 		return app, tea.Batch(
 			app.commandHandler.TickCmd(),
 			app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan),
