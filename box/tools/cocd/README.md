@@ -34,3 +34,4 @@ DevOps Engineers and SREs can use cocd to manage GitHub Actions workflows throug
 Comprehensive guides and references for using cocd effectively.
 
 - [Configuration](docs/configuration.md): Setup and configuration guide
+- [Roadmap](docs/roadmap.md): Future development plans and upcoming features 
