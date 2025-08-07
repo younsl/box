@@ -90,7 +90,11 @@ func (ch *CommandHandler) LoadRecentJobsStreaming(ctx context.Context, updateCha
 			
 			err := ch.monitor.GetRecentJobsWithStreaming(ctx, jobUpdateChan)
 			if err != nil {
-				jobUpdateChan <- monitor.JobUpdate{Error: err}
+				select {
+				case jobUpdateChan <- monitor.JobUpdate{Error: err}:
+				case <-ctx.Done():
+					return
+				}
 			}
 		}()
 		

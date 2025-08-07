@@ -32,7 +32,7 @@ func (s *RecentJobsScanner) ScanRepository(ctx context.Context, repo *github.Rep
 
 	runs, _, err := s.client.ListWorkflowRuns(ctx, repo.GetName(), opts)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	for _, run := range runs.WorkflowRuns {
