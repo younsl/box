@@ -43,10 +43,12 @@ func (rm *RepositoryManager) GetRepositoriesWithCache(ctx context.Context) ([]*g
 	page := 1
 	for {
 		repoOpts := &github.RepositoryListByOrgOptions{
-			Type: "all",
+			Type:      "sources",
+			Sort:      "pushed",
+			Direction: "desc",
 			ListOptions: github.ListOptions{
 				Page:    page,
-				PerPage: DefaultPerPage,
+				PerPage: 100,
 			},
 		}
 
@@ -55,7 +57,11 @@ func (rm *RepositoryManager) GetRepositoriesWithCache(ctx context.Context) ([]*g
 			return nil, fmt.Errorf("failed to list repositories - check your token and organization name: %w", err)
 		}
 
-		allRepos = append(allRepos, repos...)
+		for _, repo := range repos {
+			if !repo.GetArchived() && !repo.GetDisabled() {
+				allRepos = append(allRepos, repo)
+			}
+		}
 
 		if resp.NextPage == 0 {
 			break
@@ -148,15 +154,7 @@ func (rm *RepositoryManager) GetSmartRepositories(ctx context.Context, maxRepos 
 	var candidateRepos []*github.Repository
 	
 	for _, repo := range allRepos {
-		if repo.GetArchived() || repo.GetDisabled() {
-			continue
-		}
-		
 		if repo.PushedAt == nil || time.Since(repo.PushedAt.Time) > DefaultMaxAge {
-			continue
-		}
-
-		if !rm.hasWorkflowFiles(ctx, repo) {
 			continue
 		}
 		

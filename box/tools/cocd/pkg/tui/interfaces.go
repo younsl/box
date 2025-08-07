@@ -18,7 +18,6 @@ type Monitor interface {
 	GetProgressTracker() ProgressTracker
 	GetScanProgress() monitor.ScanProgress
 	GetUpdateInterval() int
-	GetPendingJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error
 	GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error
 }
 
@@ -76,7 +75,6 @@ type ViewManagerInterface interface {
 type CommandHandlerInterface interface {
 	StartMonitoring(ctx context.Context, jobsChan chan []scanner.JobStatus) tea.Cmd
 	LoadPendingJobs(ctx context.Context) tea.Cmd
-	LoadPendingJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd
 	LoadRecentJobs(ctx context.Context) tea.Cmd
 	LoadRecentJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd
 	TickCmd() tea.Cmd

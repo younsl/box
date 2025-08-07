@@ -21,31 +21,26 @@ type ViewManager struct {
 	currentView ViewType
 	cursor      int
 	
-	// Pagination for recent jobs
 	recentJobsPage    int
 	recentJobsPerPage int
 	
-	// Completed jobs tracking
 	completedJobs map[string]scanner.JobStatus
 	
-	// Job highlighting for newly scanned jobs
-	previousJobs map[string]scanner.JobStatus // Track previous jobs to detect new ones
+	previousJobs map[string]scanner.JobStatus
 	
-	// Cancel confirmation popup state
 	showCancelConfirm bool
 	cancelTargetJob   *scanner.JobStatus
-	cancelSelection   int // 0 = No, 1 = Yes
+	cancelSelection   int
 	
-	// Approval confirmation popup state
 	showApprovalConfirm bool
 	approvalTargetJob   *scanner.JobStatus
-	approvalSelection   int // 0 = No, 1 = Yes
+	approvalSelection   int
 }
 
 // NewViewManager creates a new view manager
 func NewViewManager() ViewManagerInterface {
 	return &ViewManager{
-		currentView:       ViewPending,
+		currentView:       ViewRecent,
 		cursor:            0,
 		recentJobsPage:    0,
 		recentJobsPerPage: 50,
@@ -134,11 +129,9 @@ func (vm *ViewManager) GetPaginatedJobs(jobs []scanner.JobStatus) []scanner.JobS
 
 // TrackCompletedJobs tracks jobs that have moved from pending to completed
 func (vm *ViewManager) TrackCompletedJobs(currentJobs, newJobs []scanner.JobStatus) {
-	// Track completed jobs (jobs that were pending but are now completed)
 	for _, currentJob := range currentJobs {
 		currentKey := fmt.Sprintf("%s:%d:%d", currentJob.Repository, currentJob.RunID, currentJob.ID)
 		
-		// Check if this job is still pending in the new jobs
 		stillPending := false
 		for _, newJob := range newJobs {
 			newKey := fmt.Sprintf("%s:%d:%d", newJob.Repository, newJob.RunID, newJob.ID)
@@ -148,9 +141,7 @@ func (vm *ViewManager) TrackCompletedJobs(currentJobs, newJobs []scanner.JobStat
 			}
 		}
 		
-		// If job is no longer pending, add it to completed jobs
 		if !stillPending && (currentJob.Status == "waiting" || currentJob.Status == "queued" || currentJob.Status == "in_progress") {
-			// Mark as completed and add timestamp
 			completedJob := currentJob
 			completedJob.Status = "completed"
 			completedJob.CompletedAt = &time.Time{}
@@ -162,18 +153,15 @@ func (vm *ViewManager) TrackCompletedJobs(currentJobs, newJobs []scanner.JobStat
 
 // GetCombinedPendingJobs returns combined pending and completed jobs
 func (vm *ViewManager) GetCombinedPendingJobs(jobs []scanner.JobStatus) []scanner.JobStatus {
-	// Combine current pending jobs with completed jobs
 	combinedJobs := make([]scanner.JobStatus, len(jobs))
 	copy(combinedJobs, jobs)
 	
-	// Track existing job keys to avoid duplicates
 	existingKeys := make(map[string]bool)
 	for _, job := range jobs {
 		key := fmt.Sprintf("%s:%d:%d", job.Repository, job.RunID, job.ID)
 		existingKeys[key] = true
 	}
 	
-	// Add completed jobs to the list (only if not already present)
 	for _, completedJob := range vm.completedJobs {
 		key := fmt.Sprintf("%s:%d:%d", completedJob.Repository, completedJob.RunID, completedJob.ID)
 		if !existingKeys[key] {
@@ -181,24 +169,18 @@ func (vm *ViewManager) GetCombinedPendingJobs(jobs []scanner.JobStatus) []scanne
 		}
 	}
 	
-	// Sort jobs: active jobs first (by detection time), then completed jobs
 	sort.Slice(combinedJobs, func(i, j int) bool {
-		// First sort by completion status (active jobs first)
 		iCompleted := vm.isJobCompleted(combinedJobs[i])
 		jCompleted := vm.isJobCompleted(combinedJobs[j])
 		
 		if iCompleted != jCompleted {
-			return !iCompleted // Active jobs first (not completed)
+			return !iCompleted
 		}
 		
-		// For active jobs, sort by detection time (started time)
-		// Earlier detected jobs come first
 		if !iCompleted && !jCompleted {
-			// Both are active jobs - sort by started time
 			if combinedJobs[i].StartedAt != nil && combinedJobs[j].StartedAt != nil {
 				return combinedJobs[i].StartedAt.Before(*combinedJobs[j].StartedAt)
 			}
-			// If one doesn't have started time, put it at the end
 			if combinedJobs[i].StartedAt == nil {
 				return false
 			}
@@ -207,7 +189,6 @@ func (vm *ViewManager) GetCombinedPendingJobs(jobs []scanner.JobStatus) []scanne
 			}
 		}
 		
-		// For completed jobs, sort by completion time (most recent first)
 		if iCompleted && jCompleted {
 			if combinedJobs[i].CompletedAt != nil && combinedJobs[j].CompletedAt != nil {
 				return combinedJobs[i].CompletedAt.After(*combinedJobs[j].CompletedAt)
@@ -236,7 +217,6 @@ func (vm *ViewManager) isJobCompleted(job scanner.JobStatus) bool {
 func (vm *ViewManager) GetMaxCursorPosition(pendingJobs, recentJobs []scanner.JobStatus) int {
 	switch vm.currentView {
 	case ViewPending:
-		// Include both pending and completed jobs
 		return len(pendingJobs) + len(vm.completedJobs)
 	case ViewRecent:
 		return len(vm.GetPaginatedJobs(recentJobs))
@@ -249,7 +229,7 @@ func (vm *ViewManager) GetMaxCursorPosition(pendingJobs, recentJobs []scanner.Jo
 func (vm *ViewManager) ShowCancelConfirm(job scanner.JobStatus) {
 	vm.showCancelConfirm = true
 	vm.cancelTargetJob = &job
-	vm.cancelSelection = 0 // Default to "No"
+	vm.cancelSelection = 0
 }
 
 // HideCancelConfirm hides the cancel confirmation popup
@@ -290,7 +270,7 @@ func (vm *ViewManager) IsCancelConfirmed() bool {
 func (vm *ViewManager) ShowApprovalConfirm(job scanner.JobStatus) {
 	vm.showApprovalConfirm = true
 	vm.approvalTargetJob = &job
-	vm.approvalSelection = 0 // Default to "No"
+	vm.approvalSelection = 0
 }
 
 // HideApprovalConfirm hides the approval confirmation popup
@@ -330,28 +310,23 @@ func (vm *ViewManager) IsApprovalConfirmed() bool {
 // MarkNewlyScannedJobs marks new jobs and sets up highlighting
 func (vm *ViewManager) MarkNewlyScannedJobs(jobs []scanner.JobStatus) []scanner.JobStatus {
 	now := time.Now()
-	highlightDuration := 3 * time.Second // Highlight for 3 seconds
+	highlightDuration := 3 * time.Second
 	
-	// Create a map of current jobs for quick lookup
 	currentJobsMap := make(map[string]scanner.JobStatus)
 	for _, job := range jobs {
 		key := fmt.Sprintf("%s:%d:%d", job.Repository, job.RunID, job.ID)
 		currentJobsMap[key] = job
 	}
 	
-	// Process each job to mark newly discovered ones
 	updatedJobs := make([]scanner.JobStatus, len(jobs))
 	for i, job := range jobs {
 		key := fmt.Sprintf("%s:%d:%d", job.Repository, job.RunID, job.ID)
 		
-		// Check if this is a new job (not in previous jobs)
 		if _, existsInPrevious := vm.previousJobs[key]; !existsInPrevious {
-			// This is a newly discovered job
 			job.IsNewlyScanned = true
 			highlightUntil := now.Add(highlightDuration)
 			job.HighlightUntil = &highlightUntil
 		} else {
-			// Check if highlighting should still be active
 			if job.HighlightUntil != nil && now.Before(*job.HighlightUntil) {
 				job.IsNewlyScanned = true
 			} else {
@@ -363,7 +338,6 @@ func (vm *ViewManager) MarkNewlyScannedJobs(jobs []scanner.JobStatus) []scanner.
 		updatedJobs[i] = job
 	}
 	
-	// Update previous jobs map for next comparison
 	vm.previousJobs = currentJobsMap
 	
 	return updatedJobs

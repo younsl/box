@@ -40,7 +40,6 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 		Bold(true).
 		Padding(0, 1)
 	
-	// Get memory usage for header
 	progress := monitor.GetScanProgress()
 	titleText := "CoCD"
 	if ui.config.Version != "" && ui.config.Version != "dev" {
@@ -441,24 +440,18 @@ func (ui *UIComponents) getScanInfo(progress monitor.ScanProgress) string {
 		var repoInfo string
 		
 		// Consistent repository display format
-		if progress.LimitedRepos > 0 && progress.LimitedRepos < progress.ValidRepos {
-			// Fast scan: show limited count with archived info
-			if progress.ArchivedRepos > 0 {
-				repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
-					progress.LimitedRepos, progress.TotalRepos, progress.ArchivedRepos)
-			} else {
-				repoInfo = fmt.Sprintf("Repos: %d/%d", 
-					progress.LimitedRepos, progress.TotalRepos)
-			}
+		// Show real-time scan progress: completed/total
+		targetRepos := progress.LimitedRepos
+		if targetRepos == 0 || targetRepos >= progress.ValidRepos {
+			targetRepos = progress.ActiveRepos
+		}
+		
+		if progress.ArchivedRepos > 0 {
+			repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
+				progress.CompletedRepos, targetRepos, progress.ArchivedRepos)
 		} else {
-			// Full scan: show active count with archived info
-			if progress.ArchivedRepos > 0 {
-				repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
-					progress.ActiveRepos, progress.TotalRepos, progress.ArchivedRepos)
-			} else {
-				repoInfo = fmt.Sprintf("Repos: %d/%d", 
-					progress.ActiveRepos, progress.TotalRepos)
-			}
+			repoInfo = fmt.Sprintf("Repos: %d/%d", 
+				progress.CompletedRepos, targetRepos)
 		}
 		
 		scanInfo = fmt.Sprintf("Mode: %s | %s | Cache: %s", 
@@ -481,22 +474,15 @@ func (ui *UIComponents) getTimerInfo(progress monitor.ScanProgress) string {
 			countdown = 0
 		}
 		
-		// Add current state duration to the display
-		currentState := progress.ScanMode
-		stateDuration := progress.StateDuration
-		if stateDuration < 0 {
-			stateDuration = 0
-		}
 		
-		timerInfo = fmt.Sprintf("Next Scan: %s in %ds | Current: %s (%ds)", 
-			nextType, countdown, currentState, stateDuration)
+		timerInfo = fmt.Sprintf("Next %s scan in %ds", nextType, countdown)
 	} else {
 		// Show loading state with duration
 		stateDuration := progress.StateDuration
 		if stateDuration < 0 {
 			stateDuration = 0
 		}
-		timerInfo = fmt.Sprintf("Next Scan: Loading (%ds)", stateDuration)
+		timerInfo = fmt.Sprintf("Scanning... (%ds)", stateDuration)
 	}
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render(timerInfo)
 }

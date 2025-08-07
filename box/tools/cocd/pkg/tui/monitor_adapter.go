@@ -57,10 +57,6 @@ func (ma *MonitorAdapter) GetUpdateInterval() int {
 	return ma.monitor.GetUpdateInterval()
 }
 
-// GetPendingJobsWithStreaming gets pending jobs with real-time streaming
-func (ma *MonitorAdapter) GetPendingJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error {
-	return ma.monitor.GetPendingJobsWithStreaming(ctx, jobUpdateChan)
-}
 
 // GetRecentJobsWithStreaming gets recent jobs with real-time streaming
 func (ma *MonitorAdapter) GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error {

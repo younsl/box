@@ -23,11 +23,9 @@ func NewJobService(commands CommandHandlerInterface) JobService {
 func (js *DefaultJobService) GetJobsForView(view ViewType, pendingJobs, recentJobs []scanner.JobStatus, vm ViewManagerInterface) []scanner.JobStatus {
 	switch view {
 	case ViewPending:
-		// Mark newly scanned jobs for highlighting before combining
 		highlightedPendingJobs := vm.MarkNewlyScannedJobs(pendingJobs)
 		return vm.GetCombinedPendingJobs(highlightedPendingJobs)
 	case ViewRecent:
-		// Mark newly scanned jobs for highlighting before paginating
 		highlightedRecentJobs := vm.MarkNewlyScannedJobs(recentJobs)
 		return vm.GetPaginatedJobs(highlightedRecentJobs)
 	default:
@@ -38,9 +36,7 @@ func (js *DefaultJobService) GetJobsForView(view ViewType, pendingJobs, recentJo
 // RefreshJobs refreshes jobs for the current view
 func (js *DefaultJobService) RefreshJobs(ctx context.Context, view ViewType) tea.Cmd {
 	if view == ViewPending {
-		// Use streaming for pending jobs refresh as well
-		// Note: This will require access to the updateChan, so we need to modify the interface
-		return js.commands.LoadPendingJobs(ctx) // Keep old method for manual refresh
+		return js.commands.LoadPendingJobs(ctx)
 	}
 	return js.commands.LoadRecentJobs(ctx)
 }

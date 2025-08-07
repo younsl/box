@@ -9,14 +9,17 @@ import (
 
 // Messages for Bubble Tea
 type (
-	jobsMsg         []scanner.JobStatus
-	recentJobsMsg   []scanner.JobStatus
-	errorMsg        string
-	tickMsg         time.Time
-	scanProgressMsg struct{}
-	updateUIMsg        struct{} // For forcing UI updates
-	cancelSuccessMsg struct{} // For successful cancellation
-	approvalSuccessMsg struct{} // For successful approval
-	jobUpdateMsg    monitor.JobUpdate // For streaming job updates
+	jobsMsg               []scanner.JobStatus
+	pendingJobsMsg        []scanner.JobStatus
+	recentJobsMsg         []scanner.JobStatus
+	errorMsg              string
+	tickMsg               time.Time
+	scanProgressMsg       struct{}
+	updateUIMsg           struct{}
+	cancelSuccessMsg      struct{}
+	approvalSuccessMsg    struct{}
+	recentJobUpdateMsg      monitor.JobUpdate
+	jobUpdateMsg            monitor.JobUpdate
+	startRecentStreamingMsg struct{}
 )
 

@@ -7,9 +7,14 @@ import (
 	"github.com/google/go-github/v60/github"
 )
 
+const (
+	DefaultFullScanInterval = 10
+)
+
 type ProgressTracker struct {
 	mu       sync.RWMutex
 	progress ScanProgress
+	scanning bool
 }
 
 func NewProgressTracker() *ProgressTracker {
@@ -60,6 +65,17 @@ func (pt *ProgressTracker) SetIdle() {
 	}
 }
 
+func (pt *ProgressTracker) SetCompleted() {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	
+	pt.progress.ScanMode = "Completed"
+	now := time.Now()
+	pt.progress.CurrentStateStart = &now
+	pt.progress.StateDuration = 0
+	pt.scanning = false
+}
+
 func (pt *ProgressTracker) InitializeProgress(mode string, totalRepos, activeRepos, maxWorkers int, repoStats RepoStats) {
 	pt.mu.Lock()
 	defer pt.mu.Unlock()
@@ -77,10 +93,15 @@ func (pt *ProgressTracker) InitializeProgress(mode string, totalRepos, activeRep
 		stateStart = pt.progress.CurrentStateStart
 	}
 	
+	preservedCompletedRepos := 0
+	if pt.progress.CompletedRepos > 0 && pt.progress.CompletedRepos <= limitedRepos {
+		preservedCompletedRepos = pt.progress.CompletedRepos
+	}
+	
 	pt.progress = ScanProgress{
 		ActiveWorkers:     maxWorkers,
 		TotalRepos:        totalRepos,
-		CompletedRepos:    0,
+		CompletedRepos:    preservedCompletedRepos,
 		ScanMode:          mode,
 		ActiveRepos:       activeRepos,
 		ArchivedRepos:     repoStats.Archived,
@@ -89,13 +110,37 @@ func (pt *ProgressTracker) InitializeProgress(mode string, totalRepos, activeRep
 		LimitedRepos:      limitedRepos,
 		CurrentStateStart: stateStart,
 		StateDuration:     0,
+		NextScanAt:        pt.progress.NextScanAt,
+		LastScanAt:        pt.progress.LastScanAt,
+		ScanCountdown:     pt.progress.ScanCountdown,
+		ScanCycleCount:    pt.progress.ScanCycleCount,
+		IsNextScanFull:    pt.progress.IsNextScanFull,
 	}
 }
 
 func (pt *ProgressTracker) UpdateCompleted(completed int) {
 	pt.mu.Lock()
 	defer pt.mu.Unlock()
-	pt.progress.CompletedRepos = completed
+	// Only update if the new value is greater than current (monotonic increase)
+	if completed > pt.progress.CompletedRepos {
+		pt.progress.CompletedRepos = completed
+	}
+}
+
+func (pt *ProgressTracker) StartScan() bool {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	if pt.scanning {
+		return false
+	}
+	pt.scanning = true
+	return true
+}
+
+func (pt *ProgressTracker) EndScan() {
+	pt.mu.Lock()
+	defer pt.mu.Unlock()
+	pt.scanning = false
 }
 
 type RepoStats struct {
@@ -133,7 +178,8 @@ func (pt *ProgressTracker) SetNextScanTimer(nextScanAt time.Time, cycleCount int
 	
 	pt.progress.NextScanAt = &nextScanAt
 	pt.progress.ScanCycleCount = cycleCount
-	pt.progress.IsNextScanFull = isFullScan
+	
+	pt.progress.IsNextScanFull = (cycleCount % DefaultFullScanInterval == 0)
 	
 	pt.progress.ScanCountdown = int(time.Until(nextScanAt).Seconds())
 	if pt.progress.ScanCountdown < 0 {
