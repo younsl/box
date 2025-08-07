@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
@@ -39,6 +40,7 @@ type BubbleApp struct {
 	
 	// Channels
 	jobsChan chan []scanner.JobStatus
+	updateChan chan tea.Msg
 }
 
 // NewBubbleApp creates a new Bubble Tea application
@@ -63,6 +65,7 @@ func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 		keyHandler:     keyHandler,
 		jobService:     jobService,
 		jobsChan:       make(chan []scanner.JobStatus, 100),
+		updateChan:     make(chan tea.Msg, 100),
 		loading:        true,
 	}
 	
@@ -76,9 +79,24 @@ func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 func (app *BubbleApp) Init() tea.Cmd {
 	return tea.Batch(
 		app.commandHandler.StartMonitoring(app.ctx, app.jobsChan),
+		app.commandHandler.LoadPendingJobsStreaming(app.ctx, app.updateChan),
 		app.commandHandler.TickCmd(),
+		app.listenForUpdates(),
 	)
 }
+
+// listenForUpdates creates a command to continuously listen for streaming updates
+func (app *BubbleApp) listenForUpdates() tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		select {
+		case msg := <-app.updateChan:
+			return msg
+		case <-app.ctx.Done():
+			return nil
+		}
+	})
+}
+
 
 // Update handles messages and updates the model
 func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -102,6 +120,9 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		
 	case tickMsg:
 		return app.handleTickMessage(msg)
+		
+	case jobUpdateMsg:
+		return app.handleJobUpdateMessage(msg)
 		
 	case scanProgressMsg:
 		return app, nil
@@ -195,9 +216,15 @@ func (app *BubbleApp) handleTickMessage(msg tickMsg) (tea.Model, tea.Cmd) {
 	// Update the view for real-time AGE updates and scan countdown
 	app.monitor.GetProgressTracker().UpdateScanCountdown()
 	
-	// Auto-refresh pending jobs every 10 seconds
+	// Auto-refresh pending jobs every 10 seconds using streaming
 	if app.viewManager.GetCurrentView() == ViewPending && time.Since(app.lastUpdate) > 10*time.Second {
-		return app, tea.Batch(app.commandHandler.TickCmd(), app.commandHandler.LoadPendingJobs(app.ctx))
+		// Clear existing jobs and start fresh streaming scan
+		app.jobs = []scanner.JobStatus{}
+		app.loading = true
+		return app, tea.Batch(
+			app.commandHandler.TickCmd(), 
+			app.commandHandler.LoadPendingJobsStreaming(app.ctx, app.updateChan),
+		)
 	}
 	
 	// Check if countdown value has changed for efficient UI updates
@@ -218,12 +245,13 @@ func (app *BubbleApp) toggleView() (tea.Model, tea.Cmd) {
 	currentView := app.viewManager.GetCurrentView()
 	
 	if currentView == ViewPending {
-		// Switch to Recent view
+		// Switch to Recent view with streaming
 		app.loading = true
+		app.recentJobs = []scanner.JobStatus{} // Clear existing recent jobs
 		app.viewManager.SwitchToView(ViewRecent)
 		// Initialize timer for recent jobs view
 		app.commandHandler.UpdateTimerForView(ViewRecent)
-		return app, app.jobService.RefreshJobs(app.ctx, ViewRecent)
+		return app, app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan)
 	} else {
 		// Switch to Pending view
 		app.viewManager.SwitchToView(ViewPending)
@@ -341,6 +369,62 @@ func (app *BubbleApp) renderMain() string {
 	content.WriteString(app.uiRenderer.RenderStatus(app.errorMsg))
 	
 	return content.String()
+}
+
+// handleJobUpdateMessage handles streaming job updates
+func (app *BubbleApp) handleJobUpdateMessage(msg jobUpdateMsg) (tea.Model, tea.Cmd) {
+	update := monitor.JobUpdate(msg)
+	
+	// Handle error
+	if update.Error != nil {
+		app.loading = false
+		app.errorMsg = update.Error.Error()
+		return app, app.listenForUpdates() // Continue listening
+	}
+	
+	// Add new jobs to appropriate list based on current view
+	if len(update.Jobs) > 0 {
+		currentView := app.viewManager.GetCurrentView()
+		
+		// Add each job individually for real-time effect
+		for _, job := range update.Jobs {
+			var targetJobs *[]scanner.JobStatus
+			
+			// Determine which jobs list to update
+			if currentView == ViewPending {
+				targetJobs = &app.jobs
+			} else {
+				targetJobs = &app.recentJobs
+			}
+			
+			// Check if job already exists to avoid duplicates
+			exists := false
+			for _, existingJob := range *targetJobs {
+				if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+					exists = true
+					break
+				}
+			}
+			
+			if !exists {
+				*targetJobs = append(*targetJobs, job)
+			}
+		}
+		
+		// Sort jobs by time to maintain order
+		if currentView == ViewPending {
+			monitor.SortJobsByTime(app.jobs, false)
+		} else {
+			monitor.SortJobsByTime(app.recentJobs, true) // Recent jobs: newest first
+		}
+		
+		app.loading = false
+		app.lastUpdate = time.Now()
+		app.errorMsg = ""
+	}
+	
+	// Continue listening for more updates - this is key for streaming!
+	return app, app.listenForUpdates()
 }
 
 // Helper methods

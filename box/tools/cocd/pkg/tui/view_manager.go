@@ -28,6 +28,8 @@ type ViewManager struct {
 	// Completed jobs tracking
 	completedJobs map[string]scanner.JobStatus
 	
+	// Job highlighting for newly scanned jobs
+	previousJobs map[string]scanner.JobStatus // Track previous jobs to detect new ones
 	
 	// Cancel confirmation popup state
 	showCancelConfirm bool
@@ -48,6 +50,7 @@ func NewViewManager() ViewManagerInterface {
 		recentJobsPage:    0,
 		recentJobsPerPage: 50,
 		completedJobs:     make(map[string]scanner.JobStatus),
+		previousJobs:      make(map[string]scanner.JobStatus),
 	}
 }
 
@@ -322,4 +325,55 @@ func (vm *ViewManager) GetApprovalSelection() int {
 // IsApprovalConfirmed returns true if "Yes" is selected
 func (vm *ViewManager) IsApprovalConfirmed() bool {
 	return vm.approvalSelection == 1
+}
+
+// MarkNewlyScannedJobs marks new jobs and sets up highlighting
+func (vm *ViewManager) MarkNewlyScannedJobs(jobs []scanner.JobStatus) []scanner.JobStatus {
+	now := time.Now()
+	highlightDuration := 3 * time.Second // Highlight for 3 seconds
+	
+	// Create a map of current jobs for quick lookup
+	currentJobsMap := make(map[string]scanner.JobStatus)
+	for _, job := range jobs {
+		key := fmt.Sprintf("%s:%d:%d", job.Repository, job.RunID, job.ID)
+		currentJobsMap[key] = job
+	}
+	
+	// Process each job to mark newly discovered ones
+	updatedJobs := make([]scanner.JobStatus, len(jobs))
+	for i, job := range jobs {
+		key := fmt.Sprintf("%s:%d:%d", job.Repository, job.RunID, job.ID)
+		
+		// Check if this is a new job (not in previous jobs)
+		if _, existsInPrevious := vm.previousJobs[key]; !existsInPrevious {
+			// This is a newly discovered job
+			job.IsNewlyScanned = true
+			highlightUntil := now.Add(highlightDuration)
+			job.HighlightUntil = &highlightUntil
+		} else {
+			// Check if highlighting should still be active
+			if job.HighlightUntil != nil && now.Before(*job.HighlightUntil) {
+				job.IsNewlyScanned = true
+			} else {
+				job.IsNewlyScanned = false
+				job.HighlightUntil = nil
+			}
+		}
+		
+		updatedJobs[i] = job
+	}
+	
+	// Update previous jobs map for next comparison
+	vm.previousJobs = currentJobsMap
+	
+	return updatedJobs
+}
+
+// IsJobHighlighted returns true if the job should be highlighted
+func (vm *ViewManager) IsJobHighlighted(job scanner.JobStatus) bool {
+	if !job.IsNewlyScanned || job.HighlightUntil == nil {
+		return false
+	}
+	
+	return time.Now().Before(*job.HighlightUntil)
 }

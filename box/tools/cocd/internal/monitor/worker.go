@@ -26,52 +26,153 @@ func NewWorkerPool(maxWorkers int, sc scanner.Scanner) *WorkerPool {
 	}
 }
 
+// JobUpdate represents a streaming update of scan results
+type JobUpdate struct {
+	Jobs          []scanner.JobStatus // New jobs found
+	CompletedRepo string              // Name of completed repository
+	Progress      ScanProgress        // Updated progress
+	Error         error               // Any error that occurred
+}
+
 func (wp *WorkerPool) ScanRepositories(ctx context.Context, repos []*github.Repository, progressChan chan<- ScanProgress, progress *ScanProgress) ([]scanner.JobStatus, error) {
 	if len(repos) == 0 {
 		return []scanner.JobStatus{}, nil
 	}
 
-	repoChan := make(chan *github.Repository, len(repos))
-	resultChan := make(chan scanner.RepoScanResult, len(repos))
-
-	for i := 0; i < wp.maxWorkers; i++ {
-		go func(workerID int) {
-			for repo := range repoChan {
-				jobs, err := wp.scanner.ScanRepository(ctx, repo)
-				
-				resultChan <- scanner.RepoScanResult{Jobs: jobs, Err: err}
-				
-				delay := BaseWorkerDelay + time.Duration(workerID)*WorkerDelayIncrement
-				time.Sleep(delay)
-			}
-		}(i)
-	}
-
-	for _, repo := range repos {
-		repoChan <- repo
-	}
-	close(repoChan)
-
 	var allJobs []scanner.JobStatus
 	completedRepos := 0
 	
-	for i := 0; i < len(repos); i++ {
-		result := <-resultChan
-		if result.Err == nil {
-			allJobs = append(allJobs, result.Jobs...)
+	// Sequential scanning for reduced server load
+	for _, repo := range repos {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			return allJobs, ctx.Err()
+		default:
 		}
+		
+		// Record start time for adaptive delay
+		startTime := time.Now()
+		
+		// Scan repository
+		jobs, err := wp.scanner.ScanRepository(ctx, repo)
+		
+		// Calculate response time
+		responseTime := time.Since(startTime)
+		
+		// Add successful jobs to results
+		if err == nil {
+			allJobs = append(allJobs, jobs...)
+		}
+		
 		completedRepos++
 		
+		// Update progress immediately after each repository scan
 		if progress != nil {
 			progress.CompletedRepos = completedRepos
 			
 			if progressChan != nil {
-				progressChan <- *progress
+				select {
+				case progressChan <- *progress:
+				case <-ctx.Done():
+					return allJobs, ctx.Err()
+				}
+			}
+		}
+		
+		// Adaptive delay based on server response time
+		var delay time.Duration
+		if responseTime > 2*time.Second {
+			delay = 3 * time.Second // Server is slow, use longer delay
+		} else if responseTime > 1*time.Second {
+			delay = BaseWorkerDelay // Normal response time
+		} else {
+			delay = BaseWorkerDelay / 2 // Fast response, shorter delay
+		}
+		
+		// Apply delay before next repository (except for last one)
+		if completedRepos < len(repos) {
+			select {
+			case <-ctx.Done():
+				return allJobs, ctx.Err()
+			case <-time.After(delay):
 			}
 		}
 	}
 
 	return allJobs, nil
+}
+
+// ScanRepositoriesStreaming scans repositories and streams results in real-time
+func (wp *WorkerPool) ScanRepositoriesStreaming(ctx context.Context, repos []*github.Repository, jobUpdateChan chan<- JobUpdate, progress *ScanProgress) error {
+	if len(repos) == 0 {
+		return nil
+	}
+
+	completedRepos := 0
+	
+	// Sequential scanning for reduced server load with real-time updates
+	for _, repo := range repos {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		
+		// Record start time for adaptive delay
+		startTime := time.Now()
+		
+		// Scan repository
+		jobs, err := wp.scanner.ScanRepository(ctx, repo)
+		
+		// Calculate response time
+		responseTime := time.Since(startTime)
+		
+		completedRepos++
+		
+		// Update progress
+		if progress != nil {
+			progress.CompletedRepos = completedRepos
+		}
+		
+		// Send immediate update with results from this repository
+		update := JobUpdate{
+			Jobs:          jobs,
+			CompletedRepo: repo.GetName(),
+			Error:         err,
+		}
+		if progress != nil {
+			update.Progress = *progress
+		}
+		
+		select {
+		case jobUpdateChan <- update:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+		
+		// Adaptive delay based on server response time
+		var delay time.Duration
+		if responseTime > 2*time.Second {
+			delay = 3 * time.Second // Server is slow, use longer delay
+		} else if responseTime > 1*time.Second {
+			delay = BaseWorkerDelay // Normal response time
+		} else {
+			delay = BaseWorkerDelay / 2 // Fast response, shorter delay
+		}
+		
+		// Apply delay before next repository (except for last one)
+		if completedRepos < len(repos) {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+	}
+
+	return nil
 }
 
 func SortJobsByTime(jobs []scanner.JobStatus, newest bool) {

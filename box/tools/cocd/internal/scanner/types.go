@@ -22,6 +22,10 @@ type JobStatus struct {
 	Event        string
 	Actor        string
 	Repository   string
+	
+	// UI highlighting for newly scanned jobs
+	IsNewlyScanned bool      `json:"-"` // Track if this job was just discovered
+	HighlightUntil *time.Time `json:"-"` // When to stop highlighting this job
 }
 
 // RepoScanResult represents the result of scanning a repository

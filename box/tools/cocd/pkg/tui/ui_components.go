@@ -42,7 +42,13 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	
 	// Get memory usage for header
 	progress := monitor.GetScanProgress()
-	title := headerStyle.Render("CoCD")
+	titleText := "CoCD"
+	if ui.config.Version != "" && ui.config.Version != "dev" {
+		titleText = fmt.Sprintf("CoCD v%s", ui.config.Version)
+	} else if ui.config.Version == "dev" {
+		titleText = "CoCD dev"
+	}
+	title := headerStyle.Render(titleText)
 	memory := fmt.Sprintf("Mem: %s", progress.MemoryUsage)
 	server := fmt.Sprintf("Server: %s", serverName)
 	organization := fmt.Sprintf("Org: %s", org)
@@ -544,12 +550,19 @@ func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus
 	actor := ui.padString(ui.truncate(job.Actor, actorWidth), actorWidth)
 	age := ui.padString(ui.formatAge(job.StartedAt), ageWidth)
 	
-	// Apply styles
+	// Build row string
+	rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
+		repo, jobName, jobID, status, branch, actor, age)
+	
+	// Apply styles based on priority: cursor > newly highlighted > completed > normal
 	if i == cursor {
-		// Highlighted row - entire row highlighted
+		// Cursor selection - highest priority (blue background)
 		rowStyle := lipgloss.NewStyle().Background(lipgloss.Color("4")).Foreground(lipgloss.Color("15"))
-		rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
-			repo, jobName, jobID, status, branch, actor, age)
+		b.WriteString(rowStyle.Render(rowString))
+	} else if vm.IsJobHighlighted(job) {
+		// Newly scanned job - second priority (green background with fade effect)
+		// Use a subtle green background to indicate newly discovered job
+		rowStyle := lipgloss.NewStyle().Background(lipgloss.Color("2")).Foreground(lipgloss.Color("0"))
 		b.WriteString(rowStyle.Render(rowString))
 	} else {
 		// Check if this job is completed (from our tracking)
@@ -558,8 +571,6 @@ func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus
 		if isCompleted {
 			// Completed jobs: gray out everything
 			rowStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-			rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
-				repo, jobName, jobID, status, branch, actor, age)
 			b.WriteString(rowStyle.Render(rowString))
 		} else {
 			// Active jobs: normal coloring with status color only for STATUS column

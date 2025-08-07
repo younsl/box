@@ -114,6 +114,7 @@ func run(cmd *cobra.Command, args []string) error {
 		Repo:        cfg.GitHub.Repo,
 		Environment: cfg.Monitor.Environment,
 		Timezone:    cfg.Monitor.Timezone,
+		Version:     version,
 	}
 	
 	// Use Bubble Tea instead of tview for better key handling

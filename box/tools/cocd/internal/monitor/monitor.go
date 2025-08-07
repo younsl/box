@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	DefaultWorkerPoolSize    = 2
+	DefaultWorkerPoolSize    = 1
 	DefaultScanTimeout       = 60 * time.Second
 	DefaultRecentScanTimeout = 90 * time.Second
 	
@@ -89,14 +89,15 @@ func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan c
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultScanTimeout)
 	defer cancel()
 
-	allRepos, err := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
-	if err != nil {
-		return nil, err
+	// Use SmartScanner for organization scanning
+	allRepos, repoErr := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
+	if repoErr != nil {
+		return nil, repoErr
 	}
 
-	smartRepos, err := m.repoManager.GetSmartRepositories(timeoutCtx, MaxSmartRepositories)
-	if err != nil {
-		return nil, err
+	smartRepos, repoErr := m.repoManager.GetSmartRepositories(timeoutCtx, MaxSmartRepositories)
+	if repoErr != nil {
+		return nil, repoErr
 	}
 
 	repoStats := CalculateRepoStats(allRepos)
@@ -118,6 +119,69 @@ func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan c
 	m.progressTracker.SetIdle()
 
 	return jobs, nil
+}
+
+// GetPendingJobsWithStreaming gets pending jobs with real-time streaming updates
+func (m *Monitor) GetPendingJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- JobUpdate) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultScanTimeout)
+	defer cancel()
+
+	// Use SmartScanner for organization scanning
+	allRepos, repoErr := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
+	if repoErr != nil {
+		return repoErr
+	}
+
+	smartRepos, repoErr := m.repoManager.GetSmartRepositories(timeoutCtx, MaxSmartRepositories)
+	if repoErr != nil {
+		return repoErr
+	}
+
+	repoStats := CalculateRepoStats(allRepos)
+
+	m.progressTracker.InitializeProgress(ScanModeSmart, len(allRepos), len(smartRepos), DefaultWorkerPoolSize, repoStats)
+	
+	progress := m.progressTracker.GetProgress()
+	err := m.smartWorkerPool.ScanRepositoriesStreaming(timeoutCtx, smartRepos, jobUpdateChan, &progress)
+	if err != nil {
+		return err
+	}
+
+	m.progressTracker.SetIdle()
+
+	return nil
+}
+
+// GetRecentJobsWithStreaming gets recent jobs with real-time streaming updates
+func (m *Monitor) GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- JobUpdate) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
+	defer cancel()
+
+	activeRepos, err := m.repoManager.GetActiveRepositories(timeoutCtx, MaxActiveRepositories)
+	if err != nil {
+		return err
+	}
+
+	allRepos, err := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
+	if err != nil {
+		return err
+	}
+
+	repoStats := CalculateRepoStats(allRepos)
+
+	m.progressTracker.InitializeProgress(ScanModeRecent, len(allRepos), len(activeRepos), DefaultWorkerPoolSize, repoStats)
+	
+	recentWorkerPool := NewWorkerPool(DefaultWorkerPoolSize, m.recentScanner)
+	
+	progress := m.progressTracker.GetProgress()
+	err = recentWorkerPool.ScanRepositoriesStreaming(timeoutCtx, activeRepos, jobUpdateChan, &progress)
+	if err != nil {
+		return err
+	}
+
+	m.progressTracker.SetIdle()
+
+	return nil
 }
 
 

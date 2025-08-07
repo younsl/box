@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
@@ -75,6 +76,40 @@ func (ch *CommandHandler) LoadPendingJobs(ctx context.Context) tea.Cmd {
 	})
 }
 
+// LoadPendingJobsStreaming loads pending jobs with real-time streaming
+func (ch *CommandHandler) LoadPendingJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		// Create a channel for job updates
+		jobUpdateChan := make(chan monitor.JobUpdate, 100)
+		
+		// Start streaming in a goroutine
+		go func() {
+			defer close(jobUpdateChan)
+			
+			// Use the interface method
+			err := ch.monitor.GetPendingJobsWithStreaming(ctx, jobUpdateChan)
+			if err != nil {
+				// Send error through channel
+				jobUpdateChan <- monitor.JobUpdate{Error: err}
+			}
+		}()
+		
+		// Start another goroutine to forward updates to the UI
+		go func() {
+			for update := range jobUpdateChan {
+				select {
+				case updateChan <- jobUpdateMsg(update):
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+		
+		// Return immediately to start the process
+		return scanProgressMsg{}
+	})
+}
+
 // LoadRecentJobs loads recent jobs
 func (ch *CommandHandler) LoadRecentJobs(ctx context.Context) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
@@ -86,6 +121,40 @@ func (ch *CommandHandler) LoadRecentJobs(ctx context.Context) tea.Cmd {
 		nextScanAt := time.Now().Add(30 * time.Second)
 		ch.monitor.GetProgressTracker().SetNextScanTimer(nextScanAt, 1, false)
 		return recentJobsMsg(jobs)
+	})
+}
+
+// LoadRecentJobsStreaming loads recent jobs with real-time streaming
+func (ch *CommandHandler) LoadRecentJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		// Create a channel for job updates
+		jobUpdateChan := make(chan monitor.JobUpdate, 100)
+		
+		// Start streaming in a goroutine
+		go func() {
+			defer close(jobUpdateChan)
+			
+			// Use the interface method
+			err := ch.monitor.GetRecentJobsWithStreaming(ctx, jobUpdateChan)
+			if err != nil {
+				// Send error through channel
+				jobUpdateChan <- monitor.JobUpdate{Error: err}
+			}
+		}()
+		
+		// Start another goroutine to forward updates to the UI
+		go func() {
+			for update := range jobUpdateChan {
+				select {
+				case updateChan <- jobUpdateMsg(update):
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+		
+		// Return immediately to start the process
+		return scanProgressMsg{}
 	})
 }
 
