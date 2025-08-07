@@ -1,6 +1,6 @@
 # cocd
 
-[![Go Version](https://img.shields.io/badge/go-1.24-000000?style=flat-square&logo=go&logoColor=white)](go.mod)
+[![Go Version](https://img.shields.io/badge/go-1.24.5-000000?style=flat-square&logo=go&logoColor=white)](go.mod)
 [![GitHub release](https://img.shields.io/github/v/release/younsl/box?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/box/releases?q=cocd)
 [![License](https://img.shields.io/github/license/younsl/box?style=flat-square&color=black&logo=github&logoColor=white)](/LICENSE)
 
@@ -34,4 +34,5 @@ DevOps Engineers and SREs can use cocd to manage GitHub Actions workflows throug
 Comprehensive guides and references for using cocd effectively.
 
 - [Configuration](docs/configuration.md): Setup and configuration guide
-- [Roadmap](docs/roadmap.md): Future development plans and upcoming features 
+- [Roadmap](docs/roadmap.md): Development history and future plans
+- [Performance Optimization Lessons](docs/performance-optimization-lessons.md): Lessons learned from optimization work 

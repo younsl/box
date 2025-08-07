@@ -2,7 +2,7 @@ github:
   # GitHub token (can also be set via GITHUB_TOKEN env var)
   token: "" 
   # For Github Enterprise Server
-  base_url: "https://github.example.com/api/v3"
+  base_url: "github.example.com/api/v3"
   # Organization Name
   org: "your-organization"
   # Repository Name
