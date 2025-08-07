@@ -50,29 +50,22 @@ func (s *SmartScanner) ScanRepository(ctx context.Context, repo *github.Reposito
 	}
 
 	for _, run := range runs.WorkflowRuns {
-		env := ""
-		if s.envCache != nil {
-			env, _ = s.envCache.GetWorkflowRunEnvironment(ctx, repo.GetName(), run.GetID())
-		}
-		
-		if s.environment == "" || env == s.environment {
-			waitingJobs = append(waitingJobs, JobStatus{
-				ID:           run.GetID(),
-				Name:         run.GetName(),
-				RunID:        run.GetID(),
-				RunNumber:    run.GetRunNumber(),
-				Status:       run.GetStatus(),
-				Conclusion:   run.GetConclusion(),
-				StartedAt:    run.CreatedAt.GetTime(),
-				CompletedAt:  run.UpdatedAt.GetTime(),
-				Environment:  env,
-				WorkflowName: run.GetName(),
-				Branch:       run.GetHeadBranch(),
-				Event:        run.GetEvent(),
-				Actor:        run.GetActor().GetLogin(),
-				Repository:   repo.GetName(),
-			})
-		}
+		waitingJobs = append(waitingJobs, JobStatus{
+			ID:           run.GetID(),
+			Name:         run.GetName(),
+			RunID:        run.GetID(),
+			RunNumber:    run.GetRunNumber(),
+			Status:       run.GetStatus(),
+			Conclusion:   run.GetConclusion(),
+			StartedAt:    run.CreatedAt.GetTime(),
+			CompletedAt:  run.UpdatedAt.GetTime(),
+			Environment:  "",
+			WorkflowName: run.GetName(),
+			Branch:       run.GetHeadBranch(),
+			Event:        run.GetEvent(),
+			Actor:        run.GetActor().GetLogin(),
+			Repository:   repo.GetName(),
+		})
 	}
 
 	return waitingJobs, nil

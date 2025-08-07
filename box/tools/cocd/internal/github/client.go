@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"reflect"
 
 	"github.com/google/go-github/v60/github"
 	"golang.org/x/oauth2"
@@ -48,6 +49,56 @@ func NewClient(token, baseURL, org string, repo ...string) (*Client, error) {
 	}, nil
 }
 
+// addOptions adds the parameters in opts as URL query parameters to s.
+func addOptions(s string, opts interface{}) (string, error) {
+	v := reflect.ValueOf(opts)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return s, nil
+	}
+
+	u, err := url.Parse(s)
+	if err != nil {
+		return s, err
+	}
+
+	qs, err := query(opts)
+	if err != nil {
+		return s, err
+	}
+
+	u.RawQuery = qs.Encode()
+	return u.String(), nil
+}
+
+// query is a helper function to convert a struct to a url.Values
+func query(opts interface{}) (url.Values, error) {
+	v := reflect.ValueOf(opts)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("query: interface must be a struct")
+	}
+
+	q := url.Values{}
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.IsZero() {
+			continue
+		}
+
+		tag := v.Type().Field(i).Tag.Get("url")
+		if tag == "" {
+			continue
+		}
+
+		q.Add(tag, fmt.Sprintf("%v", field.Interface()))
+	}
+
+	return q, nil
+}
+
 func (c *Client) ListRepositories(ctx context.Context, opts *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 	return c.client.Repositories.ListByOrg(ctx, c.org, opts)
 }
@@ -55,6 +106,7 @@ func (c *Client) ListRepositories(ctx context.Context, opts *github.RepositoryLi
 func (c *Client) ListWorkflowRuns(ctx context.Context, repo string, opts *github.ListWorkflowRunsOptions) (*github.WorkflowRuns, *github.Response, error) {
 	return c.client.Actions.ListRepositoryWorkflowRuns(ctx, c.org, repo, opts)
 }
+
 
 func (c *Client) ListWorkflowJobs(ctx context.Context, repo string, runID int64, opts *github.ListWorkflowJobsOptions) (*github.Jobs, *github.Response, error) {
 	return c.client.Actions.ListWorkflowJobs(ctx, c.org, repo, runID, opts)

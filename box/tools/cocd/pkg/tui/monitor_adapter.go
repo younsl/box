@@ -57,6 +57,12 @@ func (ma *MonitorAdapter) GetUpdateInterval() int {
 	return ma.monitor.GetUpdateInterval()
 }
 
+
+// GetRecentJobsWithStreaming gets recent jobs with real-time streaming
+func (ma *MonitorAdapter) GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error {
+	return ma.monitor.GetRecentJobsWithStreaming(ctx, jobUpdateChan)
+}
+
 // progressTrackerAdapter adapts monitor.ProgressTracker to ProgressTracker interface
 type progressTrackerAdapter struct {
 	tracker *monitor.ProgressTracker

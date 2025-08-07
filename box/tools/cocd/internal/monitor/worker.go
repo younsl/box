@@ -26,52 +26,135 @@ func NewWorkerPool(maxWorkers int, sc scanner.Scanner) *WorkerPool {
 	}
 }
 
+type JobUpdate struct {
+	Jobs          []scanner.JobStatus // New jobs found
+	CompletedRepo string              // Name of completed repository
+	Progress      ScanProgress        // Updated progress
+	Error         error               // Any error that occurred
+}
+
 func (wp *WorkerPool) ScanRepositories(ctx context.Context, repos []*github.Repository, progressChan chan<- ScanProgress, progress *ScanProgress) ([]scanner.JobStatus, error) {
 	if len(repos) == 0 {
 		return []scanner.JobStatus{}, nil
 	}
 
-	repoChan := make(chan *github.Repository, len(repos))
-	resultChan := make(chan scanner.RepoScanResult, len(repos))
-
-	for i := 0; i < wp.maxWorkers; i++ {
-		go func(workerID int) {
-			for repo := range repoChan {
-				jobs, err := wp.scanner.ScanRepository(ctx, repo)
-				
-				resultChan <- scanner.RepoScanResult{Jobs: jobs, Err: err}
-				
-				delay := BaseWorkerDelay + time.Duration(workerID)*WorkerDelayIncrement
-				time.Sleep(delay)
-			}
-		}(i)
-	}
-
-	for _, repo := range repos {
-		repoChan <- repo
-	}
-	close(repoChan)
-
 	var allJobs []scanner.JobStatus
 	completedRepos := 0
 	
-	for i := 0; i < len(repos); i++ {
-		result := <-resultChan
-		if result.Err == nil {
-			allJobs = append(allJobs, result.Jobs...)
+	for _, repo := range repos {
+		select {
+		case <-ctx.Done():
+			return allJobs, ctx.Err()
+		default:
 		}
+		
+		startTime := time.Now()
+		
+		jobs, err := wp.scanner.ScanRepository(ctx, repo)
+		
+		responseTime := time.Since(startTime)
+		
+		if err == nil {
+			allJobs = append(allJobs, jobs...)
+		}
+		
 		completedRepos++
 		
 		if progress != nil {
 			progress.CompletedRepos = completedRepos
 			
 			if progressChan != nil {
-				progressChan <- *progress
+				select {
+				case progressChan <- *progress:
+				case <-ctx.Done():
+					return allJobs, ctx.Err()
+				}
+			}
+		}
+		
+		var delay time.Duration
+		if responseTime > 2*time.Second {
+			delay = 3 * time.Second
+		} else if responseTime > 1*time.Second {
+			delay = BaseWorkerDelay
+		} else {
+			delay = BaseWorkerDelay / 2
+		}
+		
+		if completedRepos < len(repos) {
+			select {
+			case <-ctx.Done():
+				return allJobs, ctx.Err()
+			case <-time.After(delay):
 			}
 		}
 	}
 
 	return allJobs, nil
+}
+
+
+func (wp *WorkerPool) ScanRepositoriesStreamingWithTracker(ctx context.Context, repos []*github.Repository, jobUpdateChan chan<- JobUpdate, progressTracker *ProgressTracker) error {
+	if len(repos) == 0 {
+		return nil
+	}
+
+	completedRepos := 0
+	
+	// Sequential scanning for reduced server load with real-time updates
+	for _, repo := range repos {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		
+		startTime := time.Now()
+		
+		jobs, err := wp.scanner.ScanRepository(ctx, repo)
+		
+		responseTime := time.Since(startTime)
+		
+		completedRepos++
+		
+			if progressTracker != nil {
+			progressTracker.UpdateCompleted(completedRepos)
+		}
+		
+		update := JobUpdate{
+			Jobs:          jobs,
+			CompletedRepo: repo.GetName(),
+			Error:         err,
+		}
+		if progressTracker != nil {
+			update.Progress = progressTracker.GetProgress()
+		}
+		
+		select {
+		case jobUpdateChan <- update:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+		
+		var delay time.Duration
+		if responseTime > 2*time.Second {
+			delay = 3 * time.Second
+		} else if responseTime > 1*time.Second {
+			delay = BaseWorkerDelay
+		} else {
+			delay = BaseWorkerDelay / 2
+		}
+		
+		if completedRepos < len(repos) {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+	}
+
+	return nil
 }
 
 func SortJobsByTime(jobs []scanner.JobStatus, newest bool) {

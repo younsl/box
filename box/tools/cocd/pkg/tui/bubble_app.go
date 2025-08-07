@@ -6,46 +6,44 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
 // BubbleApp is the main Bubble Tea application model
 type BubbleApp struct {
-	// Core dependencies
 	monitor Monitor
 	config  *AppConfig
 	ctx     context.Context
 	cancel  context.CancelFunc
 	
-	// Component managers
 	viewManager    ViewManagerInterface
 	uiRenderer     UIRenderer
 	commandHandler CommandHandlerInterface
 	keyHandler     KeyHandler
 	jobService     JobService
 	
-	// Application state
 	jobs       []scanner.JobStatus
 	recentJobs []scanner.JobStatus
 	
-	// UI state
 	showHelp     bool
 	loading      bool
 	errorMsg     string
 	lastUpdate   time.Time
-	lastCountdown int // Track last countdown value for change detection
-	width        int // Terminal width for pagination alignment
-	height       int // Terminal height
+	lastCountdown int
+	width        int
+	height       int
+	showWaitingOnly bool
+	scanning     bool
 	
-	// Channels
 	jobsChan chan []scanner.JobStatus
+	updateChan chan tea.Msg
 }
 
 // NewBubbleApp creates a new Bubble Tea application
 func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 	ctx, cancel := context.WithCancel(context.Background())
 	
-	// Initialize component managers
 	viewManager := NewViewManager()
 	uiRenderer := NewUIComponents(config)
 	commandHandler := NewCommandHandler(m, config)
@@ -63,11 +61,11 @@ func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 		keyHandler:     keyHandler,
 		jobService:     jobService,
 		jobsChan:       make(chan []scanner.JobStatus, 100),
+		updateChan:     make(chan tea.Msg, 100),
 		loading:        true,
 	}
 	
-	// Initialize timer immediately to prevent "Loading" state
-	commandHandler.InitializeTimer()
+	commandHandler.UpdateTimerForView(ViewRecent)
 	
 	return app
 }
@@ -76,9 +74,24 @@ func NewBubbleApp(m Monitor, config *AppConfig) *BubbleApp {
 func (app *BubbleApp) Init() tea.Cmd {
 	return tea.Batch(
 		app.commandHandler.StartMonitoring(app.ctx, app.jobsChan),
+		app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan),
 		app.commandHandler.TickCmd(),
+		app.listenForUpdates(),
 	)
 }
+
+// listenForUpdates creates a command to continuously listen for streaming updates
+func (app *BubbleApp) listenForUpdates() tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		select {
+		case msg := <-app.updateChan:
+			return msg
+		case <-app.ctx.Done():
+			return nil
+		}
+	})
+}
+
 
 // Update handles messages and updates the model
 func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -94,6 +107,9 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case jobsMsg:
 		return app.handleJobsMessage(msg)
 		
+	case pendingJobsMsg:
+		return app.handlePendingJobsMessage(msg)
+		
 	case recentJobsMsg:
 		return app.handleRecentJobsMessage(msg)
 		
@@ -103,6 +119,12 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		return app.handleTickMessage(msg)
 		
+	case jobUpdateMsg:
+		return app.handleJobUpdateMessage(msg)
+		
+	case recentJobUpdateMsg:
+		return app.handleRecentJobUpdateMessage(msg)
+	
 	case scanProgressMsg:
 		return app, nil
 		
@@ -151,9 +173,13 @@ func (app *BubbleApp) View() string {
 // Message handlers
 
 func (app *BubbleApp) handleJobsMessage(msg jobsMsg) (tea.Model, tea.Cmd) {
+	// Deprecated: redirect to pending jobs handler for backwards compatibility
+	return app.handlePendingJobsMessage(pendingJobsMsg(msg))
+}
+
+func (app *BubbleApp) handlePendingJobsMessage(msg pendingJobsMsg) (tea.Model, tea.Cmd) {
 	newJobs := []scanner.JobStatus(msg)
 	
-	// Track completed jobs
 	app.viewManager.TrackCompletedJobs(app.jobs, newJobs)
 	
 	app.jobs = newJobs
@@ -170,7 +196,6 @@ func (app *BubbleApp) handleRecentJobsMessage(msg recentJobsMsg) (tea.Model, tea
 	app.lastUpdate = time.Now()
 	app.errorMsg = ""
 	
-	// Ensure timer is set for recent jobs view since it's a one-time load
 	app.commandHandler.UpdateTimerForView(ViewRecent)
 	
 	return app, nil
@@ -180,7 +205,6 @@ func (app *BubbleApp) handleErrorMessage(msg errorMsg) (tea.Model, tea.Cmd) {
 	app.errorMsg = string(msg)
 	app.loading = false
 	
-	// Hide cancel/approval confirmation popup if it's showing (in case of workflow error)
 	if app.viewManager.IsShowingCancelConfirm() {
 		app.viewManager.HideCancelConfirm()
 	}
@@ -192,19 +216,20 @@ func (app *BubbleApp) handleErrorMessage(msg errorMsg) (tea.Model, tea.Cmd) {
 }
 
 func (app *BubbleApp) handleTickMessage(msg tickMsg) (tea.Model, tea.Cmd) {
-	// Update the view for real-time AGE updates and scan countdown
 	app.monitor.GetProgressTracker().UpdateScanCountdown()
 	
-	// Auto-refresh pending jobs every 10 seconds
-	if app.viewManager.GetCurrentView() == ViewPending && time.Since(app.lastUpdate) > 10*time.Second {
-		return app, tea.Batch(app.commandHandler.TickCmd(), app.commandHandler.LoadPendingJobs(app.ctx))
+	progress := app.monitor.GetScanProgress()
+	isScanning := progress.ScanMode != "Idle" && progress.ScanMode != "Completed"
+	if time.Since(app.lastUpdate) > 30*time.Second && !isScanning {
+		return app, tea.Batch(
+			app.commandHandler.TickCmd(),
+			app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan),
+		)
 	}
 	
-	// Check if countdown value has changed for efficient UI updates
 	currentCountdown := app.monitor.GetScanProgress().ScanCountdown
 	if currentCountdown != app.lastCountdown {
 		app.lastCountdown = currentCountdown
-		// Force UI update only when countdown changes
 		return app, tea.Batch(app.commandHandler.TickCmd(), func() tea.Msg { return updateUIMsg{} })
 	}
 	
@@ -212,28 +237,32 @@ func (app *BubbleApp) handleTickMessage(msg tickMsg) (tea.Model, tea.Cmd) {
 }
 
 
-// View switching methods
 
 func (app *BubbleApp) toggleView() (tea.Model, tea.Cmd) {
 	currentView := app.viewManager.GetCurrentView()
 	
 	if currentView == ViewPending {
-		// Switch to Recent view
-		app.loading = true
 		app.viewManager.SwitchToView(ViewRecent)
-		// Initialize timer for recent jobs view
 		app.commandHandler.UpdateTimerForView(ViewRecent)
-		return app, app.jobService.RefreshJobs(app.ctx, ViewRecent)
+		
+		app.loading = true
+		return app, app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan)
 	} else {
-		// Switch to Pending view
 		app.viewManager.SwitchToView(ViewPending)
+		
 		return app, nil
 	}
 }
 
 func (app *BubbleApp) refreshCurrentView() (tea.Model, tea.Cmd) {
+	currentView := app.viewManager.GetCurrentView()
 	app.loading = true
-	return app, app.jobService.RefreshJobs(app.ctx, app.viewManager.GetCurrentView())
+	
+	if currentView == ViewRecent {
+			return app, app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan)
+	}
+	
+	return app, app.jobService.RefreshJobs(app.ctx, currentView)
 }
 
 func (app *BubbleApp) showCancelConfirmation() (tea.Model, tea.Cmd) {
@@ -249,7 +278,6 @@ func (app *BubbleApp) showCancelConfirmation() (tea.Model, tea.Cmd) {
 	
 	selectedJob := jobs[cursor]
 	
-	// Only allow cancellation for pending/in_progress jobs
 	if selectedJob.Status != "waiting" && selectedJob.Status != "queued" && selectedJob.Status != "in_progress" {
 		return app, nil
 	}
@@ -271,7 +299,6 @@ func (app *BubbleApp) showApprovalConfirmation() (tea.Model, tea.Cmd) {
 	
 	selectedJob := jobs[cursor]
 	
-	// Only allow approval for waiting jobs that need approval
 	if selectedJob.Status != "waiting" {
 		return app, nil
 	}
@@ -280,7 +307,6 @@ func (app *BubbleApp) showApprovalConfirmation() (tea.Model, tea.Cmd) {
 	return app, nil
 }
 
-// Navigation methods
 
 func (app *BubbleApp) moveCursorUp() (tea.Model, tea.Cmd) {
 	app.viewManager.MoveCursor(-1, app.getMaxCursorPosition())
@@ -306,16 +332,13 @@ func (app *BubbleApp) navigatePageRight() (tea.Model, tea.Cmd) {
 	return app, nil
 }
 
-// UI rendering methods
 
 func (app *BubbleApp) renderMain() string {
 	var content strings.Builder
 	
-	// Header
 	content.WriteString(app.uiRenderer.RenderHeader(app.monitor))
 	content.WriteString("\n")
 	
-	// View selector
 	content.WriteString(app.uiRenderer.RenderViewSelector(
 		app.viewManager.GetCurrentView(),
 		len(app.jobs),
@@ -324,12 +347,10 @@ func (app *BubbleApp) renderMain() string {
 	))
 	content.WriteString("\n")
 	
-	// Job table
 	jobs := app.getJobsForCurrentView()
 	content.WriteString(app.uiRenderer.RenderJobTable(jobs, app.viewManager.GetCursor(), app.viewManager))
 	content.WriteString("\n")
 	
-	// Pagination (only for Recent Jobs view)
 	if app.viewManager.GetCurrentView() == ViewRecent {
 		pagination := app.uiRenderer.RenderPagination(app.viewManager.GetCurrentView(), app.viewManager, len(app.recentJobs), jobs)
 		if pagination != "" {
@@ -337,13 +358,113 @@ func (app *BubbleApp) renderMain() string {
 		}
 	}
 	
-	// Status/Info
 	content.WriteString(app.uiRenderer.RenderStatus(app.errorMsg))
 	
 	return content.String()
 }
 
-// Helper methods
+func (app *BubbleApp) handleJobUpdateMessage(msg jobUpdateMsg) (tea.Model, tea.Cmd) {
+	update := monitor.JobUpdate(msg)
+	
+	if update.Error != nil {
+		app.loading = false
+		app.errorMsg = update.Error.Error()
+		return app, app.listenForUpdates() // Continue listening
+	}
+	
+	if len(update.Jobs) > 0 {
+		currentView := app.viewManager.GetCurrentView()
+		
+		for _, job := range update.Jobs {
+			existsInJobs := false
+			for _, existingJob := range app.jobs {
+				if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+					existsInJobs = true
+					break
+				}
+			}
+			if !existsInJobs {
+				app.jobs = append(app.jobs, job)
+			}
+			
+			existsInRecent := false
+			for _, existingJob := range app.recentJobs {
+				if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+					existsInRecent = true
+					break
+				}
+			}
+			if !existsInRecent {
+				app.recentJobs = append(app.recentJobs, job)
+			}
+		}
+		
+		if currentView == ViewPending {
+			monitor.SortJobsByTime(app.jobs, false)
+		} else {
+			monitor.SortJobsByTime(app.recentJobs, true)
+		}
+		
+		app.loading = false
+		app.lastUpdate = time.Now()
+		app.errorMsg = ""
+	}
+	
+	return app, app.listenForUpdates()
+}
+
+
+func (app *BubbleApp) handleRecentJobUpdateMessage(msg recentJobUpdateMsg) (tea.Model, tea.Cmd) {
+	update := monitor.JobUpdate(msg)
+	
+	if update.Error != nil {
+		app.loading = false
+		app.errorMsg = update.Error.Error()
+		return app, app.listenForUpdates()
+	}
+	
+	if len(update.Jobs) > 0 {
+		for _, job := range update.Jobs {
+			existsInRecent := false
+			for _, existingJob := range app.recentJobs {
+				if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+					existsInRecent = true
+					break
+				}
+			}
+			
+			if !existsInRecent {
+				app.recentJobs = append(app.recentJobs, job)
+			}
+			
+			if job.Status == "waiting" {
+				existsInPending := false
+				for _, existingJob := range app.jobs {
+					if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+						existsInPending = true
+						break
+					}
+				}
+				
+				if !existsInPending {
+					app.jobs = append(app.jobs, job)
+				}
+			}
+		}
+		
+		monitor.SortJobsByTime(app.recentJobs, true)
+		monitor.SortJobsByTime(app.jobs, false)
+	}
+	
+	
+	
+	app.loading = false
+	app.lastUpdate = time.Now()
+	app.errorMsg = ""
+	
+	return app, app.listenForUpdates()
+}
+
 
 func (app *BubbleApp) getJobsForCurrentView() []scanner.JobStatus {
 	return app.jobService.GetJobsForView(

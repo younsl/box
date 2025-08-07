@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/younsl/cocd/internal/monitor"
 	"github.com/younsl/cocd/internal/scanner"
 )
 
@@ -23,7 +24,6 @@ func NewCommandHandler(monitor Monitor, config *AppConfig) CommandHandlerInterfa
 	}
 }
 
-// generateApprovalMessage creates approval message with timestamp
 func (ch *CommandHandler) generateApprovalMessage() string {
 	timezone := ch.config.Timezone
 	if timezone == "" {
@@ -39,71 +39,87 @@ func (ch *CommandHandler) generateApprovalMessage() string {
 	return fmt.Sprintf("Remote approved by cocd at %s", timestamp)
 }
 
-// StartMonitoring starts the background monitoring process
 func (ch *CommandHandler) StartMonitoring(ctx context.Context, jobsChan chan []scanner.JobStatus) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
-		// Start the monitoring in the background
 		go ch.monitor.StartMonitoring(ctx, jobsChan)
 		
-		// Start a goroutine to listen for job updates and forward them to the UI
 		go func() {
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case jobs := <-jobsChan:
-					// We can't directly send tea.Msg from here
-					// The monitor will handle periodic updates
 					_ = jobs
 				}
 			}
 		}()
 		
-		// Return immediate command to load pending jobs
 		return ch.LoadPendingJobs(ctx)()
 	})
 }
 
-// LoadPendingJobs loads pending jobs
 func (ch *CommandHandler) LoadPendingJobs(ctx context.Context) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		jobs, err := ch.monitor.GetPendingJobs(ctx)
 		if err != nil {
 			return errorMsg(err.Error())
 		}
-		return jobsMsg(jobs)
+		return pendingJobsMsg(jobs)
 	})
 }
 
-// LoadRecentJobs loads recent jobs
+
 func (ch *CommandHandler) LoadRecentJobs(ctx context.Context) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		jobs, err := ch.monitor.GetRecentJobs(ctx)
 		if err != nil {
 			return errorMsg(err.Error())
 		}
-		// Set timer after loading recent jobs since this is a one-time operation
 		nextScanAt := time.Now().Add(30 * time.Second)
 		ch.monitor.GetProgressTracker().SetNextScanTimer(nextScanAt, 1, false)
 		return recentJobsMsg(jobs)
 	})
 }
 
-// TickCmd creates a tick command for periodic updates
+func (ch *CommandHandler) LoadRecentJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd {
+	return tea.Cmd(func() tea.Msg {
+		jobUpdateChan := make(chan monitor.JobUpdate, 100)
+		
+		go func() {
+			defer close(jobUpdateChan)
+			
+			err := ch.monitor.GetRecentJobsWithStreaming(ctx, jobUpdateChan)
+			if err != nil {
+				jobUpdateChan <- monitor.JobUpdate{Error: err}
+			}
+		}()
+		
+		go func() {
+			for update := range jobUpdateChan {
+				select {
+				case updateChan <- recentJobUpdateMsg(update):
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+		
+		return scanProgressMsg{}
+	})
+}
+
 func (ch *CommandHandler) TickCmd() tea.Cmd {
 	return tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
 
-// JumpToActions opens the selected job's GitHub Actions page in browser
 func (ch *CommandHandler) JumpToActions(vm ViewManagerInterface, jobs, recentJobs []scanner.JobStatus) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		var selectedJob *scanner.JobStatus
 		
 		if vm.GetCurrentView() == ViewPending {
-			// Get the combined jobs list (same as rendered in table)
-			combinedJobs := vm.GetCombinedPendingJobs(jobs)
+				combinedJobs := vm.GetCombinedPendingJobs(jobs)
 			if len(combinedJobs) > 0 && vm.GetCursor() < len(combinedJobs) {
 				selectedJob = &combinedJobs[vm.GetCursor()]
 			}
@@ -125,13 +141,11 @@ func (ch *CommandHandler) JumpToActions(vm ViewManagerInterface, jobs, recentJob
 	})
 }
 
-// InitializeTimer initializes the timer to prevent loading state
 func (ch *CommandHandler) InitializeTimer() {
 	nextScanAt := time.Now().Add(10 * time.Second)
 	ch.monitor.GetProgressTracker().SetNextScanTimer(nextScanAt, 1, false)
 }
 
-// UpdateTimerForView updates the timer for a specific view
 func (ch *CommandHandler) UpdateTimerForView(viewType ViewType) {
 	var delay time.Duration
 	switch viewType {
@@ -145,7 +159,6 @@ func (ch *CommandHandler) UpdateTimerForView(viewType ViewType) {
 	ch.monitor.GetProgressTracker().SetNextScanTimer(nextScanAt, 1, false)
 }
 
-// CancelWorkflow cancels the selected workflow run
 func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInterface) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		job := vm.GetCancelTargetJob()
@@ -153,7 +166,6 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInte
 			return errorMsg("No job selected for cancellation")
 		}
 		
-		// Get the GitHub client from monitor
 		clientInterface := ch.monitor.GetClient()
 		if clientInterface == nil {
 			return errorMsg("GitHub client not available")
@@ -164,7 +176,6 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInte
 			return errorMsg("Failed to create GitHub client adapter")
 		}
 		
-		// Cancel the workflow run
 		_, err := client.CancelWorkflowRun(ctx, job.Repository, job.RunID)
 		if err != nil {
 			return errorMsg(fmt.Sprintf("Failed to cancel workflow: %v", err))
@@ -174,7 +185,6 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInte
 	})
 }
 
-// ApproveDeployment approves the selected deployment
 func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerInterface) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		job := vm.GetApprovalTargetJob()
@@ -182,7 +192,6 @@ func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerI
 			return errorMsg("No job selected for approval")
 		}
 		
-		// Get the GitHub client from monitor
 		clientInterface := ch.monitor.GetClient()
 		if clientInterface == nil {
 			return errorMsg("GitHub client not available")
@@ -193,7 +202,6 @@ func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerI
 			return errorMsg("Failed to create GitHub client adapter")
 		}
 		
-		// First, get pending deployments to find the environment IDs
 		pendingDeployments, _, err := client.GetPendingDeployments(ctx, job.Repository, job.RunID)
 		if err != nil {
 			return errorMsg(fmt.Sprintf("Failed to get pending deployments: %v", err))
@@ -203,7 +211,6 @@ func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerI
 			return errorMsg("No pending deployments found for this workflow")
 		}
 		
-		// Extract environment IDs
 		var environmentIDs []int64
 		for _, pd := range pendingDeployments {
 			if pd.Environment.ID != nil {
@@ -215,7 +222,6 @@ func (ch *CommandHandler) ApproveDeployment(ctx context.Context, vm ViewManagerI
 			return errorMsg("No environment IDs found in pending deployments")
 		}
 		
-		// Approve the deployment
 		_, err = client.ApprovePendingDeployment(ctx, job.Repository, job.RunID, environmentIDs, ch.generateApprovalMessage())
 		if err != nil {
 			return errorMsg(fmt.Sprintf("Failed to approve deployment: %v", err))

@@ -34,6 +34,7 @@ type ScanProgress struct {
 // ScanMode constants
 const (
 	ScanModeIdle   = "Idle"
+	ScanModeOrg    = "Organization"
 	ScanModeSmart  = "Smart"
 	ScanModeRecent = "Recent"
 )

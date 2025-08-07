@@ -168,3 +168,20 @@ When working on performance optimizations, especially for external API interacti
 
 ### Reference
 See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case study on PerformanceOptimizer anti-patterns.
+
+## GitHub API Limitations
+
+### Important: Organization-Level Workflow Runs Endpoint Does Not Exist
+
+**CRITICAL**: The GitHub REST API does **NOT** provide an organization-level workflow runs endpoint such as `/orgs/{org}/actions/runs`. This endpoint does not exist and will return 404 errors.
+
+**Available Endpoints**:
+- ✅ Repository-level: `/repos/{owner}/{repo}/actions/runs` - Lists workflow runs for a specific repository
+- ❌ Organization-level: `/orgs/{org}/actions/runs` - **Does NOT exist**
+
+**Correct Approach for Organization-Wide Scanning**:
+1. Use `/orgs/{org}/repos` to list all repositories in the organization
+2. For each repository, call `/repos/{owner}/{repo}/actions/runs` to get workflow runs
+3. Aggregate results from all repositories manually
+
+This limitation affects the cocd tool's scanning strategy. Use SmartScanner or similar repository-iterating approaches instead of attempting organization-level API calls.

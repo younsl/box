@@ -8,4 +8,5 @@ type AppConfig struct {
 	Environment string
 	Token       string
 	Timezone    string
+	Version     string
 }

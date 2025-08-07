@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	DefaultWorkerPoolSize    = 2
+	DefaultWorkerPoolSize    = 1
 	DefaultScanTimeout       = 60 * time.Second
 	DefaultRecentScanTimeout = 90 * time.Second
 	
-	MaxSmartRepositories  = 100
+	MaxSmartRepositories  = 50
 	MaxActiveRepositories = 100
 	MaxRecentJobs         = 100
 	
@@ -86,38 +86,59 @@ func (m *Monitor) GetPendingJobs(ctx context.Context) ([]scanner.JobStatus, erro
 }
 
 func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan chan<- ScanProgress) ([]scanner.JobStatus, error) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultScanTimeout)
-	defer cancel()
-
-	allRepos, err := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
+	recentJobs, err := m.GetRecentJobsWithProgress(ctx, progressChan)
 	if err != nil {
 		return nil, err
 	}
 
-	smartRepos, err := m.repoManager.GetSmartRepositories(timeoutCtx, MaxSmartRepositories)
+	var waitingJobs []scanner.JobStatus
+	for _, job := range recentJobs {
+		if job.Status == "waiting" {
+			waitingJobs = append(waitingJobs, job)
+		}
+	}
+
+	SortJobsByTime(waitingJobs, false)
+
+	return waitingJobs, nil
+}
+
+
+// GetRecentJobsWithStreaming gets recent jobs with real-time streaming updates
+func (m *Monitor) GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- JobUpdate) error {
+	if !m.progressTracker.StartScan() {
+		return nil
+	}
+	
+	defer m.progressTracker.EndScan()
+	
+	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
+	defer cancel()
+
+	activeRepos, err := m.repoManager.GetActiveRepositories(timeoutCtx, MaxActiveRepositories)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	allRepos, err := m.repoManager.GetRepositoriesWithCache(timeoutCtx)
+	if err != nil {
+		return err
 	}
 
 	repoStats := CalculateRepoStats(allRepos)
 
-	m.progressTracker.InitializeProgress(ScanModeSmart, len(allRepos), len(smartRepos), DefaultWorkerPoolSize, repoStats)
+	m.progressTracker.InitializeProgress(ScanModeRecent, len(allRepos), len(activeRepos), DefaultWorkerPoolSize, repoStats)
 	
-	if progressChan != nil {
-		progressChan <- m.progressTracker.GetProgress()
-	}
-
-	progress := m.progressTracker.GetProgress()
-	jobs, err := m.smartWorkerPool.ScanRepositories(timeoutCtx, smartRepos, progressChan, &progress)
+	recentWorkerPool := NewWorkerPool(DefaultWorkerPoolSize, m.recentScanner)
+	
+	err = recentWorkerPool.ScanRepositoriesStreamingWithTracker(timeoutCtx, activeRepos, jobUpdateChan, m.progressTracker)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	SortJobsByTime(jobs, false)
+	m.progressTracker.SetCompleted()
 
-	m.progressTracker.SetIdle()
-
-	return jobs, nil
+	return nil
 }
 
 
@@ -126,6 +147,12 @@ func (m *Monitor) GetRecentJobs(ctx context.Context) ([]scanner.JobStatus, error
 }
 
 func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan chan<- ScanProgress) ([]scanner.JobStatus, error) {
+	if !m.progressTracker.StartScan() {
+		return []scanner.JobStatus{}, nil
+	}
+	
+	defer m.progressTracker.EndScan()
+	
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
 	defer cancel()
 
@@ -159,7 +186,7 @@ func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan ch
 
 	jobs = LimitJobs(jobs, MaxRecentJobs)
 
-	m.progressTracker.SetIdle()
+	m.progressTracker.SetCompleted()
 
 	return jobs, nil
 }
@@ -170,15 +197,6 @@ func (m *Monitor) StartMonitoring(ctx context.Context, jobChan chan<- []scanner.
 	nextScanAt := time.Now().Add(m.interval)
 	m.progressTracker.SetNextScanTimer(nextScanAt, 1, false)
 	
-	go func() {
-		jobs, err := m.GetPendingJobs(ctx)
-		if err != nil {
-			jobChan <- []scanner.JobStatus{}
-			return
-		}
-		m.progressTracker.SetScanCompleted()
-		jobChan <- jobs
-	}()
 	
 	smartTicker := time.NewTicker(m.interval)
 	defer smartTicker.Stop()

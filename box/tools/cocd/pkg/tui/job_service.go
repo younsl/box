@@ -23,9 +23,11 @@ func NewJobService(commands CommandHandlerInterface) JobService {
 func (js *DefaultJobService) GetJobsForView(view ViewType, pendingJobs, recentJobs []scanner.JobStatus, vm ViewManagerInterface) []scanner.JobStatus {
 	switch view {
 	case ViewPending:
-		return vm.GetCombinedPendingJobs(pendingJobs)
+		highlightedPendingJobs := vm.MarkNewlyScannedJobs(pendingJobs)
+		return vm.GetCombinedPendingJobs(highlightedPendingJobs)
 	case ViewRecent:
-		return vm.GetPaginatedJobs(recentJobs)
+		highlightedRecentJobs := vm.MarkNewlyScannedJobs(recentJobs)
+		return vm.GetPaginatedJobs(highlightedRecentJobs)
 	default:
 		return []scanner.JobStatus{}
 	}

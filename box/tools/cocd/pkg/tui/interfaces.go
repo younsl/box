@@ -18,6 +18,7 @@ type Monitor interface {
 	GetProgressTracker() ProgressTracker
 	GetScanProgress() monitor.ScanProgress
 	GetUpdateInterval() int
+	GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error
 }
 
 // ProgressTracker defines the interface for tracking progress
@@ -64,6 +65,10 @@ type ViewManagerInterface interface {
 	SetApprovalSelection(selection int)
 	GetApprovalSelection() int
 	IsApprovalConfirmed() bool
+	
+	// Job highlighting for newly scanned jobs
+	MarkNewlyScannedJobs(jobs []scanner.JobStatus) []scanner.JobStatus
+	IsJobHighlighted(job scanner.JobStatus) bool
 }
 
 // CommandHandler defines the interface for handling commands
@@ -71,6 +76,7 @@ type CommandHandlerInterface interface {
 	StartMonitoring(ctx context.Context, jobsChan chan []scanner.JobStatus) tea.Cmd
 	LoadPendingJobs(ctx context.Context) tea.Cmd
 	LoadRecentJobs(ctx context.Context) tea.Cmd
+	LoadRecentJobsStreaming(ctx context.Context, updateChan chan<- tea.Msg) tea.Cmd
 	TickCmd() tea.Cmd
 	JumpToActions(vm ViewManagerInterface, jobs, recentJobs []scanner.JobStatus) tea.Cmd
 	InitializeTimer()

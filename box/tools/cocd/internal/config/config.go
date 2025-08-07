@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -28,17 +29,31 @@ type MonitorConfig struct {
 }
 
 func Load() (*Config, error) {
+	// Check if config exists, if not create skeleton
+	if !ConfigExists() {
+		configPath, err := TryCreateDefaultConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to create default config: %v\n", err)
+		} else {
+			// Set the config file explicitly to use the newly created one
+			viper.SetConfigFile(configPath)
+		}
+	}
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/.cocd")
-	viper.AddConfigPath("/etc/cocd")
+	
+	// Add config paths in priority order
+	for _, path := range GetConfigPaths() {
+		dir := filepath.Dir(path)
+		viper.AddConfigPath(dir)
+	}
 
 	viper.SetEnvPrefix("COCD")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	viper.SetDefault("github.base_url", "https://api.github.com")
+	viper.SetDefault("github.base_url", "api.github.com")
 	viper.SetDefault("monitor.interval", 5)
 	viper.SetDefault("monitor.environment", "prod")
 	viper.SetDefault("monitor.timezone", "UTC")
@@ -52,6 +67,11 @@ func Load() (*Config, error) {
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
+	// Ensure base_url has https:// prefix
+	if config.GitHub.BaseURL != "" && !strings.HasPrefix(config.GitHub.BaseURL, "http://") && !strings.HasPrefix(config.GitHub.BaseURL, "https://") {
+		config.GitHub.BaseURL = "https://" + config.GitHub.BaseURL
 	}
 
 	if config.GitHub.Token == "" {

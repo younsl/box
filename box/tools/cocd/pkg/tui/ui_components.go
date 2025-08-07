@@ -40,9 +40,14 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 		Bold(true).
 		Padding(0, 1)
 	
-	// Get memory usage for header
 	progress := monitor.GetScanProgress()
-	title := headerStyle.Render("CoCD")
+	titleText := "CoCD"
+	if ui.config.Version != "" && ui.config.Version != "dev" {
+		titleText = fmt.Sprintf("CoCD v%s", ui.config.Version)
+	} else if ui.config.Version == "dev" {
+		titleText = "CoCD dev"
+	}
+	title := headerStyle.Render(titleText)
 	memory := fmt.Sprintf("Mem: %s", progress.MemoryUsage)
 	server := fmt.Sprintf("Server: %s", serverName)
 	organization := fmt.Sprintf("Org: %s", org)
@@ -435,24 +440,18 @@ func (ui *UIComponents) getScanInfo(progress monitor.ScanProgress) string {
 		var repoInfo string
 		
 		// Consistent repository display format
-		if progress.LimitedRepos > 0 && progress.LimitedRepos < progress.ValidRepos {
-			// Fast scan: show limited count with archived info
-			if progress.ArchivedRepos > 0 {
-				repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
-					progress.LimitedRepos, progress.TotalRepos, progress.ArchivedRepos)
-			} else {
-				repoInfo = fmt.Sprintf("Repos: %d/%d", 
-					progress.LimitedRepos, progress.TotalRepos)
-			}
+		// Show real-time scan progress: completed/total
+		targetRepos := progress.LimitedRepos
+		if targetRepos == 0 || targetRepos >= progress.ValidRepos {
+			targetRepos = progress.ActiveRepos
+		}
+		
+		if progress.ArchivedRepos > 0 {
+			repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
+				progress.CompletedRepos, targetRepos, progress.ArchivedRepos)
 		} else {
-			// Full scan: show active count with archived info
-			if progress.ArchivedRepos > 0 {
-				repoInfo = fmt.Sprintf("Repos: %d/%d (%d archived)", 
-					progress.ActiveRepos, progress.TotalRepos, progress.ArchivedRepos)
-			} else {
-				repoInfo = fmt.Sprintf("Repos: %d/%d", 
-					progress.ActiveRepos, progress.TotalRepos)
-			}
+			repoInfo = fmt.Sprintf("Repos: %d/%d", 
+				progress.CompletedRepos, targetRepos)
 		}
 		
 		scanInfo = fmt.Sprintf("Mode: %s | %s | Cache: %s", 
@@ -475,22 +474,15 @@ func (ui *UIComponents) getTimerInfo(progress monitor.ScanProgress) string {
 			countdown = 0
 		}
 		
-		// Add current state duration to the display
-		currentState := progress.ScanMode
-		stateDuration := progress.StateDuration
-		if stateDuration < 0 {
-			stateDuration = 0
-		}
 		
-		timerInfo = fmt.Sprintf("Next Scan: %s in %ds | Current: %s (%ds)", 
-			nextType, countdown, currentState, stateDuration)
+		timerInfo = fmt.Sprintf("Next %s scan in %ds", nextType, countdown)
 	} else {
 		// Show loading state with duration
 		stateDuration := progress.StateDuration
 		if stateDuration < 0 {
 			stateDuration = 0
 		}
-		timerInfo = fmt.Sprintf("Next Scan: Loading (%ds)", stateDuration)
+		timerInfo = fmt.Sprintf("Scanning... (%ds)", stateDuration)
 	}
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render(timerInfo)
 }
@@ -544,12 +536,19 @@ func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus
 	actor := ui.padString(ui.truncate(job.Actor, actorWidth), actorWidth)
 	age := ui.padString(ui.formatAge(job.StartedAt), ageWidth)
 	
-	// Apply styles
+	// Build row string
+	rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
+		repo, jobName, jobID, status, branch, actor, age)
+	
+	// Apply styles based on priority: cursor > newly highlighted > completed > normal
 	if i == cursor {
-		// Highlighted row - entire row highlighted
+		// Cursor selection - highest priority (blue background)
 		rowStyle := lipgloss.NewStyle().Background(lipgloss.Color("4")).Foreground(lipgloss.Color("15"))
-		rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
-			repo, jobName, jobID, status, branch, actor, age)
+		b.WriteString(rowStyle.Render(rowString))
+	} else if vm.IsJobHighlighted(job) {
+		// Newly scanned job - second priority (green background with fade effect)
+		// Use a subtle green background to indicate newly discovered job
+		rowStyle := lipgloss.NewStyle().Background(lipgloss.Color("2")).Foreground(lipgloss.Color("0"))
 		b.WriteString(rowStyle.Render(rowString))
 	} else {
 		// Check if this job is completed (from our tracking)
@@ -558,8 +557,6 @@ func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus
 		if isCompleted {
 			// Completed jobs: gray out everything
 			rowStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-			rowString := fmt.Sprintf("%s %s %s %s %s %s %s",
-				repo, jobName, jobID, status, branch, actor, age)
 			b.WriteString(rowStyle.Render(rowString))
 		} else {
 			// Active jobs: normal coloring with status color only for STATUS column
