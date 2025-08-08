@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    defaults:
+      run:
+        working-directory: ./box/tools/idled
     strategy:
       matrix:
         goos: [linux, darwin]
@@ -39,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: idled-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ./bin/idled-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ./box/tools/idled/bin/idled-${{ matrix.goos }}-${{ matrix.goarch }}
 
   publish-release:
     needs: release
