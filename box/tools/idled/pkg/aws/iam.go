@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/briandowns/spinner"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	"github.com/younsl/idled/pkg/utils"
 )
 

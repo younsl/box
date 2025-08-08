@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 )
 
 // PrintInstancesTable prints a formatted table of EC2 instances

@@ -10,7 +10,7 @@ import (
 
 	// smtypes "github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 )
 
 const (

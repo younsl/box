@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 )
 
 // FormatIAMUserTable writes IAM user information in a table format

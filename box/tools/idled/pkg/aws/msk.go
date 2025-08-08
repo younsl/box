@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kafka/types"
 
 	// kafkaconnecttypes "github.com/aws/aws-sdk-go-v2/service/kafkaconnect/types" // State type might be directly in kafka types
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	// Alias for pkg utils
 )
 

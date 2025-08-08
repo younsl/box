@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	"github.com/briandowns/spinner"
 	"github.com/dustin/go-humanize"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 )
 
 func getActualLastEventTimestamp(ctx context.Context, client *cloudwatchlogs.Client, logGroupName string) (int64, error) {

@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 )
 
 // PrintSecretsTable prints the idle Secrets Manager secret information in a table format.

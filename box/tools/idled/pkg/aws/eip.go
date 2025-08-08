@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	"github.com/younsl/idled/pkg/utils"
 )
 

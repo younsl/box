@@ -8,7 +8,7 @@ import (
 	"time"
 
 	// "github.com/jedib0t/go-pretty/v6/table"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	// "github.com/younsl/idled/pkg/pricing" // Not needed for table, maybe for summary?
 )
 

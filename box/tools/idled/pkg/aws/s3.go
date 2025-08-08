@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cwTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	"github.com/younsl/idled/pkg/utils"
 )
 

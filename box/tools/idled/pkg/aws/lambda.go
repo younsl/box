@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	lambdaTypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/briandowns/spinner"
-	"github.com/younsl/idled/internal/models"
+	"github.com/younsl/idled/pkg/models"
 	"github.com/younsl/idled/pkg/utils"
 )
 

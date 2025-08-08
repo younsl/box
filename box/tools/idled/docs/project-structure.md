@@ -9,17 +9,22 @@ idled/
 ├── cmd/
 │   └── idled/        # Main CLI application
 │       └── main.go
-├── internal/
-│   └── models/       # Internal data models (struct definitions)
-│       ├── ec2.go
-│       ├── ebs.go
-│       ├── s3.go
-│       ├── lambda.go
-│       ├── eip.go
-│       ├── iam.go
-│       ├── config.go
-│       └── elb.go      # Added ELB model
 ├── pkg/
+│   ├── models/       # Data models (struct definitions)
+│   │   ├── ec2.go
+│   │   ├── ebs.go
+│   │   ├── s3.go
+│   │   ├── lambda.go
+│   │   ├── eip.go
+│   │   ├── iam.go
+│   │   ├── config.go
+│   │   ├── elb.go
+│   │   ├── ecr.go
+│   │   ├── logs.go
+│   │   ├── msk.go
+│   │   └── secretsmanager.go
+│   ├── version/      # Version information
+│   │   └── version.go
 │   ├── aws/          # AWS API interaction logic
 │   │   ├── ec2.go
 │   │   ├── ebs.go
@@ -28,7 +33,11 @@ idled/
 │   │   ├── eip.go
 │   │   ├── iam.go
 │   │   ├── config.go
-│   │   └── elb.go      # Added ELB logic
+│   │   ├── elb.go
+│   │   ├── ecr.go
+│   │   ├── logs.go
+│   │   ├── msk.go
+│   │   └── secretsmanager.go
 │   ├── formatter/    # Output formatting (tables, summaries)
 │   │   ├── ec2_table.go
 │   │   ├── ebs_table.go
@@ -37,14 +46,30 @@ idled/
 │   │   ├── eip_table.go
 │   │   ├── iam_table.go
 │   │   ├── config_table.go
-│   │   ├── elb_table.go  # Added ELB table formatter
-│   │   └── common.go   # Common formatting utilities
+│   │   ├── elb_table.go
+│   │   ├── ecr.go
+│   │   ├── logs_table.go
+│   │   ├── msk_table.go
+│   │   ├── secretsmanager_table.go
+│   │   ├── common.go   # Common formatting utilities
+│   │   ├── stats.go    # Statistics formatting
+│   │   └── unicode_width.go  # Unicode width utilities
 │   ├── pricing/      # AWS Pricing API interaction (optional, for cost estimation)
-│   │   └── pricing.go
-│   └── utils/        # General utility functions (e.g., region validation)
-│       └── aws_utils.go
+│   │   ├── api.go
+│   │   ├── common.go
+│   │   ├── ebs.go
+│   │   ├── ec2.go
+│   │   ├── stats.go
+│   │   └── types.go
+│   └── utils/        # General utility functions
+│       ├── format_utils.go
+│       ├── json_utils.go
+│       ├── pointer_utils.go
+│       ├── region_utils.go
+│       ├── tag_utils.go
+│       └── time_utils.go
 ├── docs/             # Project documentation
-│   ├── aws/          # Per-service documentation (NEW)
+│   ├── aws/          # Per-service documentation
 │   │   ├── ec2.md
 │   │   ├── ebs.md
 │   │   ├── s3.md
@@ -52,7 +77,12 @@ idled/
 │   │   ├── eip.md
 │   │   ├── iam.md
 │   │   ├── config.md
-│   │   └── elb.md
+│   │   ├── elb.md
+│   │   ├── ecr.md
+│   │   ├── logs.md
+│   │   ├── msk.md
+│   │   └── secretsmanager.md
+│   ├── available-services.md
 │   └── project-structure.md
 ├── Makefile          # Build automation
 ├── go.mod
@@ -72,11 +102,12 @@ The code is organized following these principles:
 ## Code Organization Overview
 
 - **`/cmd/idled`**: Contains the `main.go` file, which handles CLI argument parsing (using Cobra), orchestrates calls to different service scanners based on flags, and manages overall application flow including spinners.
-- **`/internal/models`**: Defines the Go structs (e.g., `EC2Instance`, `ELBResource`) used to hold data retrieved from AWS APIs for each service.
+- **`/pkg/models`**: Defines the Go structs (e.g., `EC2Instance`, `ELBResource`) used to hold data retrieved from AWS APIs for each service.
+- **`/pkg/version`**: Contains version information for the application, including build metadata.
 - **`/pkg/aws`**: Houses the core logic for interacting with AWS APIs for each supported service. Each service has its own file (e.g., `ec2.go`, `elb.go`) containing functions to fetch resources and determine their idle status based on defined criteria (API calls, CloudWatch checks).
 - **`/pkg/formatter`**: Contains functions responsible for taking the collected resource data (slices of model structs) and presenting it to the user in a formatted table (using `text/tabwriter`) or as a summary.
-- **`/pkg/pricing`**: (If used) Contains logic to interact with the AWS Pricing API to estimate costs for certain resources (like EBS volumes or EIPs).
-- **`/pkg/utils`**: Provides common helper functions used across different packages, such as AWS region validation.
+- **`/pkg/pricing`**: Contains logic to interact with the AWS Pricing API to estimate costs for certain resources (like EBS volumes, EC2 instances, etc.).
+- **`/pkg/utils`**: Provides common helper functions used across different packages, such as AWS region validation, time formatting, JSON handling, and tag utilities.
 - **`/docs`**: Contains project documentation, including per-service details in the `docs/aws/` subdirectory.
 
 ## Implementation Details (Concise)
