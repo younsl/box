@@ -1,6 +1,6 @@
 # idled
 
-[![Go Version](https://img.shields.io/badge/Go-1.24.5-blue?style=flat-square&color=black&logo=go&logoColor=white)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.24.5-blue?style=flat-square&color=black&logo=go&logoColor=white)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square&color=black)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/younsl/box?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/box/releases?q=idled)
 
