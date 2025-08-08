@@ -2,9 +2,9 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-blue?style=flat-square&color=black&logo=go&logoColor=white)](https://golang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square&color=black)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/younsl/idled?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/idled/releases)
+[![GitHub release](https://img.shields.io/github/v/release/younsl/box?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/box/releases)
 
-idled stands for "idle finder". idled is a CLI tool that finds idle AWS resources across regions and shows the results in a table format.
+idled stands for "idle detector". idled is a CLI tool that finds idle AWS resources across regions and shows the results in a table format.
 
 ## Features
 
@@ -25,28 +25,27 @@ idled stands for "idle finder". idled is a CLI tool that finds idle AWS resource
 
 ## Installation
 
-### From Source
+### From Release
 
 ```bash
-git clone https://github.com/younsl/idled.git
-cd idled
-go build -o bin/idled ./cmd/idled
+# Get arch and os currently running on the machine
+ARCH=$(arch)
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+# Download the latest release
+curl -L -o idled https://github.com/younsl/box/releases/latest/download/idled-$OS-$ARCH
+chmod +x idled
+./idled --version
 ```
 
-## Build
+### From Source
+
+Build idled from source code using the [Makefile](Makefile):
 
 ```bash
-# Build the binary
+git clone https://github.com/younsl/box.git
+cd box/box/tools/idled
 make build
-
-# Just run the application
-make run
-
-# Clean, format, test and build
-make
-
-# Show all available make commands
-make help
 ```
 
 ## Usage
