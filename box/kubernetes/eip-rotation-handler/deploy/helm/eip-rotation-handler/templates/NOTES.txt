@@ -1,0 +1,24 @@
+{{ .Chart.Name }} v{{ .Chart.AppVersion }} deployed successfully!
+
+Release: {{ .Release.Name }} (v{{ .Chart.AppVersion }})
+Namespace: {{ .Release.Namespace }}
+Rotation Interval: {{ .Values.rotation.intervalMinutes }} minutes
+
+Quick Status:
+  kubectl get pods -l {{ include "eip-rotation-handler.selectorLabels" . | replace ": " "=" | replace "\n" "," }} -n {{ .Release.Namespace }}
+
+View Logs:
+  kubectl logs -f -l {{ include "eip-rotation-handler.selectorLabels" . | replace ": " "=" | replace "\n" "," }} -n {{ .Release.Namespace }}
+
+Required IAM Permissions:
+  ec2:AllocateAddress, ec2:AssociateAddress, ec2:DescribeAddresses, ec2:ReleaseAddress
+
+{{- if .Values.daemonset.nodeSelector }}
+Targeting nodes with:
+{{- range $key, $value := .Values.daemonset.nodeSelector }}
+  {{ $key }}: {{ $value }}
+{{- end }}
+{{- end }}
+
+💡 First rotation starts within {{ .Values.rotation.intervalMinutes }} minutes
+   Monitor AWS EC2 console for EIP changes 

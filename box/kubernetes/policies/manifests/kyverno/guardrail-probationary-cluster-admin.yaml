@@ -1,0 +1,49 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: guardrail-probationary-cluster-admin
+  annotations:
+    kyverno.io/kyverno-version: 1.13.1
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-03-07T00:00:00+09:00"
+    kyverno.younsl.xyz/reference: https://kyverno.io/policies/other/block-cluster-admin-from-ns/block-cluster-admin-from-ns/
+spec:
+  admission: true
+  background: false
+  emitWarning: false
+  failurePolicy: Fail
+  # DEPRECATION WARNING:
+  # `validationFailureActions` will be deprecated in the future.
+  # Please use `failureAction` instead.
+  validationFailureAction: Enforce
+  rules:
+  - match:
+      any:
+      - clusterRoles:
+        - cluster-admin
+        resources:
+          kinds:
+          - '*'
+        # PREREQUISITE FOR CONFIGURATION:
+        # You need to set the target username to block from this policy.
+        # Please add {{SessionName}} keyword to divide individual user sessions
+        # in aws-auth ConfigMap or Access Entries.
+        subjects:
+        - kind: User
+          name: EXAMPLE-USERNAME-example.com
+    name: guardrail-probationary-cluster-admin
+    skipBackgroundRequests: true
+    validate:
+      allowExistingViolations: true
+      deny:
+        conditions:
+          any:
+          - key: '{{ request.operation || ''BACKGROUND'' }}'
+            operator: AnyIn
+            value:
+            - CREATE
+            - UPDATE
+            - DELETE
+      failureAction: Enforce
+      message: The cluster-admin user 'EXAMPLE-USERNAME-example.com' is on probation and has read-only access. Create, update, and delete operations are restricted to prevent misconfigurations or accidental changes.
