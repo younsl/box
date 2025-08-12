@@ -521,17 +521,6 @@ func (ui *UIComponents) renderTableHeader(b *strings.Builder, repoWidth, jobWidt
 	
 	b.WriteString(headerStyle.Render(headerRow))
 	b.WriteString("\n")
-	
-	// Add separator line
-	for i, width := range widths {
-		b.WriteString(strings.Repeat("─", width))
-		if i < len(widths)-1 {
-			b.WriteString(" ")
-		}
-	}
-	b.WriteString(" ")
-	b.WriteString(strings.Repeat("─", ageWidth))
-	b.WriteString("\n")
 }
 
 func (ui *UIComponents) renderTableRow(b *strings.Builder, job scanner.JobStatus, i, cursor int, vm ViewManagerInterface, repoWidth, jobWidth, idWidth, statusWidth, branchWidth, actorWidth, ageWidth int) {
