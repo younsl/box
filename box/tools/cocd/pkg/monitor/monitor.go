@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	ghclient "github.com/younsl/cocd/internal/github"
-	"github.com/younsl/cocd/internal/scanner"
+	ghclient "github.com/younsl/cocd/pkg/github"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 const (
@@ -30,13 +30,11 @@ type Monitor struct {
 	progressTracker *ProgressTracker
 	envCache       *EnvironmentCache
 	
-	smartScanner  *scanner.SmartScanner
 	recentScanner *scanner.RecentJobsScanner
 	
 	environment string
 	interval    time.Duration
 	
-	smartWorkerPool *WorkerPool
 }
 
 func NewMonitor(client *ghclient.Client, environment string, interval int) *Monitor {
@@ -44,21 +42,16 @@ func NewMonitor(client *ghclient.Client, environment string, interval int) *Moni
 	progressTracker := NewProgressTracker()
 	envCache := NewEnvironmentCache(client)
 	
-	smartScanner := scanner.NewSmartScanner(client, environment, envCache)
 	recentScanner := scanner.NewRecentJobsScanner(client)
-	
-	smartWorkerPool := NewWorkerPool(DefaultWorkerPoolSize, smartScanner)
 	
 	return &Monitor{
 		client:          client,
 		repoManager:     repoManager,
 		progressTracker: progressTracker,
 		envCache:        envCache,
-		smartScanner:    smartScanner,
 		recentScanner:   recentScanner,
 		environment:     environment,
 		interval:        time.Duration(interval) * time.Second,
-		smartWorkerPool: smartWorkerPool,
 	}
 }
 
@@ -183,8 +176,6 @@ func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan ch
 	}
 
 	SortJobsByTime(jobs, true)
-
-	jobs = LimitJobs(jobs, MaxRecentJobs)
 
 	m.progressTracker.SetCompleted()
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v60/github"
-	ghclient "github.com/younsl/cocd/internal/github"
+	ghclient "github.com/younsl/cocd/pkg/github"
 )
 
 type RecentJobsScanner struct {

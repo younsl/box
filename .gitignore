@@ -111,4 +111,5 @@ box/slides/*/*.html
 #----------------------------------
 # cocd
 #----------------------------------
-!**/cocd/internal/config
+!**/cocd/pkg/config
+

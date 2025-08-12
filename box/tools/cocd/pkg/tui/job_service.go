@@ -4,7 +4,7 @@ import (
 	"context"
 	
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // DefaultJobService implements the JobService interface

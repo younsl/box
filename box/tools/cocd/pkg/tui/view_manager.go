@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // ViewType represents different view types

@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/younsl/cocd/internal/config"
-	"github.com/younsl/cocd/internal/github"
-	"github.com/younsl/cocd/internal/monitor"
+	"github.com/younsl/cocd/pkg/config"
+	"github.com/younsl/cocd/pkg/github"
+	"github.com/younsl/cocd/pkg/monitor"
 	"github.com/younsl/cocd/pkg/tui"
 	"golang.org/x/term"
 )

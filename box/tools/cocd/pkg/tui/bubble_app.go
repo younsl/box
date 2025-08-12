@@ -6,8 +6,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/younsl/cocd/internal/monitor"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/monitor"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // BubbleApp is the main Bubble Tea application model
@@ -427,44 +427,52 @@ func (app *BubbleApp) handleRecentJobUpdateMessage(msg recentJobUpdateMsg) (tea.
 		return app, app.listenForUpdates()
 	}
 	
-	if len(update.Jobs) > 0 {
-		for _, job := range update.Jobs {
-			existsInRecent := false
-			for _, existingJob := range app.recentJobs {
-				if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
-					existsInRecent = true
-					break
+	// Handle repository completion for real-time updates
+	if update.CompletedRepo != "" {
+		// Add or update jobs from the completed repository
+		if len(update.Jobs) > 0 {
+			// Remove old jobs from the same repository first
+			var filteredRecentJobs []scanner.JobStatus
+			for _, job := range app.recentJobs {
+				if job.Repository != update.CompletedRepo {
+					filteredRecentJobs = append(filteredRecentJobs, job)
 				}
 			}
+			app.recentJobs = filteredRecentJobs
 			
-			if !existsInRecent {
+			// Add new jobs from this repository
+			for _, job := range update.Jobs {
 				app.recentJobs = append(app.recentJobs, job)
-			}
-			
-			if job.Status == "waiting" {
-				existsInPending := false
-				for _, existingJob := range app.jobs {
-					if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
-						existsInPending = true
-						break
+				
+				// Also update pending jobs if status is waiting
+				if job.Status == "waiting" {
+					existsInPending := false
+					for i, existingJob := range app.jobs {
+						if existingJob.RunID == job.RunID && existingJob.ID == job.ID {
+							app.jobs[i] = job
+							existsInPending = true
+							break
+						}
+					}
+					
+					if !existsInPending {
+						app.jobs = append(app.jobs, job)
 					}
 				}
-				
-				if !existsInPending {
-					app.jobs = append(app.jobs, job)
-				}
 			}
+			
+			// Sort jobs after each update
+			monitor.SortJobsByTime(app.recentJobs, true)
+			monitor.SortJobsByTime(app.jobs, false)
 		}
-		
-		monitor.SortJobsByTime(app.recentJobs, true)
-		monitor.SortJobsByTime(app.jobs, false)
 	}
 	
-	
-	
-	app.loading = false
-	app.lastUpdate = time.Now()
-	app.errorMsg = ""
+	// Check if scan is completed
+	if update.Progress.ScanMode == "Completed" {
+		app.loading = false
+		app.lastUpdate = time.Now()
+		app.errorMsg = ""
+	}
 	
 	return app, app.listenForUpdates()
 }

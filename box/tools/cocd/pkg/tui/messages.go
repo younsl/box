@@ -3,8 +3,8 @@ package tui
 import (
 	"time"
 	
-	"github.com/younsl/cocd/internal/monitor"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/monitor"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // Messages for Bubble Tea

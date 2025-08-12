@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
-	"github.com/younsl/cocd/internal/monitor"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/monitor"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // UIComponents handles UI rendering

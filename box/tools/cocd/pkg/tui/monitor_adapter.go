@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 	
-	"github.com/younsl/cocd/internal/monitor"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/monitor"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // MonitorAdapter adapts the monitor.Monitor to the Monitor interface

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/younsl/cocd/internal/monitor"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/monitor"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 // CommandHandler handles all command operations

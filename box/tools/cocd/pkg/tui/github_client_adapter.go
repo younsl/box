@@ -4,7 +4,7 @@ import (
 	"context"
 	
 	"github.com/google/go-github/v60/github"
-	githubclient "github.com/younsl/cocd/internal/github"
+	githubclient "github.com/younsl/cocd/pkg/github"
 )
 
 // GitHubClient defines the interface for GitHub operations

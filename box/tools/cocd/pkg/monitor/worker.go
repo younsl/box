@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v60/github"
-	"github.com/younsl/cocd/internal/scanner"
+	"github.com/younsl/cocd/pkg/scanner"
 )
 
 const (
