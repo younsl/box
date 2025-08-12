@@ -23,7 +23,6 @@ type GitHubSkeleton struct {
 
 type MonitorSkeleton struct {
 	Interval    int    `yaml:"interval" comment:"Refresh interval in seconds"`
-	Environment string `yaml:"environment" comment:"Deployment environment to monitor\nCommon values: prod, production, staging, dev"`
 	Timezone    string `yaml:"timezone" comment:"Timezone for displaying timestamps\nExamples: UTC, Asia/Seoul, America/New_York, Europe/London, Asia/Tokyo"`
 }
 
@@ -37,7 +36,6 @@ func GetDefaultConfig() *ConfigSkeleton {
 		},
 		Monitor: MonitorSkeleton{
 			Interval:    5,
-			Environment: "prod",
 			Timezone:    "UTC",
 		},
 	}
@@ -138,8 +136,6 @@ func addComments(node *yaml.Node) {
 				key.HeadComment = "\nMonitor configuration"
 			case "interval":
 				key.HeadComment = "Refresh interval in seconds (default: 5)"
-			case "environment":
-				key.HeadComment = "Deployment environment to monitor (default: prod)\nCommon values: prod, production, staging, dev"
 			case "timezone":
 				key.HeadComment = "Timezone for displaying timestamps (default: UTC)\nExamples: UTC, Asia/Seoul, America/New_York, Europe/London, Asia/Tokyo"
 			}

@@ -40,7 +40,6 @@ func init() {
 	rootCmd.Flags().StringP("base-url", "u", "", "GitHub base URL (for GitHub Enterprise)")
 	rootCmd.Flags().StringP("org", "o", "", "GitHub organization")
 	rootCmd.Flags().StringP("repo", "r", "", "GitHub repository (optional, if not specified monitors all repos in org)")
-	rootCmd.Flags().StringP("environment", "e", "prod", "Environment to monitor")
 	rootCmd.Flags().IntP("interval", "i", 5, "Refresh interval in seconds")
 }
 
@@ -76,9 +75,6 @@ func run(cmd *cobra.Command, args []string) error {
 	if repo, _ := cmd.Flags().GetString("repo"); repo != "" {
 		cfg.GitHub.Repo = repo
 	}
-	if env, _ := cmd.Flags().GetString("environment"); env != "" {
-		cfg.Monitor.Environment = env
-	}
 	if interval, _ := cmd.Flags().GetInt("interval"); interval != 0 {
 		cfg.Monitor.Interval = interval
 	}
@@ -106,13 +102,12 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create GitHub client: %w", err)
 	}
 
-	mon := monitor.NewMonitor(client, cfg.Monitor.Environment, cfg.Monitor.Interval)
+	mon := monitor.NewMonitor(client, cfg.Monitor.Interval)
 	
 	tuiConfig := &tui.AppConfig{
 		ServerURL:   cfg.GitHub.BaseURL,
 		Org:         cfg.GitHub.Org,
 		Repo:        cfg.GitHub.Repo,
-		Environment: cfg.Monitor.Environment,
 		Timezone:    cfg.Monitor.Timezone,
 		Version:     version,
 	}

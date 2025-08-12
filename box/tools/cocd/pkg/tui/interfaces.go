@@ -83,6 +83,7 @@ type CommandHandlerInterface interface {
 	UpdateTimerForView(viewType ViewType)
 	CancelWorkflow(ctx context.Context, vm ViewManagerInterface) tea.Cmd
 	ApproveDeployment(ctx context.Context, vm ViewManagerInterface) tea.Cmd
+	DelayedRefresh(delay time.Duration) tea.Cmd
 }
 
 // UIRenderer defines the interface for rendering UI components

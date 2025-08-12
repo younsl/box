@@ -137,10 +137,24 @@ func (app *BubbleApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Refresh the current view to see updated status
 		return app.refreshCurrentView()
 		
+	case cancelProcessingMsg:
+		app.viewManager.HideCancelConfirm()
+		// Silently wait and then refresh to sync with GitHub
+		return app, app.commandHandler.DelayedRefresh(3 * time.Second)
+		
 	case approvalSuccessMsg:
 		app.viewManager.HideApprovalConfirm()
 		// Refresh the current view to see updated status
 		return app.refreshCurrentView()
+		
+	case approvalProcessingMsg:
+		app.viewManager.HideApprovalConfirm()
+		// Silently wait and then refresh to sync with GitHub
+		return app, app.commandHandler.DelayedRefresh(3 * time.Second)
+		
+	case delayedRefreshMsg:
+		// Perform the delayed refresh without showing loading indicator
+		return app.silentRefreshCurrentView()
 		
 	default:
 		return app, nil
@@ -264,6 +278,17 @@ func (app *BubbleApp) refreshCurrentView() (tea.Model, tea.Cmd) {
 	
 	if currentView == ViewRecent {
 			return app, app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan)
+	}
+	
+	return app, app.jobService.RefreshJobs(app.ctx, currentView)
+}
+
+func (app *BubbleApp) silentRefreshCurrentView() (tea.Model, tea.Cmd) {
+	currentView := app.viewManager.GetCurrentView()
+	// Don't show loading indicator for silent refresh
+	
+	if currentView == ViewRecent {
+		return app, app.commandHandler.LoadRecentJobsStreaming(app.ctx, app.updateChan)
 	}
 	
 	return app, app.jobService.RefreshJobs(app.ctx, currentView)

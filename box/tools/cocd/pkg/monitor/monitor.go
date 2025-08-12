@@ -32,12 +32,11 @@ type Monitor struct {
 	
 	recentScanner *scanner.RecentJobsScanner
 	
-	environment string
 	interval    time.Duration
 	
 }
 
-func NewMonitor(client *ghclient.Client, environment string, interval int) *Monitor {
+func NewMonitor(client *ghclient.Client, interval int) *Monitor {
 	repoManager := NewRepositoryManager(client)
 	progressTracker := NewProgressTracker()
 	envCache := NewEnvironmentCache(client)
@@ -50,7 +49,6 @@ func NewMonitor(client *ghclient.Client, environment string, interval int) *Moni
 		progressTracker: progressTracker,
 		envCache:        envCache,
 		recentScanner:   recentScanner,
-		environment:     environment,
 		interval:        time.Duration(interval) * time.Second,
 	}
 }

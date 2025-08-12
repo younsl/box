@@ -11,8 +11,6 @@ github:
 monitor:
   # Refresh scanning interval in seconds
   interval: 5
-  # Deployment Environment to monitor (prod, staging, etc.)
-  environment: "prod"
   # Timezone for approval timestamps (default: UTC)
   # Examples: UTC, Asia/Seoul, America/New_York, Europe/London, Asia/Tokyo
   timezone: Asia/Seoul

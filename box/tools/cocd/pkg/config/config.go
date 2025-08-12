@@ -24,7 +24,6 @@ type GitHubConfig struct {
 
 type MonitorConfig struct {
 	Interval int `mapstructure:"interval"`
-	Environment string `mapstructure:"environment"`
 	Timezone string `mapstructure:"timezone"`
 }
 
@@ -55,7 +54,6 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("github.base_url", "api.github.com")
 	viper.SetDefault("monitor.interval", 5)
-	viper.SetDefault("monitor.environment", "prod")
 	viper.SetDefault("monitor.timezone", "UTC")
 
 	if err := viper.ReadInConfig(); err != nil {

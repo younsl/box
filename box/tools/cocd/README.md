@@ -6,7 +6,7 @@
 
 > cocd stands for Chaos Of Continuous Deployment
 
-A TUI (Terminal User Interface) application for monitoring GitHub Actions jobs that are waiting for approval in production environments. Inspired by [k9s](https://github.com/derailed/k9s), cocd provides an interactive interface to monitor your GitHub Actions workflows in real-time.
+A TUI (Terminal User Interface) application for monitoring GitHub Actions jobs that are waiting for approval. Inspired by [k9s](https://github.com/derailed/k9s), cocd provides an interactive interface to monitor your GitHub Actions workflows in real-time.
 
 ## Background
 
@@ -23,7 +23,6 @@ DevOps Engineers and SREs can use cocd to manage GitHub Actions workflows throug
 - **Job approval** - Approve pending deployment jobs directly from the TUI
 - **Job cancellation** - Cancel running or pending jobs
 - **Real-time updates** - Live monitoring with configurable refresh intervals
-- **Multi-environment support** - Monitor different environments (prod, staging, dev)
 
 ## Architecture
 

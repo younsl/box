@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -163,6 +164,12 @@ func (ch *CommandHandler) UpdateTimerForView(viewType ViewType) {
 	ch.monitor.GetProgressTracker().SetNextScanTimer(nextScanAt, 1, false)
 }
 
+func (ch *CommandHandler) DelayedRefresh(delay time.Duration) tea.Cmd {
+	return tea.Tick(delay, func(t time.Time) tea.Msg {
+		return delayedRefreshMsg{}
+	})
+}
+
 func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInterface) tea.Cmd {
 	return tea.Cmd(func() tea.Msg {
 		job := vm.GetCancelTargetJob()
@@ -182,6 +189,11 @@ func (ch *CommandHandler) CancelWorkflow(ctx context.Context, vm ViewManagerInte
 		
 		_, err := client.CancelWorkflowRun(ctx, job.Repository, job.RunID)
 		if err != nil {
+			// Silently handle "job scheduled" error - it usually means cancellation is processing
+			if strings.Contains(err.Error(), "job scheduled on GitHub side") {
+				// Return processing message to trigger delayed refresh
+				return cancelProcessingMsg{job: job}
+			}
 			return errorMsg(fmt.Sprintf("Failed to cancel workflow: %v", err))
 		}
 		

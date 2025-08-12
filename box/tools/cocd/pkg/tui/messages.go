@@ -17,9 +17,12 @@ type (
 	scanProgressMsg       struct{}
 	updateUIMsg           struct{}
 	cancelSuccessMsg      struct{}
+	cancelProcessingMsg   struct{ job *scanner.JobStatus }
 	approvalSuccessMsg    struct{}
+	approvalProcessingMsg struct{ job *scanner.JobStatus }
 	recentJobUpdateMsg      monitor.JobUpdate
 	jobUpdateMsg            monitor.JobUpdate
 	startRecentStreamingMsg struct{}
+	delayedRefreshMsg     struct{}
 )
 

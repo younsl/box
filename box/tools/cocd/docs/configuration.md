@@ -54,9 +54,6 @@ github:
 monitor:
   # Refresh interval in seconds (default: 5)
   interval: 5
-  # Deployment environment to monitor (default: prod)
-  # Common values: prod, production, staging, dev
-  environment: prod
   # Timezone for displaying timestamps (default: UTC)
   # Examples: UTC, Asia/Seoul, America/New_York, Europe/London, Asia/Tokyo
   timezone: UTC
@@ -71,7 +68,6 @@ export COCD_GITHUB_TOKEN="your-token"
 export COCD_GITHUB_ORG="your-org"
 export COCD_GITHUB_REPO="your-repo"
 export COCD_MONITOR_INTERVAL=10
-export COCD_MONITOR_ENVIRONMENT="staging"
 export COCD_MONITOR_TIMEZONE="Asia/Seoul"
 ```
 
@@ -116,7 +112,6 @@ github:
 
 monitor:
   interval: 30
-  environment: production
   timezone: Asia/Seoul
 ```
 
@@ -148,6 +143,5 @@ github:
 
 monitor:
   interval: 30
-  environment: production
   timezone: Asia/Seoul
 ```

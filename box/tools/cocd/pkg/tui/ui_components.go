@@ -51,7 +51,6 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	memory := fmt.Sprintf("Mem: %s", progress.MemoryUsage)
 	server := fmt.Sprintf("Server: %s", serverName)
 	organization := fmt.Sprintf("Org: %s", org)
-	environment := fmt.Sprintf("Env: %s", ui.config.Environment)
 	
 	status := ui.getConnectionStatus(false, "")
 	
@@ -59,8 +58,8 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	timerInfo := ui.getTimerInfo(progress)
 	keyBindings := ui.getKeyBindings()
 	
-	return fmt.Sprintf("%s  %s  %s  %s  %s  Status: %s\n%s\n%s\n%s", 
-		title, memory, server, organization, environment, status, scanInfo, timerInfo, keyBindings)
+	return fmt.Sprintf("%s  %s  %s  %s  Status: %s\n%s\n%s\n%s", 
+		title, memory, server, organization, status, scanInfo, timerInfo, keyBindings)
 }
 
 // RenderViewSelector renders the view selector
