@@ -108,4 +108,5 @@ type KeyHandler interface {
 type JobService interface {
 	GetJobsForView(view ViewType, pendingJobs, recentJobs []scanner.JobStatus, vm ViewManagerInterface) []scanner.JobStatus
 	RefreshJobs(ctx context.Context, view ViewType) tea.Cmd
+	RefreshJobsWithStreaming(ctx context.Context, view ViewType, updateChan chan<- tea.Msg) tea.Cmd
 }

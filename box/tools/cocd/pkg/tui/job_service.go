@@ -40,3 +40,11 @@ func (js *DefaultJobService) RefreshJobs(ctx context.Context, view ViewType) tea
 	}
 	return js.commands.LoadRecentJobs(ctx)
 }
+
+// RefreshJobsWithStreaming refreshes jobs with streaming for recent jobs
+func (js *DefaultJobService) RefreshJobsWithStreaming(ctx context.Context, view ViewType, updateChan chan<- tea.Msg) tea.Cmd {
+	if view == ViewPending {
+		return js.commands.LoadPendingJobs(ctx)
+	}
+	return js.commands.LoadRecentJobsStreaming(ctx, updateChan)
+}

@@ -52,19 +52,14 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	memory := fmt.Sprintf("Mem: %s", progress.MemoryUsage)
 	server := fmt.Sprintf("Server: %s", serverName)
 	
-	// Get username and repo count
+	// Get username
 	username := "unknown"
 	if user, err := monitor.GetAuthenticatedUser(context.Background()); err == nil && user != "" {
 		username = user
 	}
 	
-	repoCount := progress.TotalRepos
-	if repoCount == 0 {
-		repoCount = progress.ValidRepos
-	}
-	
 	userInfo := fmt.Sprintf("User: %s", username)
-	organization := fmt.Sprintf("Org: %s  Repos: %d", org, repoCount)
+	organization := fmt.Sprintf("Org: %s", org)
 	
 	status := ui.getConnectionStatus(false, "")
 	
