@@ -19,6 +19,7 @@ type Monitor interface {
 	GetScanProgress() monitor.ScanProgress
 	GetUpdateInterval() int
 	GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- monitor.JobUpdate) error
+	GetAuthenticatedUser(ctx context.Context) (string, error)
 }
 
 // ProgressTracker defines the interface for tracking progress

@@ -201,3 +201,8 @@ func (c *Client) GetContents(ctx context.Context, owner, repo, path string, opts
 	return c.client.Repositories.GetContents(ctx, owner, repo, path, opts)
 }
 
+// GetAuthenticatedUser gets information about the authenticated user
+func (c *Client) GetAuthenticatedUser(ctx context.Context) (*github.User, *github.Response, error) {
+	return c.client.Users.Get(ctx, "")
+}
+

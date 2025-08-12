@@ -14,7 +14,6 @@ const (
 type ProgressTracker struct {
 	mu       sync.RWMutex
 	progress ScanProgress
-	scanning bool
 }
 
 func NewProgressTracker() *ProgressTracker {
@@ -73,7 +72,6 @@ func (pt *ProgressTracker) SetCompleted() {
 	now := time.Now()
 	pt.progress.CurrentStateStart = &now
 	pt.progress.StateDuration = 0
-	pt.scanning = false
 }
 
 func (pt *ProgressTracker) InitializeProgress(mode string, totalRepos, activeRepos, maxWorkers int, repoStats RepoStats) {
@@ -127,21 +125,6 @@ func (pt *ProgressTracker) UpdateCompleted(completed int) {
 	}
 }
 
-func (pt *ProgressTracker) StartScan() bool {
-	pt.mu.Lock()
-	defer pt.mu.Unlock()
-	if pt.scanning {
-		return false
-	}
-	pt.scanning = true
-	return true
-}
-
-func (pt *ProgressTracker) EndScan() {
-	pt.mu.Lock()
-	defer pt.mu.Unlock()
-	pt.scanning = false
-}
 
 type RepoStats struct {
 	Total    int

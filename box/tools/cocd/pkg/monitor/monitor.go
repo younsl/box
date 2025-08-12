@@ -28,7 +28,6 @@ type Monitor struct {
 	client         *ghclient.Client
 	repoManager    *RepositoryManager
 	progressTracker *ProgressTracker
-	envCache       *EnvironmentCache
 	
 	recentScanner *scanner.RecentJobsScanner
 	
@@ -39,7 +38,6 @@ type Monitor struct {
 func NewMonitor(client *ghclient.Client, interval int) *Monitor {
 	repoManager := NewRepositoryManager(client)
 	progressTracker := NewProgressTracker()
-	envCache := NewEnvironmentCache(client)
 	
 	recentScanner := scanner.NewRecentJobsScanner(client)
 	
@@ -47,7 +45,6 @@ func NewMonitor(client *ghclient.Client, interval int) *Monitor {
 		client:          client,
 		repoManager:     repoManager,
 		progressTracker: progressTracker,
-		envCache:        envCache,
 		recentScanner:   recentScanner,
 		interval:        time.Duration(interval) * time.Second,
 	}
@@ -70,6 +67,17 @@ func (m *Monitor) GetScanProgress() ScanProgress {
 
 func (m *Monitor) GetUpdateInterval() int {
 	return int(m.interval.Seconds())
+}
+
+func (m *Monitor) GetAuthenticatedUser(ctx context.Context) (string, error) {
+	user, _, err := m.client.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return "", err
+	}
+	if user.Login != nil {
+		return *user.Login, nil
+	}
+	return "", nil
 }
 
 func (m *Monitor) GetPendingJobs(ctx context.Context) ([]scanner.JobStatus, error) {
@@ -97,12 +105,6 @@ func (m *Monitor) GetPendingJobsWithProgress(ctx context.Context, progressChan c
 
 // GetRecentJobsWithStreaming gets recent jobs with real-time streaming updates
 func (m *Monitor) GetRecentJobsWithStreaming(ctx context.Context, jobUpdateChan chan<- JobUpdate) error {
-	if !m.progressTracker.StartScan() {
-		return nil
-	}
-	
-	defer m.progressTracker.EndScan()
-	
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
 	defer cancel()
 
@@ -138,12 +140,6 @@ func (m *Monitor) GetRecentJobs(ctx context.Context) ([]scanner.JobStatus, error
 }
 
 func (m *Monitor) GetRecentJobsWithProgress(ctx context.Context, progressChan chan<- ScanProgress) ([]scanner.JobStatus, error) {
-	if !m.progressTracker.StartScan() {
-		return []scanner.JobStatus{}, nil
-	}
-	
-	defer m.progressTracker.EndScan()
-	
 	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultRecentScanTimeout)
 	defer cancel()
 
@@ -220,7 +216,7 @@ func (m *Monitor) startCacheCleanup(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			m.envCache.CleanupExpiredCache()
+			// Repository cache cleanup handled by repository manager
 		}
 	}
 }

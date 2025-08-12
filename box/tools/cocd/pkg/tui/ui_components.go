@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -50,7 +51,20 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	title := headerStyle.Render(titleText)
 	memory := fmt.Sprintf("Mem: %s", progress.MemoryUsage)
 	server := fmt.Sprintf("Server: %s", serverName)
-	organization := fmt.Sprintf("Org: %s", org)
+	
+	// Get username and repo count
+	username := "unknown"
+	if user, err := monitor.GetAuthenticatedUser(context.Background()); err == nil && user != "" {
+		username = user
+	}
+	
+	repoCount := progress.TotalRepos
+	if repoCount == 0 {
+		repoCount = progress.ValidRepos
+	}
+	
+	userInfo := fmt.Sprintf("User: %s", username)
+	organization := fmt.Sprintf("Org: %s  Repos: %d", org, repoCount)
 	
 	status := ui.getConnectionStatus(false, "")
 	
@@ -58,8 +72,8 @@ func (ui *UIComponents) RenderHeader(monitor Monitor) string {
 	timerInfo := ui.getTimerInfo(progress)
 	keyBindings := ui.getKeyBindings()
 	
-	return fmt.Sprintf("%s  %s  %s  %s  Status: %s\n%s\n%s\n%s", 
-		title, memory, server, organization, status, scanInfo, timerInfo, keyBindings)
+	return fmt.Sprintf("%s  %s  %s  %s  %s  Status: %s\n%s\n%s\n%s", 
+		title, memory, server, organization, userInfo, status, scanInfo, timerInfo, keyBindings)
 }
 
 // RenderViewSelector renders the view selector

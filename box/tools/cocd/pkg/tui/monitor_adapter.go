@@ -63,6 +63,11 @@ func (ma *MonitorAdapter) GetRecentJobsWithStreaming(ctx context.Context, jobUpd
 	return ma.monitor.GetRecentJobsWithStreaming(ctx, jobUpdateChan)
 }
 
+// GetAuthenticatedUser returns the authenticated user's login name
+func (ma *MonitorAdapter) GetAuthenticatedUser(ctx context.Context) (string, error) {
+	return ma.monitor.GetAuthenticatedUser(ctx)
+}
+
 // progressTrackerAdapter adapts monitor.ProgressTracker to ProgressTracker interface
 type progressTrackerAdapter struct {
 	tracker *monitor.ProgressTracker
