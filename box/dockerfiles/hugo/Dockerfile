@@ -1,4 +1,4 @@
-FROM alpine:3.21.0
+FROM alpine:3.22.1
 
 LABEL maintainer="Younsung Lee <cysl@kakao.com>" \
       version="1.1.0" \
