@@ -119,6 +119,3 @@ commit-history-cleaner.sh
 workspace/
 unused/
 combined_relabel_configs.yaml
-
-# Binary files
-promdrop
