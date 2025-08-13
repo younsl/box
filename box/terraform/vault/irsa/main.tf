@@ -16,7 +16,7 @@ data "aws_iam_openid_connect_provider" "this" {
 #===============================================================================
 module "irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.48.0"
+  version = "5.60.0"
 
   role_name = "vault-irsa-role"
 
@@ -37,7 +37,7 @@ module "irsa_role" {
 #===============================================================================
 module "iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
-  version = "5.48.0"
+  version = "5.60.0"
 
   name        = "vault-auto-unseal-policy"
   path        = "/"
