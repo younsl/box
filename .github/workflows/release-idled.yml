@@ -1,0 +1,92 @@
+name: Release idled
+run-name: ✨ Release ${{ github.ref_name }} triggered by @${{ github.actor }}
+
+on:
+  push:
+    tags:
+      - 'idled/[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: ./box/tools/idled
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+
+      - name: Build artifact (${{ matrix.goos }}/${{ matrix.goarch }})
+        run: |
+          echo "Building artifact for ${{ matrix.goos }}/${{ matrix.goarch }} ..."
+          export GOOS=${{ matrix.goos }}
+          export GOARCH=${{ matrix.goarch }}
+          make build
+        env:
+          CGO_ENABLED: 0
+
+      - name: Upload artifact (${{ matrix.goos }}/${{ matrix.goarch }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: idled-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ./box/tools/idled/bin/idled-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  publish-release:
+    needs: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: dist
+
+      - name: List downloaded artifacts
+        run: ls -R dist
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: idled ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/*/*
+          body: |
+            ## Installation
+
+            Download the command line tool from the release page or use the following command:
+
+            <details>
+            <summary>Install idled</summary>
+              
+            ```bash
+            # Get arch and os currently running on the machine
+            ARCH=$(arch)
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+            # Download the binary and make it executable
+            curl -L -o idled https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/idled-$OS-$ARCH && \
+            chmod +x idled && \
+
+            # Run the binary
+            ./idled --version
+            ```
+
+            </details>
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
