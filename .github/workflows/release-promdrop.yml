@@ -105,7 +105,7 @@ jobs:
             type=ref,event=tag
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         env:
           IMAGE_DESCRIPTION: "A CLI tool to generate prometheus metric-drop config for each prometheus job"
         with:
