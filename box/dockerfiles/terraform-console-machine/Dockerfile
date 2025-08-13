@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL maintainer "Younsung Lee <cysl@kakao.com>"
 LABEL version="1.0"
