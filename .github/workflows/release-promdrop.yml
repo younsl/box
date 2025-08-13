@@ -16,7 +16,7 @@ env:
   PROJECT_NAME: promdrop
   PROJECT_BASE_DIR: box/kubernetes/promdrop
   REGISTRY: ghcr.io
-  IMAGE_NAME: younsl/${{ env.PROJECT_NAME }}
+  IMAGE_NAME: younsl/promdrop
   VERSION: ${{ github.ref_name || inputs.version }}
 
 jobs:
