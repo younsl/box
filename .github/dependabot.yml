@@ -10,17 +10,25 @@ updates:
       - "actions"
 
   - package-ecosystem: "docker"
-    directory: "/box/dockerfiles"
+    directory: "/"
     schedule:
       interval: "daily"
       timezone: "Asia/Seoul"
     labels:
       - "docker-dependencies"
 
-  - package-ecosystem: "docker"
-    directory: "/box/kubernetes/eip-rotation-handler/"
+  - package-ecosystem: "gomod"
+    directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
       timezone: "Asia/Seoul"
     labels:
-      - "docker-dependencies"
+      - "go-dependencies"
+
+  - package-ecosystem: "terraform"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Seoul"
+    labels:
+      - "terraform-dependencies"
