@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:3.22
 
 LABEL maintainer "Younsung Lee <cysl@kakao.com>"
 LABEL description "Lightweight alpine base image installed yarn v3.3.0"
