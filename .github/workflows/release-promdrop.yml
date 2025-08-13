@@ -1,5 +1,5 @@
 name: Release
-run-name: Release ${{ env.PROJECT_NAME }} ${{ github.ref_name }}
+run-name: 📦 Release promdrop ${{ github.ref_name }} 
 
 on:
   push:
