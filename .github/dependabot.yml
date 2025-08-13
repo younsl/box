@@ -1,3 +1,7 @@
+# Dependabot configuration for monorepo dependency management
+# Reference: https://github.blog/changelog/2024-06-25-simplified-dependabot-yml-configuration-with-multi-directory-key-directories-and-wildcard-glob-support/
+# Multi-directory support: https://github.blog/changelog/2024-04-29-dependabot-multi-directory-configuration-public-beta-now-available/
+
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -10,7 +14,9 @@ updates:
       - "actions"
 
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/box/dockerfiles/*"
+      - "/box/kubernetes/*"
     schedule:
       interval: "daily"
       timezone: "Asia/Seoul"
@@ -18,7 +24,9 @@ updates:
       - "docker-dependencies"
 
   - package-ecosystem: "gomod"
-    directory: "/"
+    directories:
+      - "/box/tools/*"
+      - "/box/kubernetes/*"
     schedule:
       interval: "weekly"
       timezone: "Asia/Seoul"
@@ -26,7 +34,9 @@ updates:
       - "go-dependencies"
 
   - package-ecosystem: "terraform"
-    directory: "/"
+    directories:
+      - "/box/terraform/*"
+      - "/box/terraform/*/*"
     schedule:
       interval: "weekly"
       timezone: "Asia/Seoul"
