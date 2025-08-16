@@ -63,6 +63,7 @@ box/
 │   └── policies/               # Kyverno and CEL admission policies
 ├── tools/                  # CLI utilities (Go-based)
 │   ├── cocd/              # GitHub Actions deployment monitor
+│   ├── idled/             # AWS idle resource scanner
 │   ├── kk/                # Domain connectivity checker
 │   └── qg/                # QR code generator
 ├── scripts/                # Automation scripts by platform
@@ -73,7 +74,7 @@ box/
 │   ├── vault/irsa/        # Vault with AWS KMS integration
 │   └── terraform-elasticache-*/  # ElastiCache backup Lambda
 ├── actions/                # GitHub Actions reusable workflows
-├── dockerfiles/            # Custom container images
+├── containers/             # Custom container images
 └── resume/                 # Bilingual resume (EN/KO)
 ```
 
@@ -140,6 +141,22 @@ IMDS_VERSION=auto             # auto|v1|v2
 # - ec2:ReleaseAddress
 ```
 
+### idled - AWS Idle Resource Scanner
+
+```bash
+# Scan idle resources across regions
+idled ec2 --regions all          # EC2 instances
+idled ebs --regions us-east-1    # EBS volumes
+idled s3                          # S3 buckets (global)
+
+# Service-specific idle criteria:
+# - EC2: Stopped instances
+# - EBS: Unattached volumes
+# - S3: No access for 90+ days
+# - Lambda: No invocations in 30+ days
+# - EIP: Unassociated addresses
+```
+
 ## Performance & API Guidelines
 
 ### GitHub API Constraints
@@ -164,3 +181,17 @@ Prefer:
 - User experience over theoretical efficiency
 
 See `box/tools/cocd/docs/performance-optimization-lessons.md` for case study.
+
+## Release Workflow
+
+GitHub Actions automatically builds and releases on tag push:
+
+```bash
+# Tool releases (pattern: {tool}/x.y.z)
+git tag cocd/1.0.0 && git push --tags
+git tag idled/1.0.0 && git push --tags
+git tag promdrop/1.0.0 && git push --tags
+
+# Workflows in .github/workflows/release-*.yml
+# Creates multi-platform binaries and GitHub releases
+```
