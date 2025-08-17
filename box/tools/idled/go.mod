@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.44.0
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.47.3
-	github.com/aws/aws-sdk-go-v2/service/configservice v1.52.3
+	github.com/aws/aws-sdk-go-v2/service/configservice v1.56.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.211.2
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.43.3
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.45.2
