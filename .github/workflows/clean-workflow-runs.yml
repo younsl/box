@@ -3,15 +3,14 @@ run-name: 🧹 Clean old workflow runs
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 1 * * *'
   workflow_dispatch:
-
-permissions:
-  actions: write
 
 jobs:
   delete:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
     steps:
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2.0.6
