@@ -53,3 +53,30 @@ flowchart LR
   style n fill: darkorange, color: white
   style note stroke: transparent, fill: transparent
 ```
+
+n8n database migration from sqlite to postgresql:
+
+```mermaid
+flowchart LR
+  note["n8n uses a local SQLite database by default."]
+  subgraph k8s["Kubernetes Cluster"]
+    subgraph ns1["n8n namespace"]
+      pn["`**Pod**
+      n8n`"]
+    end
+    subgraph ns2["n8n-test namespace"]
+      pn2["`**Pod**
+      n8n`"]
+      pdb[("`**Pod**
+      postgresql-0`")]
+    end
+  end
+  l["Local Machine"]
+
+  pn --Export sqlite, creds & workflows--> l
+  pn2 --> pdb
+  l --Import csv to tables--> pdb
+  l --Import--> pn2
+
+  style note stroke: transparent, fill: transparent
+```
