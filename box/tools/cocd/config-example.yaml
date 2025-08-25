@@ -1,0 +1,16 @@
+github:
+  # GitHub token (can also be set via GITHUB_TOKEN env var)
+  token: "" 
+  # For Github Enterprise Server
+  base_url: "github.example.com/api/v3"
+  # Organization Name
+  org: "your-organization"
+  # Repository Name
+  # repo: "your-repository"
+
+monitor:
+  # Refresh scanning interval in seconds
+  interval: 5
+  # Timezone for approval timestamps (default: UTC)
+  # Examples: UTC, Asia/Seoul, America/New_York, Europe/London, Asia/Tokyo
+  timezone: Asia/Seoul
