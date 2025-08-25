@@ -38,8 +38,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.4 h1:ueB2Te0Na
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.4/go.mod h1:nLEfLnVMmLvyIG58/6gsSA03F1voKGaCfHV7+lR8S7s=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 h1:moLQUoVq91LiqT1nbvzDukyqAlCv89ZmwaHw/ZFlFZg=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15/go.mod h1:ZH34PJUc8ApjBIfgQCFvkWcUDBtl/WTD+uiYHjd8igA=
-github.com/aws/aws-sdk-go-v2/service/kafka v1.39.2 h1:E2YG/t/JoVPPqJaAzjj9KheMeNFShnHsuF1WcTLLtYI=
-github.com/aws/aws-sdk-go-v2/service/kafka v1.39.2/go.mod h1:+9NIh+Gy66wZf5I3XLog+2pxKSWwOV82D3oTZ9It3eE=
+github.com/aws/aws-sdk-go-v2/service/kafka v1.42.2 h1:ej9/b17LRaw6M6b1FQOxx6d4rOOwKLSc5jvNdU1iang=
+github.com/aws/aws-sdk-go-v2/service/kafka v1.42.2/go.mod h1:cr4qUDfJkgZqFYH755JcO9mYzMF83kkeaWI+Ttsr0d4=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.71.2 h1:z926KZ1Ysi8Mbi4biJSAIRFdKemwQpO9M0QUTRLDaXA=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.71.2/go.mod h1:c27kk10S36lBYgbG1jR3opn4OAS5Y/4wjJa1GiHK/X4=
 github.com/aws/aws-sdk-go-v2/service/pricing v1.34.2 h1:rMadRuZp6w5fe7v+PW2ybQaAlsNWNqUoBU4GTPe7H24=
