@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Job Application Tracker</h1>
+        </header>
+        
+        <div class="controls">
+            <div class="controls-left">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="edit-mode-toggle" onchange="toggleEditMode()">
+                    <label for="edit-mode-toggle" class="toggle-label">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text-view">View</span>
+                        <span class="toggle-text-edit">Edit</span>
+                    </label>
+                </div>
+                <button onclick="openModal()" id="new-app-btn" disabled>+ New Application</button>
+            </div>
+            
+            <div class="status-info-compact">
+                <span class="status-label">GPG:</span>
+                <span class="status-value" id="gpg-recipient-compact">Loading...</span>
+                <span class="status-label">Data:</span>
+                <span class="status-value" id="data-status-compact">Encrypted</span>
+                <span class="status-label">Size:</span>
+                <span class="status-value" id="file-size-compact">-</span>
+                <span class="status-label">Updated:</span>
+                <span class="status-value" id="last-updated-compact">-</span>
+            </div>
+            
+            <div class="status-filter">
+                <select id="status-filter" onchange="filterStatus(this.value)">
+                    <option value="all">All Status</option>
+                    <option value="applied">Applied</option>
+                    <option value="screening">Screening</option>
+                    <option value="interview1">Interview I</option>
+                    <option value="interview2">Interview II</option>
+                    <option value="interview3">Interview III</option>
+                    <option value="final">Final</option>
+                    <option value="offer">Offer</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="withdrawn">Withdrawn</option>
+                </select>
+            </div>
+        </div>
+        
+        <table id="applications-table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Position</th>
+                    <th>Status</th>
+                    <th>Final Result</th>
+                    <th>Applied Date</th>
+                    <th>Platform</th>
+                    <th>URL</th>
+                    <th>Files</th>
+                    <th id="actions-header" style="display: none;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="applications-body">
+            </tbody>
+        </table>
+        
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h3>No applications yet</h3>
+            <p>Start tracking your job applications by clicking the "New Application" button above.</p>
+        </div>
+    </div>
+    
+    <div class="modal" id="application-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">New Application</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="application-form">
+                <input type="hidden" id="app-id">
+                
+                <div class="form-group">
+                    <label for="company">Company</label>
+                    <input type="text" id="company" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <input type="text" id="position" required>
+                </div>
+                
+                <div class="form-group-row">
+                    <div class="form-group-half">
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option value="applied">Applied</option>
+                            <option value="screening">Screening</option>
+                            <option value="interview1">Interview I</option>
+                            <option value="interview2">Interview II</option>
+                            <option value="interview3">Interview III</option>
+                            <option value="final">Final</option>
+                            <option value="offer">Offer</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="withdrawn">Withdrawn</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group-half">
+                        <label for="final-result">Final Result</label>
+                        <select id="final-result">
+                            <option value="">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="withdrawn">Withdrawn</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="applied-date">Applied Date</label>
+                    <input type="date" id="applied-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="platform">Platform</label>
+                    <input type="text" id="platform" placeholder="e.g., LinkedIn, Company Website, Indeed">
+                </div>
+                
+                <div class="form-group">
+                    <label for="url">URL</label>
+                    <input type="url" id="url" placeholder="https://company.com/careers/job-posting">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="file-upload">Files</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="file-upload" multiple accept=".pdf,.doc,.docx,.txt,.rtf,.hwp,.jpg,.jpeg,.png,.gif,.bmp,.svg,.zip,.rar,.7z,.ppt,.pptx,.xls,.xlsx,.csv,.md,.json,.xml,.html,.css,.js,.py,.go,.java,.cpp,.c,.h,.sh,.yaml,.yml,.gpg">
+                        <div class="file-list" id="file-list"></div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="sync-status" id="sync-status"></div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
