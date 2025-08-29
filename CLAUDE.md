@@ -261,3 +261,19 @@ git tag qg/1.0.0 && git push --tags
 - Mock AWS API calls using interfaces
 - Follow Go's standard testing package conventions
 - Test core logic in `internal/` and `pkg/` packages
+
+## Pre-commit Hooks
+
+**URL Checking for Resume**:
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run manually
+pre-commit run --files box/resume/resume.html
+
+# URL check script location
+.github/scripts/check-resume-urls.sh
+```
+
+The pre-commit hook validates all URLs in resume.html before allowing commits.
