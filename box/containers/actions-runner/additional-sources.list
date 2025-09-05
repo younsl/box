@@ -1,0 +1,5 @@
+# Additional APT Sources
+## Kakao Mirror
+deb http://mirror.kakao.com/ubuntu/ jammy main restricted universe multiverse
+deb http://mirror.kakao.com/ubuntu/ jammy-updates main restricted universe multiverse
+deb http://mirror.kakao.com/ubuntu/ jammy-security main restricted universe multiverse
