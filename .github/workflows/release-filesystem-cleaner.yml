@@ -92,3 +92,6 @@ jobs:
             VERSION=${{ needs.check.outputs.version }}
             COMMIT=${{ github.sha }}
             DATE=${{ steps.date.outputs.date }}
+          provenance: false
+          sbom: false
+          outputs: type=image,name=target
