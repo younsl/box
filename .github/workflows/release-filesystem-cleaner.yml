@@ -80,7 +80,7 @@ jobs:
         run: echo "date=$(date -u '+%Y-%m-%d_%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: Build and push multi-arch container image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: box/containers/filesystem-cleaner
           platforms: linux/amd64,linux/arm64
