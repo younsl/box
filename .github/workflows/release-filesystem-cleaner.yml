@@ -1,0 +1,90 @@
+name: Release filesystem-cleaner
+run-name: 📦 [younsl/filesystem-cleaner] Release filesystem-cleaner container image
+
+on:
+  push:
+    tags:
+      - 'filesystem-cleaner/*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        type: string
+
+env:
+  IMAGE_NAME: younsl/filesystem-cleaner
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    outputs:
+      image_exists: ${{ steps.image_check.outputs.image_exists }}
+      version: ${{ steps.extract_version.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/filesystem-cleaner/}
+          else
+            VERSION=${{ github.event.inputs.tag }}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Check if image exists on GitHub Container Registry
+        id: image_check
+        run: |
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
+          TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
+            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/tags/list)
+          echo "TAGS: $TAGS"
+
+          ## Check if TAGS is empty or null
+          if [[ -z "$TAGS" || "$TAGS" == "null" ]]; then
+            echo "No tags found, treating as image not existing."
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+          else
+            ## Check if the specific tag already exists
+            if echo "$TAGS" | jq -e --arg TAG "${{ steps.extract_version.outputs.version }}" '.tags | index($TAG)'; then
+              echo "Image with tag ${{ steps.extract_version.outputs.version }} already exists."
+              echo "image_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "Image with tag ${{ steps.extract_version.outputs.version }} not found."
+              echo "image_exists=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: check
+    if: ${{ needs.check.outputs.image_exists == 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry (ghcr.io)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push multi-arch container image
+        uses: docker/build-push-action@v5
+        with:
+          context: box/containers/filesystem-cleaner
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.version }}
+            ghcr.io/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            VERSION=${{ needs.check.outputs.version }}
+            COMMIT=${{ github.sha }}
+            DATE=${{ github.run_started_at }}

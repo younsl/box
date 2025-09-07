@@ -129,3 +129,8 @@ box/slides/*/*.html
 #----------------------------------
 !**/job-tracker/cmd/job-tracker/*
 !**/job-tracker/pkg/config
+
+#----------------------------------
+# filesystem-cleaner
+#----------------------------------
+!**/filesystem-cleaner/pkg/config
