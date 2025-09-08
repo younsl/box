@@ -8,7 +8,10 @@ A lightweight Go-based container image for automatic filesystem cleanup in Kuber
 ## Architecture
 
 ```mermaid
-flowchart TD
+---
+title: filesystem-cleaner Architecture
+---
+flowchart LR
     subgraph k8s ["Kubernetes Cluster"]
         subgraph pod ["Actions Runner Pod"]
             initContainer["filesystem-cleaner<br/>(initContainer)"]
