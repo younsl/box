@@ -5,6 +5,26 @@
 
 A lightweight Go-based container image for automatic filesystem cleanup in Kubernetes environments. Designed as a sidecar container or init container, it monitors disk usage and intelligently removes files to prevent storage exhaustion. Particularly useful for GitHub Actions self-hosted runners, CI/CD pipelines, and any workloads that generate temporary files requiring periodic cleanup.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph k8s ["Kubernetes Cluster"]
+        subgraph pod ["Actions Runner Pod"]
+            initContainer["filesystem-cleaner<br/>(initContainer)"]
+            container["actions-runner<br/>(main container)"]
+            volume["`**workspace volume**
+            /home/runner/_work`"]
+        end
+    end
+    
+    initContainer -->|"cleans filesystem<br/>before runner starts"| container
+    initContainer -.->|mount| volume
+    container -.->|mount| volume
+```
+
+The filesystem-cleaner runs as an init container before the GitHub Actions runner starts. Both containers share the same workspace volume, allowing the cleaner to remove build artifacts and cache data to prevent disk space issues.
+
 ## Features
 
 - **Automatic disk usage monitoring** - Triggers cleanup when usage exceeds threshold
