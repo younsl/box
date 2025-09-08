@@ -17,7 +17,7 @@ Custom container images built for specific DevOps workflows and development need
 | 5 | [**terraform-console-machine**](./terraform-console-machine/) | Terraform development environment | hashicorp/terraform | Interactive Terraform console | - |
 | 6 | [**yarn**](./yarn/) | Yarn package manager | node | Node.js with Yarn | - |
 | 7 | [**backup-utils**](/.github/workflows/release-backup-utils.yml) | GitHub Enterprise backup utilities | [github/backup-utils](https://github.com/github/backup-utils/releases) (unmodified) | GitHub Enterprise backup/restore tools (uses original Dockerfile) | [ghcr.io/younsl/backup-utils](https://github.com/younsl/box/pkgs/container/backup-utils), [helm chart](https://github.com/younsl/charts/tree/main/charts/backup-utils) |
-| 8 | [**filesystem-cleaner**](./filesystem-cleaner/) | Temporary file cleanup for Kubernetes | golang:1.25-alpine | Sidecar container that monitors and cleans specified directories | - |
+| 8 | [**filesystem-cleaner**](./filesystem-cleaner/) | Temporary file cleanup for Kubernetes | golang:1.25-alpine | Sidecar container that monitors and cleans specified directories | [ghcr.io/younsl/filesystem-cleaner](https://github.com/younsl/box/pkgs/container/filesystem-cleaner) |
 
 ## License
 
