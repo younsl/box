@@ -4,7 +4,7 @@ Custom [GitHub Actions runner image](https://github.com/actions/actions-runner-c
 
 ## Base Image
 
-- `summerwind/actions-runner:v2.328.0-ubuntu-22.04`
+- `summerwind/actions-runner:v2.328.0-ubuntu-22.04` from [docker hub](https://hub.docker.com/r/summerwind/actions-runner/tags)
 
 ## Features
 
