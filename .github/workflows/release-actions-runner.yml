@@ -79,6 +79,7 @@ jobs:
         run: |
           docker build \
             --platform linux/amd64 \
+            --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             -t ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.version }} \
             box/containers/actions-runner
             
