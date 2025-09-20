@@ -9,6 +9,7 @@ on:
 jobs:
   delete:
     runs-on: ubuntu-24.04
+    # Only this job has the necessary permissions, following the principle of least privilege
     permissions:
       actions: write
     steps:
