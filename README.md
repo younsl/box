@@ -12,3 +12,7 @@ It contains some scripts, kubernetes snippets, engineering notes, and some asset
 - [terraform](./box/terraform/)
 - [til](./box/til/)
 - [tools](./box/tools/)
+
+## ⚠️ Personal Use Only
+
+**This is a personal repository for individual use only.** Pull requests are not accepted and will be automatically closed. The repository includes an automated workflow ([close-pull-request.yml](.github/workflows/close-pull-request.yml)) that immediately closes any PRs submitted from forked repositories.
