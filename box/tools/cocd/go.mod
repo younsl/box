@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/google/go-github/v60 v60.0.0
-	github.com/mattn/go-runewidth v0.0.16
+	github.com/mattn/go-runewidth v0.0.17
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.20.1
 	golang.org/x/oauth2 v0.25.0
