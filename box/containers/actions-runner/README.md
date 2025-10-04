@@ -39,3 +39,4 @@ RUN apt-get update && \
 ## References
 
 - [GitHub Community Discussion on APT mirrors](https://github.com/orgs/community/discussions/160684)
+- [Actions Runner Available Images](https://github.com/actions/runner-images?tab=readme-ov-file#available-images)
