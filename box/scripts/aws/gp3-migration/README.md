@@ -52,6 +52,7 @@ Do you want to proceed with the migration? (y/n): y
 [i] All gp2 volumes have been migrated to gp3 successfully!
 ```
 
-## Reference
+## References
 
-[Blog post](https://younsl.github.io/blog/script-gp2-volumes-to-gp3-migration/)
+- [Blog post](https://younsl.github.io/blog/script-gp2-volumes-to-gp3-migration/)
+- [AWS EBS volume modification documentation](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html#elastic-volumes-considerations)
