@@ -26,6 +26,16 @@ This image can be used as a drop-in replacement for the standard GitHub Actions 
 
 To add or modify mirror sources, edit the `additional-sources.list` file.
 
+You can also install additional utilities like `make` or `aws-cli` using the package manager, for example:
+
+```dockerfile
+# Install make and other build essentials
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+```
+
 ## References
 
 - [GitHub Community Discussion on APT mirrors](https://github.com/orgs/community/discussions/160684)
