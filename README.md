@@ -1,15 +1,19 @@
 # box
 
-Clutter box. This repository is structured as a [monorepo](https://en.wikipedia.org/wiki/Monorepo).
+A monorepo containing Kubernetes tools, container images, and DevOps automation resources.
 
 ## Featured content
 
-It contains some scripts, kubernetes snippets, engineering notes, and some assets from [tech blog](https://younsl.github.io).
+Kubernetes utilities, container images, automation scripts, infrastructure code, and engineering documentation.
 
-- [containers](./box/containers/)
-- [kubernetes](./box/kubernetes/)
-- [scripts](./box/kubernetes/)
-- [terraform](./box/terraform/)
-- [til](./box/til/)
-- [tools](./box/tools/)
+- **[tools](./box/tools/)** - CLI utilities (cocd, idled, kk, qg)
+- **[containers](./box/containers/)** - Custom container images
+- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers
+- **[terraform](./box/terraform/)** - Infrastructure as Code
+- **[actions](./box/actions/)** - Reusable GitHub Actions workflows
+- **[scripts](./box/scripts/)** - Automation scripts for AWS, GitHub, and K8s
+- **[til](./box/til/)** - Engineering notes and learnings
 
+## License
+
+[MIT License](./LICENSE)
