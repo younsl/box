@@ -13,7 +13,3 @@ Kubernetes utilities, container images, automation scripts, infrastructure code,
 - **[actions](./box/actions/)** - Reusable GitHub Actions workflows
 - **[scripts](./box/scripts/)** - Automation scripts for AWS, GitHub, and K8s
 - **[til](./box/til/)** - Engineering notes and learnings
-
-## License
-
-[MIT License](./LICENSE)
