@@ -4,6 +4,22 @@
 
 All gp2 type EBS volumes located in the specified AWS Region are converted to gp3.
 
+## Precautions
+
+- Each EBS volume can only be modified once **every 6 hours**.
+- See [AWS EBS volume modification documentation](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html#elastic-volumes-considerations) for detailed requirements and limitations.
+
+## Kubernetes Volume Impact
+
+This script migrates **all gp2 volumes** in the specified region, including volumes used by Kubernetes PersistentVolumes (PVs).
+
+- **Online migration**: EBS volume type changes can be performed without detaching the volume (no downtime)
+- **Kubernetes compatibility**: StorageClass name (e.g., `gp2`) is just a label and doesn't need to match the actual EBS volume type
+- **Existing PVs unaffected**: Already provisioned PVs remain bound; volume type change is transparent to Kubernetes
+- **Performance impact**: Temporary I/O performance degradation may occur during migration
+- **Database workloads**: For production databases, run during low-traffic periods
+- **Recommended approach**: Migrate in phases (dev → staging → production stateless → production stateful)
+
 ## Example
 
 ```bash
