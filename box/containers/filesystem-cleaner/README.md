@@ -145,6 +145,8 @@ spec:
 
 ## Configuration
 
+Configure filesystem-cleaner using command-line flags (via `args` in Kubernetes):
+
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--target-paths` | `string` | `/home/runner/_work` | Paths to monitor and clean (comma-separated) |
