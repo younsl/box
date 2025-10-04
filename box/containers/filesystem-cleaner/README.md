@@ -7,24 +7,7 @@ A lightweight Go-based container image for automatic filesystem cleanup in Kuber
 
 ## Architecture
 
-```mermaid
----
-title: filesystem-cleaner Architecture
----
-flowchart LR
-    subgraph k8s ["Kubernetes Cluster"]
-        subgraph pod ["Actions Runner Pod"]
-            initContainer["filesystem-cleaner<br/>(initContainer)"]
-            container["actions-runner<br/>(main container)"]
-            volume["`**workspace volume**
-            /home/runner/_work`"]
-        end
-    end
-    
-    initContainer -->|"cleans filesystem<br/>before runner starts"| container
-    initContainer -.->|mount| volume
-    container -.->|mount| volume
-```
+<img width="693" height="373" alt="스크린샷 2025-10-04 오후 8 34 04" src="https://github.com/user-attachments/assets/4013a038-b42f-4f18-8b38-96429e176e44" />
 
 The filesystem-cleaner runs as an init container before the GitHub Actions runner starts. Both containers share the same workspace volume, allowing the cleaner to remove build artifacts and cache data to prevent disk space issues.
 
