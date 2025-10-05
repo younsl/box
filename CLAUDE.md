@@ -45,17 +45,6 @@ make docker-push    # Push to ECR (requires AWS credentials)
 make deploy         # Deploy to Kubernetes (where available)
 ```
 
-### Resume Generation
-
-```bash
-cd box/resume/
-make open           # Open HTML resume in Chrome
-make pdf            # Generate English + Korean PDFs
-make pdf-en         # English PDF only
-make pdf-ko         # Korean PDF only
-make clean          # Remove generated PDFs
-```
-
 ## High-Level Architecture
 
 ### Repository Structure
@@ -63,25 +52,28 @@ make clean          # Remove generated PDFs
 ```
 box/
 ├── kubernetes/             # K8s controllers, policies, helm charts
-│   ├── eip-rotation-handler/   # AWS EIP rotation DaemonSet
 │   ├── jdk-version-scanner/    # JDK version scanning tool
 │   ├── promdrop/          # Prometheus metric filter generator
-│   └── policies/               # Kyverno and CEL admission policies
-├── tools/                  # CLI utilities (Go-based)
+│   └── policies/          # Kyverno and CEL admission policies
+├── tools/                 # CLI utilities (Go-based)
 │   ├── cocd/              # GitHub Actions deployment monitor
 │   ├── idled/             # AWS idle resource scanner
 │   ├── kk/                # Domain connectivity checker
 │   └── qg/                # QR code generator
-├── scripts/                # Automation scripts by platform
+├── containers/            # Custom container images
+│   ├── actions-runner/    # GitHub Actions runner
+│   ├── filesystem-cleaner/# File system cleanup tool
+│   ├── hugo/              # Hugo static site generator
+│   └── terraform-console-machine/  # Terraform console container
+├── scripts/               # Automation scripts by platform
 │   ├── aws/               # AWS resource management
 │   ├── github/            # Repository automation
 │   └── k8s-registry-io-stat/  # K8s connectivity testing
-├── terraform/              # Infrastructure as Code
+├── terraform/             # Infrastructure as Code
 │   ├── vault/irsa/        # Vault with AWS KMS integration
 │   └── terraform-elasticache-*/  # ElastiCache backup Lambda
-├── actions/                # GitHub Actions reusable workflows
-├── containers/             # Custom container images
-└── resume/                 # Bilingual resume (EN/KO)
+├── actions/               # GitHub Actions reusable workflows
+└── til/                   # Engineering notes and learnings
 ```
 
 ### Architectural Patterns
@@ -119,11 +111,10 @@ box/
 
 ## AWS Integration Points
 
-- **EC2/EIP**: Elastic IP rotation for forward proxy bypass
 - **ECR**: Container registry for Kubernetes deployments
 - **IAM/IRSA**: Service account to IAM role mapping
 - **KMS**: Vault auto-unseal encryption
-- **IMDS**: Instance metadata for auto-discovery
+- **EC2**: Instance and resource management (idled scanner)
 
 Configure AWS credentials via environment variables or IAM instance profiles.
 
@@ -145,21 +136,6 @@ export COCD_CONFIG_PATH="./config.yaml"
 # Repository scanning limitation
 # ⚠️ No org-level workflow API exists
 # Must iterate repositories individually
-```
-
-### eip-rotation-handler - AWS EIP Rotation
-
-```bash
-# Key environment variables
-ROTATION_INTERVAL_MINUTES=10  # 1-1440 minutes
-LOG_LEVEL=info                # debug|info|warn|error
-IMDS_VERSION=auto             # auto|v1|v2
-
-# Required IAM permissions
-# - ec2:AllocateAddress
-# - ec2:AssociateAddress
-# - ec2:DescribeAddresses
-# - ec2:ReleaseAddress
 ```
 
 ### idled - AWS Idle Resource Scanner
@@ -261,19 +237,3 @@ git tag qg/1.0.0 && git push --tags
 - Mock AWS API calls using interfaces
 - Follow Go's standard testing package conventions
 - Test core logic in `internal/` and `pkg/` packages
-
-## Pre-commit Hooks
-
-**URL Checking for Resume**:
-```bash
-# Install pre-commit hooks
-pre-commit install
-
-# Run manually
-pre-commit run --files box/resume/resume.html
-
-# URL check script location
-.github/scripts/check-resume-urls.sh
-```
-
-The pre-commit hook validates all URLs in resume.html before allowing commits.
