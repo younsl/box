@@ -17,7 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.76.2
 	github.com/aws/aws-sdk-go-v2/service/pricing v1.39.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.0
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.4
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.39.6
 	github.com/briandowns/spinner v1.23.2
 	github.com/dustin/go-humanize v1.0.1
 	github.com/spf13/cobra v1.9.1
