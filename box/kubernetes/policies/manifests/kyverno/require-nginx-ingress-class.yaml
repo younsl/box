@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-nginx-ingress-class
+  annotations:
+    policies.kyverno.io/title: Require Nginx IngressClass Only
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    kyverno.io/kyverno-version: 1.14.0
+    kyverno.io/kubernetes-version: "1.32"
+    policies.kyverno.io/subject: Ingress
+    policies.kyverno.io/description: >-
+      This policy requires that all Ingress resources use ingressClassName: nginx only.
+      Other ingress controllers are not allowed for increasing operation efficiency.
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-05-27T00:00:00+09:00"
+spec:
+  admission: true
+  background: true
+  emitWarning: false
+  failurePolicy: Fail
+  # DEPRECATION WARNING:
+  # `validationFailureActions` will be deprecated in the future.
+  # Please use `failureAction` instead.
+  validationFailureAction: Enforce
+  rules:
+  - match:
+      any:
+      - resources:
+          kinds:
+          - Ingress
+    name: require-nginx-ingress-class
+    skipBackgroundRequests: true
+    validate:
+      allowExistingViolations: true
+      deny:
+        # If ingressClassName is not specified or null, it is not allowed.
+        # Only allow ingressClassName: nginx.
+        conditions:
+          any:
+          - key: "{{ request.object.spec.ingressClassName || '' }}"
+            operator: NotEquals
+            value: nginx
+      failureAction: Enforce
+      message: >-
+        Ingress resource must use ingressClassName 'nginx' only. Other ingress
+        controllers are not allowed for increasing operation efficiency.
