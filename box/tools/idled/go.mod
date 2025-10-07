@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/iam v1.47.1
 	github.com/aws/aws-sdk-go-v2/service/kafka v1.42.2
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.76.2
-	github.com/aws/aws-sdk-go-v2/service/pricing v1.34.2
+	github.com/aws/aws-sdk-go-v2/service/pricing v1.39.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.4
 	github.com/briandowns/spinner v1.23.2
