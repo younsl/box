@@ -42,8 +42,8 @@ github.com/aws/aws-sdk-go-v2/service/kafka v1.42.2 h1:ej9/b17LRaw6M6b1FQOxx6d4rO
 github.com/aws/aws-sdk-go-v2/service/kafka v1.42.2/go.mod h1:cr4qUDfJkgZqFYH755JcO9mYzMF83kkeaWI+Ttsr0d4=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.76.2 h1:/mOkmwc5PcOlnzhsqfASiJMAyN6ih3JKxjvvVl7h8mE=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.76.2/go.mod h1:9x/lRk5gSifCG5RVQd1bL4vcrpkqF1HP2skh55YrLJ0=
-github.com/aws/aws-sdk-go-v2/service/pricing v1.34.2 h1:rMadRuZp6w5fe7v+PW2ybQaAlsNWNqUoBU4GTPe7H24=
-github.com/aws/aws-sdk-go-v2/service/pricing v1.34.2/go.mod h1:giTP9ufzBQJRB6bc7P30PO8s35hCp6au5uM70zkohU4=
+github.com/aws/aws-sdk-go-v2/service/pricing v1.39.6 h1:SapAI7aLrvLNUCBeBhhR6cU7TFIrRC5KNeaj72hV+fc=
+github.com/aws/aws-sdk-go-v2/service/pricing v1.39.6/go.mod h1:TtNWNQGg2WmSIS+j/ZqyJD3xY6zyAuYHBDGxFYQftjU=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.78.0 h1:EBm8lXevBWe+kK9VOU/IBeOI189WPRwPUc3LvJK9GOs=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.78.0/go.mod h1:4qzsZSzB/KiX2EzDjs9D7A8rI/WGJxZceVJIHqtJjIU=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.4 h1:EKXYJ8kgz4fiqef8xApu7eH0eae2SrVG+oHCLFybMRI=
