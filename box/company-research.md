@@ -25,6 +25,7 @@
 | Payment | 페이히어 | AWS, Kubernetes, Istio | 확인필요 | [채용](https://careers.payhere.in/recruit) | - |
 | Payment | 쿠팡페이 | AWS, Azure, Kubernetes | 확인필요 | [채용](https://www.coupang.jobs/kr/jobs/?department=Coupang+Pay&department=Coupang+Pay+Tech) | - |
 | Payment | 무신사페이먼츠 | AWS, Kubernetes | On-site | [채용](https://www.musinsacareers.com/ko/home?subsidiaries=%EB%AC%B4%EC%8B%A0%EC%82%AC%ED%8E%98%EC%9D%B4%EB%A8%BC%EC%B8%A0) | - |
+| Payment | 크림페이 | On-premise, Kubernetes | On-site | [채용](https://recruit.kreampaycorp.com/main.do) | - |
 
 [^1]: 2025년 10월부터는 주 5일 오피스 근무로 변경될 예정
 
