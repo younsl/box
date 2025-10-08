@@ -23,6 +23,10 @@ Additional context and deprecation notices for specific images.
 
 - **backup-utils**: ⚠️ **Deprecated** - GitHub Enterprise Server 3.17+ includes built-in backup service, making this container unnecessary.
 
+## References
+
+- **Helm Charts**: [younsl/charts](https://github.com/younsl/charts) - Helm charts repository maintained by me (younsl) that uses these container images (actions-runner, backup-utils)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file in the project root for details.
