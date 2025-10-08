@@ -1,12 +1,10 @@
 # Container Images
 
-![logo](https://github.com/younsl/younsl.github.io/blob/main/content/slides/admission-policy/assets/pink-container-84x84.png)
-
 This directory contains custom container images for various DevOps and development purposes.
 
 ## Available Images
 
-Custom container images built for specific DevOps workflows and development needs. Images are either stored locally or pushed to [public ghcr.io](https://github.com/younsl?tab=packages) (GitHub Container Registry).
+Production-ready container images for DevOps automation, development tooling, and Kubernetes workloads. Published to [public ghcr.io](https://github.com/younsl?tab=packages) (GitHub Container Registry) or stored locally.
 
 | # | Image | Purpose | Base Image | Description | Remark |
 |---|-------|---------|------------|-------------|--------|
@@ -18,6 +16,12 @@ Custom container images built for specific DevOps workflows and development need
 | 6 | [**yarn**](./yarn/) | Yarn package manager | node | Node.js with Yarn | - |
 | 7 | [**backup-utils**](/.github/workflows/release-backup-utils.yml) | GitHub Enterprise backup utilities | [github/backup-utils](https://github.com/github/backup-utils/releases) (unmodified) | GitHub Enterprise backup/restore tools (uses original Dockerfile) | [ghcr.io/younsl/backup-utils](https://github.com/younsl/box/pkgs/container/backup-utils), [helm chart](https://github.com/younsl/charts/tree/main/charts/backup-utils) |
 | 8 | [**filesystem-cleaner**](./filesystem-cleaner/) | Temporary file cleanup for Kubernetes | golang:1.25-alpine | Sidecar container that monitors and cleans specified directories | [ghcr.io/younsl/filesystem-cleaner](https://github.com/younsl/box/pkgs/container/filesystem-cleaner) |
+
+## Notes
+
+Additional context and deprecation notices for specific images.
+
+- **backup-utils**: ⚠️ **Deprecated** - GitHub Enterprise Server 3.17+ includes built-in backup service, making this container unnecessary.
 
 ## License
 
