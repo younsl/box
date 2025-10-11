@@ -1,5 +1,16 @@
 # gp3-migration
 
+## Important Announcement
+
+**Automatic gp3 Migration for EKS Users**: If you're using aws-ebs-csi-driver **v1.19.0-eksbuild.2 or later**, you can enable automatic gp2 to gp3 migration by simply adding an annotation to your PersistentVolumeClaim (PVC). This eliminates the need for manual volume migration scripts.
+
+See the [AWS re:Post knowledge article](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) for detailed instructions on using the annotation-based approach.
+
+**This script is still useful for**:
+- Migrating standalone EBS volumes not managed by Kubernetes
+- Bulk migration of existing gp2 volumes across multiple AWS accounts/regions
+- Environments using older versions of aws-ebs-csi-driver
+
 ## Summary
 
 All gp2 type EBS volumes located in the specified AWS Region are converted to gp3.
