@@ -14,6 +14,21 @@ kubectl annotate pvc <pvc-name> ebs.csi.aws.com/volumeType="gp3"
 
 The migration happens **without downtime** - volumes are modified online without detaching from running pods. See the [AWS re:Post knowledge article](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) for detailed instructions.
 
+For EKS clusters with CSI driver v1.19.0 or later, the PVC Annotation method is strongly recommended as it provides the simplest approach with zero downtime using just a single command per volume.
+
+### Migration Method Comparison
+
+| Aspect | PVC Annotation Method | VolumeSnapshot Method |
+|--------|----------------------|----------------------|
+| **Complexity** | Simple (1 command) | Complex (5+ steps) |
+| **Downtime** | None | Requires pod restart |
+| **Existing Volumes** | Migrates in-place | Creates new volumes |
+| **CSI Driver Required** | v1.19.0+ | Any version |
+| **Risk Level** | Low | Medium |
+| **Best For** | Active volume migration | Data backup during migration |
+| **Command** | `kubectl annotate pvc` | Create snapshot → Restore |
+| **Guide** | [AWS re:Post](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) | [AWS Blog](https://aws.amazon.com/ko/blogs/containers/migrating-amazon-eks-clusters-from-gp2-to-gp3-ebs-volumes/) |
+
 **This script is still useful for**:
 - Migrating standalone EBS volumes not managed by Kubernetes
 - Bulk migration of existing gp2 volumes across multiple AWS accounts/regions
