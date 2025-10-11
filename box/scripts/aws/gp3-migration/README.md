@@ -8,14 +8,22 @@ All gp2 type EBS volumes located in the specified AWS Region are converted to gp
 
 There are **three methods** to migrate EBS gp2 volumes to gp3 in Kubernetes: **Volume Attributes Class** (declarative), **PVC Annotation** (imperative), and **VolumeSnapshot** (legacy).
 
-### 1. Volume Attributes Class (VAC) - Declarative Approach
+### 1. [Volume Attributes Class (VAC)](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) - Declarative Approach
 
 For Kubernetes **1.31+** with EBS CSI driver **v1.35.0+** (EKS managed add-on v1.35.0-eksbuild.2+). `VolumeAttributesClass` feature gate is automatically enabled on EKS - no additional configuration needed. Best for GitOps workflows and managing multiple volumes with standardized profiles.
 
 ![Kubernetes Architecture](./docs/1.png)
 
-```yaml
-# Step 1: Create VolumeAttributesClass
+**What is [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/)?**
+
+[VolumeAttributesClass (VAC)](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) defines a set of volume attributes (like type, IOPS, throughput) that can be applied to existing PersistentVolumes without recreating them. Think of it as a "profile" for volume modifications that enables zero-downtime in-place updates.
+
+**Important**: The `parameters` field syntax varies by CSI driver. For `ebs.csi.aws.com`, use `type`, `iops`, and `throughput`. Other drivers may use different parameter names - always check your CSI driver's documentation.
+
+**Step 1**: Create [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) resource with desired gp3 configuration.
+
+```bash
+kubectl apply -f - <<EOF
 apiVersion: storage.k8s.io/v1beta1
 kind: VolumeAttributesClass
 metadata:
@@ -25,25 +33,11 @@ parameters:
   type: gp3
   iops: "3000"
   throughput: "125"
+  tagSpecification_1: "performance=standard"
+EOF
 ```
 
-```yaml
-# Step 2: Update PVC to reference the VolumeAttributesClass
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-app-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Gi
-  storageClassName: gp2
-  volumeAttributesClassName: gp3-migration  # Add this field
-```
-
-Or apply using kubectl:
+**Step 2**: Patch existing PVC to reference the [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/).
 
 ```bash
 kubectl patch pvc <pvc-name> \
@@ -65,11 +59,11 @@ kubectl annotate pvc <pvc-name> ebs.csi.aws.com/volumeType="gp3"
 
 **⚠️ Outdated method** - Works with any CSI driver version but requires pod restart and creates new volumes. This approach is no longer recommended because it causes downtime and doesn't support in-place migration. Use VAC or PVC Annotation for zero-downtime migrations instead.
 
-**Recommended approach**: Use **VAC** for declarative infrastructure management, **PVC Annotation** for quick migrations, or **VolumeSnapshot** when you need backup guarantees during migration.
+**Recommended approach**: Use **[VAC](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/)** for declarative infrastructure management, **PVC Annotation** for quick migrations, or **VolumeSnapshot** when you need backup guarantees during migration.
 
 ### Migration Method Comparison
 
-| Aspect | Volume Attributes Class | PVC Annotation Method | VolumeSnapshot Method |
+| Aspect | [Volume Attributes Class](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) | PVC Annotation Method | VolumeSnapshot Method |
 |--------|------------------------|----------------------|----------------------|
 | **Complexity** | Moderate (3-4 steps) | Simple (1 command) | Complex (5+ steps) |
 | **Downtime** | None | None | Requires pod restart |
