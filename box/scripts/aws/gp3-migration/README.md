@@ -1,35 +1,31 @@
 # gp3-migration
 
+## Summary
+
+All gp2 type EBS volumes located in the specified AWS Region are converted to gp3.
+
 ## Important Announcement
 
-**Automatic gp3 Migration for EKS Users**: If you're using aws-ebs-csi-driver **v1.19.0-eksbuild.2 or later**, you can enable automatic gp2 to gp3 migration by simply adding an annotation to your PersistentVolumeClaim (PVC). This eliminates the need for manual volume migration scripts.
+**Automatic gp3 Migration for EKS Users**: If you're using aws-ebs-csi-driver **v1.19.0-eksbuild.2 or later**, you can enable automatic gp2 to gp3 migration by simply adding the `ebs.csi.aws.com/volumeType` annotation to your PersistentVolumeClaim (PVC):
 
-See the [AWS re:Post knowledge article](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) for detailed instructions on using the annotation-based approach.
+```bash
+kubectl annotate pvc <pvc-name> ebs.csi.aws.com/volumeType="gp3"
+```
+
+The migration happens **without downtime** - volumes are modified online without detaching from running pods. See the [AWS re:Post knowledge article](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) for detailed instructions.
 
 **This script is still useful for**:
 - Migrating standalone EBS volumes not managed by Kubernetes
 - Bulk migration of existing gp2 volumes across multiple AWS accounts/regions
 - Environments using older versions of aws-ebs-csi-driver
 
-## Summary
-
-All gp2 type EBS volumes located in the specified AWS Region are converted to gp3.
-
 ## Precautions
 
 - Each EBS volume can only be modified once **every 6 hours**.
-- See [AWS EBS volume modification documentation](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html#elastic-volumes-considerations) for detailed requirements and limitations.
-
-## Kubernetes Volume Impact
-
-This script migrates **all gp2 volumes** in the specified region, including volumes used by Kubernetes PersistentVolumes (PVs).
-
 - **Online migration**: EBS volume type changes can be performed without detaching the volume (no downtime)
-- **Kubernetes compatibility**: StorageClass name (e.g., `gp2`) is just a label and doesn't need to match the actual EBS volume type
-- **Existing PVs unaffected**: Already provisioned PVs remain bound; volume type change is transparent to Kubernetes
 - **Performance impact**: Temporary I/O performance degradation may occur during migration
 - **Database workloads**: For production databases, run during low-traffic periods
-- **Recommended approach**: Migrate in phases (dev → staging → production stateless → production stateful)
+- See [AWS EBS volume modification documentation](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html#elastic-volumes-considerations) for detailed requirements and limitations.
 
 ## Example
 
