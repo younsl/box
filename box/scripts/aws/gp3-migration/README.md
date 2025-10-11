@@ -12,6 +12,8 @@ There are **three methods** to migrate EBS gp2 volumes to gp3 in Kubernetes: **V
 
 For Kubernetes **1.31+** with EBS CSI driver **v1.35.0+** (EKS managed add-on v1.35.0-eksbuild.2+). `VolumeAttributesClass` feature gate is automatically enabled on EKS - no additional configuration needed. Best for GitOps workflows and managing multiple volumes with standardized profiles.
 
+![Kubernetes Architecture](./docs/1.png)
+
 ```yaml
 # Step 1: Create VolumeAttributesClass
 apiVersion: storage.k8s.io/v1beta1
