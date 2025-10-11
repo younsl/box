@@ -8,7 +8,11 @@ This guide describes **three methods** for migrating EBS gp2 volumes to gp3 in K
 2. **PVC Annotation** - Imperative approach
 3. **VolumeSnapshot** - Legacy approach (⚠️ requires pod restart)
 
-## Method 1: Volume Attributes Class (VAC) - Declarative Approach
+## Volume Modification Process
+
+**Recommended approach for production environments.** This section describes the modern, declarative method using VolumeAttributesClass (VAC) that enables zero-downtime, in-place volume migration with GitOps-friendly configuration management.
+
+### Method 1: Volume Attributes Class (VAC) - Declarative Approach
 
 This method performs in-place volume migration without requiring pod restart or PV recreation, enabling zero-downtime volume type changes.
 
@@ -16,13 +20,13 @@ Available for Kubernetes **1.31+** with EBS CSI driver **v1.35.0+** (EKS managed
 
 ![Kubernetes Architecture](./assets/gp3-migration-1.png)
 
-### What is VolumeAttributesClass?
+#### What is VolumeAttributesClass?
 
 [VolumeAttributesClass (VAC)](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) defines a set of volume attributes (like type, IOPS, throughput) that can be applied to existing PersistentVolumes without recreating them. Think of it as a "profile" for volume modifications that enables zero-downtime in-place updates.
 
 **Important**: The `parameters` field syntax varies by CSI driver. For `ebs.csi.aws.com`, use `type`, `iops`, and `throughput`. Other drivers may use different parameter names - always check your CSI driver's documentation.
 
-### Step 1: Create VolumeAttributesClass
+#### Step 1: Create VolumeAttributesClass
 
 Create [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) resource with desired gp3 configuration.
 
@@ -41,7 +45,7 @@ parameters:
 EOF
 ```
 
-### Step 2: Patch PVC
+#### Step 2: Patch PVC
 
 Patch existing PVC to reference the [VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/).
 
@@ -53,12 +57,17 @@ kubectl patch pvc <pvc-name> \
 
 **Note**: `storageClassName` and `volumeAttributesClassName` can be different. The `storageClassName` (e.g., `gp2`) represents the original StorageClass used when the PV was **first created** and cannot be changed. The `volumeAttributesClassName` (e.g., `gp3-migration`) is used to **modify the existing PV's attributes** in-place. This is the expected pattern for volume migration scenarios.
 
-### References
+#### References
 
 - [AWS EBS CSI Driver - Modify Volume](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md)
 - [AWS Blog - Modify Amazon EBS volumes on Kubernetes with Volume Attributes Classes](https://aws.amazon.com/ko/blogs/containers/modify-amazon-ebs-volumes-on-kubernetes-with-volume-attributes-classes/)
 
-## Method 2: PVC Annotation - Quick Migration
+## Alternative Methods
+
+**For quick migrations or older Kubernetes versions.** These methods provide alternatives when VolumeAttributesClass is not available or for simple one-off migrations. Method 2 supports in-place migration, while Method 3 uses snapshot-based restoration to create new volumes with pod restart.
+
+<details>
+<summary>Method 2: PVC Annotation - Quick Migration</summary>
 
 This method also performs in-place volume migration without requiring pod restart or PV recreation.
 
@@ -68,13 +77,18 @@ Available for CSI driver **v1.19.0+**. This is the simplest approach for one-off
 kubectl annotate pvc <pvc-name> ebs.csi.aws.com/volumeType="gp3"
 ```
 
-## Method 3: VolumeSnapshot - Legacy Approach
+</details>
+
+<details>
+<summary>Method 3: VolumeSnapshot - Legacy Approach</summary>
 
 **⚠️ This method requires pod restart and creates new PV instead of modifying existing volumes in-place.**
 
 While this outdated method works with any CSI driver version, it is no longer recommended because it requires pod restart and doesn't support in-place migration. **Use VAC or PVC Annotation instead for zero-downtime migrations.**
 
 **Recommended approach**: Use **[VAC](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/)** for declarative infrastructure management, **PVC Annotation** for quick migrations, or **VolumeSnapshot** only when you need backup guarantees during migration.
+
+</details>
 
 ## Migration Method Comparison
 
