@@ -97,6 +97,8 @@ While this outdated method works with any CSI driver version, it is no longer re
 
 ## Migration Method Comparison
 
+**Method 1 ([VolumeAttributesClass](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/)) is strongly recommended for production environments.** Unlike annotation-based workarounds, it uses a dedicated Kubernetes resource (`VolumeAttributesClass`) for declarative volume configuration management. This enables reusable volume profiles, GitOps integration, and standardized policies across multiple PVCs, aligning with Kubernetes-native resource management patterns.
+
 | Aspect | [Volume Attributes Class](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/) | PVC Annotation Method | VolumeSnapshot Method |
 |--------|------------------------|----------------------|----------------------|
 | **Complexity** | Moderate (3-4 steps) | Simple (1 command) | Complex (5+ steps) |
