@@ -47,6 +47,10 @@ kubectl patch pvc <pvc-name> \
 
 **Note**: `storageClassName` and `volumeAttributesClassName` can be different. The `storageClassName` (e.g., `gp2`) represents the original StorageClass used when the PV was **first created** and cannot be changed. The `volumeAttributesClassName` (e.g., `gp3-migration`) is used to **modify the existing PV's attributes** in-place. This is the expected pattern for volume migration scenarios.
 
+**References**:
+- [AWS EBS CSI Driver - Modify Volume](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/modify-volume.md)
+- [AWS Blog - Modify Amazon EBS volumes on Kubernetes with Volume Attributes Classes](https://aws.amazon.com/ko/blogs/containers/modify-amazon-ebs-volumes-on-kubernetes-with-volume-attributes-classes/)
+
 ### 2. PVC Annotation - Quick Migration
 
 For CSI driver **v1.19.0+**. Simplest approach for one-off migrations with zero downtime.
