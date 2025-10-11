@@ -6,28 +6,80 @@ All gp2 type EBS volumes located in the specified AWS Region are converted to gp
 
 ## Important Announcement
 
-**Automatic gp3 Migration for EKS Users**: If you're using aws-ebs-csi-driver **v1.19.0-eksbuild.2 or later**, you can enable automatic gp2 to gp3 migration by simply adding the `ebs.csi.aws.com/volumeType` annotation to your PersistentVolumeClaim (PVC):
+There are **three methods** to migrate EBS gp2 volumes to gp3 in Kubernetes: **Volume Attributes Class** (declarative), **PVC Annotation** (imperative), and **VolumeSnapshot** (legacy).
+
+### 1. Volume Attributes Class (VAC) - Declarative Approach
+
+For Kubernetes **1.31+** with EBS CSI driver **v1.35.0+** (EKS managed add-on v1.35.0-eksbuild.2+). `VolumeAttributesClass` feature gate is automatically enabled on EKS - no additional configuration needed. Best for GitOps workflows and managing multiple volumes with standardized profiles.
+
+```yaml
+# Step 1: Create VolumeAttributesClass
+apiVersion: storage.k8s.io/v1beta1
+kind: VolumeAttributesClass
+metadata:
+  name: gp3-migration
+driverName: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+```
+
+```yaml
+# Step 2: Update PVC to reference the VolumeAttributesClass
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-app-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: gp2
+  volumeAttributesClassName: gp3-migration  # Add this field
+```
+
+Or apply using kubectl:
+
+```bash
+kubectl patch pvc <pvc-name> \
+  --type merge \
+  --patch '{"spec":{"volumeAttributesClassName":"gp3-migration"}}'
+```
+
+**Note**: `storageClassName` and `volumeAttributesClassName` can be different. The `storageClassName` (e.g., `gp2`) represents the original StorageClass used when the PV was **first created** and cannot be changed. The `volumeAttributesClassName` (e.g., `gp3-migration`) is used to **modify the existing PV's attributes** in-place. This is the expected pattern for volume migration scenarios.
+
+### 2. PVC Annotation - Quick Migration
+
+For CSI driver **v1.19.0+**. Simplest approach for one-off migrations with zero downtime.
 
 ```bash
 kubectl annotate pvc <pvc-name> ebs.csi.aws.com/volumeType="gp3"
 ```
 
-The migration happens **without downtime** - volumes are modified online without detaching from running pods. See the [AWS re:Post knowledge article](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) for detailed instructions.
+### 3. VolumeSnapshot - Legacy Approach
 
-For EKS clusters with CSI driver v1.19.0 or later, the PVC Annotation method is strongly recommended as it provides the simplest approach with zero downtime using just a single command per volume.
+**⚠️ Outdated method** - Works with any CSI driver version but requires pod restart and creates new volumes. This approach is no longer recommended because it causes downtime and doesn't support in-place migration. Use VAC or PVC Annotation for zero-downtime migrations instead.
+
+**Recommended approach**: Use **VAC** for declarative infrastructure management, **PVC Annotation** for quick migrations, or **VolumeSnapshot** when you need backup guarantees during migration.
 
 ### Migration Method Comparison
 
-| Aspect | PVC Annotation Method | VolumeSnapshot Method |
-|--------|----------------------|----------------------|
-| **Complexity** | Simple (1 command) | Complex (5+ steps) |
-| **Downtime** | None | Requires pod restart |
-| **Existing Volumes** | Migrates in-place | Creates new volumes |
-| **CSI Driver Required** | v1.19.0+ | Any version |
-| **Risk Level** | Low | Medium |
-| **Best For** | Active volume migration | Data backup during migration |
-| **Command** | `kubectl annotate pvc` | Create snapshot → Restore |
-| **Guide** | [AWS re:Post](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) | [AWS Blog](https://aws.amazon.com/ko/blogs/containers/migrating-amazon-eks-clusters-from-gp2-to-gp3-ebs-volumes/) |
+| Aspect | Volume Attributes Class | PVC Annotation Method | VolumeSnapshot Method |
+|--------|------------------------|----------------------|----------------------|
+| **Complexity** | Moderate (3-4 steps) | Simple (1 command) | Complex (5+ steps) |
+| **Downtime** | None | None | Requires pod restart |
+| **Existing Volumes** | Migrates in-place | Migrates in-place | Creates new volumes |
+| **K8s Version** | 1.31+ | Any | Any |
+| **CSI Driver Required** | v1.35.0+ | v1.19.0+ | Any version |
+| **Risk Level** | Low | Low | Medium |
+| **Management Style** | Declarative (GitOps) | Imperative (ad-hoc) | Manual |
+| **Reusability** | High (profiles) | Low | Low |
+| **Best For** | Infrastructure as Code | Quick migrations | Backup during migration |
+| **Approach** | Create VAC → Patch PVC | `kubectl annotate pvc` | Create snapshot → Restore |
+| **Guide** | [AWS Blog](https://aws.amazon.com/ko/blogs/containers/modify-amazon-ebs-volumes-on-kubernetes-with-volume-attributes-classes/) | [AWS re:Post](https://repost.aws/knowledge-center/eks-migrate-ebs-volume-g3) | [AWS Blog](https://aws.amazon.com/ko/blogs/containers/migrating-amazon-eks-clusters-from-gp2-to-gp3-ebs-volumes/) |
 
 **This script is still useful for**:
 - Migrating standalone EBS volumes not managed by Kubernetes
