@@ -6,7 +6,7 @@ All gp2 type EBS volumes located in the specified AWS Region are converted to gp
 
 ## EKS gp2 to gp3 Migration
 
-For migrating EBS volumes in Kubernetes clusters, see the dedicated guide: **[EKS gp2 to gp3 Migration Guide](./docs/eks-gp2-to-gp3-migration.md)**
+For migrating EBS volumes in Kubernetes clusters, see the dedicated guide: **[EKS gp2 to gp3 Migration Guide](/box/til/eks-gp2-to-gp3-migration.md)**
 
 The guide covers three migration methods. The first two methods support in-place migration without requiring pod restart or PV recreation, enabling zero-downtime volume type changes:
 - **Volume Attributes Class (VAC)** - Declarative approach for K8s 1.31+ (Recommended)

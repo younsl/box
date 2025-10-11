@@ -14,7 +14,7 @@ This method performs in-place volume migration without requiring pod restart or 
 
 Available for Kubernetes **1.31+** with EBS CSI driver **v1.35.0+** (EKS managed add-on v1.35.0-eksbuild.2+). The `VolumeAttributesClass` feature gate is automatically enabled on EKS with no additional configuration needed. This approach is best suited for GitOps workflows and managing multiple volumes with standardized profiles.
 
-![Kubernetes Architecture](../docs/1.png)
+![Kubernetes Architecture](./assets/gp3-migration-1.png)
 
 ### What is VolumeAttributesClass?
 
