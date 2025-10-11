@@ -17,9 +17,9 @@ This guide describes **three methods** for migrating EBS gp2 volumes to gp3 in K
 This method performs in-place volume migration without requiring pod restart or PV recreation, enabling zero-downtime volume type changes. Best suited for GitOps workflows and managing multiple volumes with standardized profiles.
 
 **Requirements for using VolumeAttributesClass:**
-- Kubernetes 1.31 or later (VolumeAttributesClass promoted to Beta in upstream)
-- EBS CSI driver v1.35.0+ (EKS managed add-on v1.35.0-eksbuild.2+)
-- VolumeAttributesClass feature gate
+- [ ] Kubernetes 1.31 or later (VolumeAttributesClass promoted to Beta in upstream)
+- [ ] EBS CSI driver v1.35.0+ (EKS managed add-on v1.35.0-eksbuild.2+)
+- [ ] VolumeAttributesClass feature gate
   - EKS 1.31+: Automatically enabled by default
   - Upstream Kubernetes 1.31: Requires manual activation
 
