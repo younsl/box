@@ -1,0 +1,41 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-scaledobject-fallback
+  annotations:
+    policies.kyverno.io/title: Disallow fallback in ScaledObject
+    policies.kyverno.io/category: KEDA
+    policies.kyverno.io/subject: ScaledObject
+    policies.kyverno.io/minversion: 1.13.0
+    policies.kyverno.io/description: >-
+      This policy audits the presence of the fallback field in ScaledObject resources.
+      Using fallback can cause unexpected autoscaling behavior, and should be reviewed carefully.
+    policies.kyverno.io/reference: https://kyverno.io/policies/pod-security/baseline/disallow-host-path/disallow-host-path/
+    kyverno.younsl.xyz/battle-tested: "true"
+    kyverno.younsl.xyz/battle-tested-since: "2025-04-11T00:00:00+09:00"
+spec:
+  background: true
+  emitWarning: true
+  failurePolicy: Fail
+  # DEPRECATION WARNING:
+  # `validationFailureActions` will be deprecated in the future.
+  # Please use `failureAction` instead.
+  validationFailureAction: Audit
+  rules:
+    - name: scaledobject-fallback
+      match:
+        any:
+          - resources:
+              kinds:
+                - ScaledObject
+      validate:
+        allowExistingViolations: true
+        failureAction: Audit
+        message: >-
+          The .spec.fallback field is set in this ScaledObject resource.
+          While fallback can help maintain availability during metric errors, it may hide real issues and lead to unintended scaling.
+          Review the fallback configuration carefully or consider removing it if not essential.
+        pattern:
+          spec:
+            X(fallback): "null"
