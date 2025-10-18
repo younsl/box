@@ -273,11 +273,44 @@ jobs:
           echo "Release assets:"
           ls -lh release-assets/
 
-      - name: Generate checksums
+      - name: Generate checksums table
+        id: checksums
         working-directory: release-assets
         run: |
-          sha256sum *.tar.gz > checksums.txt
-          cat checksums.txt
+          CHECKSUMS_TABLE="| Platform | Architecture | Binary | SHA256 Checksum |\n"
+          CHECKSUMS_TABLE="${CHECKSUMS_TABLE}|----------|--------------|--------|-----------------|"
+
+          # Linux amd64
+          if [ -f "promdrop-linux-amd64.tar.gz" ]; then
+            checksum=$(sha256sum promdrop-linux-amd64.tar.gz | awk '{print $1}')
+            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| Linux | amd64 | \`promdrop-linux-amd64.tar.gz\` | \`$checksum\` |"
+          fi
+
+          # Linux arm64
+          if [ -f "promdrop-linux-arm64.tar.gz" ]; then
+            checksum=$(sha256sum promdrop-linux-arm64.tar.gz | awk '{print $1}')
+            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| Linux | arm64 | \`promdrop-linux-arm64.tar.gz\` | \`$checksum\` |"
+          fi
+
+          # macOS amd64
+          if [ -f "promdrop-darwin-amd64.tar.gz" ]; then
+            checksum=$(sha256sum promdrop-darwin-amd64.tar.gz | awk '{print $1}')
+            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| macOS | amd64 (Intel) | \`promdrop-darwin-amd64.tar.gz\` | \`$checksum\` |"
+          fi
+
+          # macOS arm64
+          if [ -f "promdrop-darwin-arm64.tar.gz" ]; then
+            checksum=$(sha256sum promdrop-darwin-arm64.tar.gz | awk '{print $1}')
+            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| macOS | arm64 (Apple Silicon) | \`promdrop-darwin-arm64.tar.gz\` | \`$checksum\` |"
+          fi
+
+          # Output to GitHub environment for use in release body
+          echo "CHECKSUMS_TABLE<<EOF" >> $GITHUB_ENV
+          echo -e "$CHECKSUMS_TABLE" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Also print to console for debugging
+          echo -e "$CHECKSUMS_TABLE"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -305,12 +338,7 @@ jobs:
 
             Download the appropriate binary for your platform:
 
-            | Platform | Architecture | Binary |
-            |----------|--------------|--------|
-            | Linux | amd64 | `${{ env.PROJECT_NAME }}-linux-amd64.tar.gz` |
-            | Linux | arm64 | `${{ env.PROJECT_NAME }}-linux-arm64.tar.gz` |
-            | macOS | amd64 (Intel) | `${{ env.PROJECT_NAME }}-darwin-amd64.tar.gz` |
-            | macOS | arm64 (Apple Silicon) | `${{ env.PROJECT_NAME }}-darwin-arm64.tar.gz` |
+            ${{ env.CHECKSUMS_TABLE }}
 
             **Quick install** (auto-detects platform):
 
@@ -375,14 +403,6 @@ jobs:
             - [Usage Guide](https://github.com/${{ github.repository }}/blob/main/${{ env.PROJECT_BASE_DIR }}/docs/usage.md)
             - [Testing Guide](https://github.com/${{ github.repository }}/blob/main/${{ env.PROJECT_BASE_DIR }}/docs/testing.md)
             - [Output Configuration](https://github.com/${{ github.repository }}/blob/main/${{ env.PROJECT_BASE_DIR }}/docs/output-configuration.md)
-
-            ## Checksums
-
-            Verify your download with SHA256:
-
-            ```
-            $(cat release-assets/checksums.txt)
-            ```
           generate_release_notes: true
           draft: false
           prerelease: false
