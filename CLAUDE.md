@@ -45,6 +45,10 @@ make docker-push    # Push to ECR (requires AWS credentials)
 make deploy         # Deploy to Kubernetes (where available)
 ```
 
+**Note**: Not all tools have identical Makefile targets. Check project-specific Makefiles for variations:
+- `make mod` (cocd) vs `make deps` (idled, jdk-scanner)
+- Some projects include `make vet` or `make lint` targets
+
 ## High-Level Architecture
 
 ### Repository Structure
@@ -209,7 +213,7 @@ Prefer:
 - Measurement before optimization
 - User experience over theoretical efficiency
 
-See `box/tools/cocd/docs/performance-optimization-lessons.md` for case study.
+See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case study (written in Korean).
 
 ## Release Workflow
 
@@ -220,11 +224,18 @@ GitHub Actions automatically builds and releases on tag push:
 git tag cocd/1.0.0 && git push --tags
 git tag idled/1.0.0 && git push --tags
 git tag promdrop/1.0.0 && git push --tags
-git tag kk/1.0.0 && git push --tags
-git tag qg/1.0.0 && git push --tags
 
-# Workflows in .github/workflows/release-*.yml
-# Creates multi-platform binaries and GitHub releases
+# Note: Not all tools have automated release workflows
+# Check .github/workflows/release-*.yml for available automation
+
+# Available workflows:
+# - release-cocd.yml
+# - release-idled.yml
+# - release-promdrop.yml
+# - release-filesystem-cleaner.yml
+# - release-actions-runner.yml
+# - release-hugo.yml
+# - release-backup-utils.yml
 ```
 
 ## Testing Guidelines
