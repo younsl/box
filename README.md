@@ -2,7 +2,7 @@
 
 A monorepo containing Kubernetes tools, container images, and DevOps automation resources.
 
-## 🦀 Announcement
+## Announcement
 
 Migrating all Go-based CLI tools and Kubernetes controllers in this repository to [Rust](https://github.com/rust-lang/rust). All future tools will be developed in Rust instead of Go.
 
