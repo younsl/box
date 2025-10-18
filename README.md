@@ -1,6 +1,6 @@
 # o
 
-<img width="640" height="960" alt="image" src="https://github.com/user-attachments/assets/b7d59233-ed0e-4613-ba8a-07b84d007f94" />
+![1](https://github.com/user-attachments/assets/9b1068ca-55eb-4ed1-a61b-734f1c1bf911)
 
 A monorepo containing Kubernetes tools, container images, and DevOps automation resources.
 
