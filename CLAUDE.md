@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A monorepo serving as a DevOps toolbox containing Kubernetes utilities, automation scripts, infrastructure code, and engineering documentation.
 
+**Language Migration Notice**: The repository is migrating CLI tools from Go to Rust for better performance, memory safety, and modern tooling. Completed migrations include `kk`, `qg`, and `jvs`. In-progress migrations include `cocd`, `idled`, and `promdrop`.
+
 ## Development Commands
 
 ### Go Projects
@@ -78,6 +80,36 @@ make docker-push    # Push to ECR (requires AWS credentials)
 make deploy         # Deploy to Kubernetes (where available)
 ```
 
+**Container-Specific Notes**:
+- **filesystem-cleaner**: Includes `make vet` and `make dev` targets for debug logging
+- **actions-runner**, **hugo**: Have specialized build workflows for multi-arch images
+- Update ECR_REGISTRY variable in Makefiles before pushing
+
+### Terraform Projects
+
+Standard Terraform workflow for infrastructure modules:
+
+```bash
+# Initialize Terraform
+terraform init
+
+# Validate configuration
+terraform validate
+
+# Plan changes
+terraform plan
+
+# Apply changes
+terraform apply
+
+# Destroy resources
+terraform destroy
+```
+
+**Available Modules**:
+- `vault/irsa/` - Vault auto-unseal with AWS KMS integration
+- `terraform-elasticache-snapshot-backup-lambda/` - ElastiCache backup automation
+
 ## High-Level Architecture
 
 ### Repository Structure
@@ -95,16 +127,19 @@ box/
 │   └── qg/                # QR code generator (Rust)
 ├── containers/            # Custom container images
 │   ├── actions-runner/    # GitHub Actions runner
-│   ├── filesystem-cleaner/# File system cleanup tool
-│   ├── hugo/              # Hugo static site generator
+│   ├── filesystem-cleaner/# File system cleanup tool (Go)
+│   ├── hugo/              # Hugo static site generator image
+│   ├── ab/                # Apache Bench container
+│   ├── mageai/            # Mage AI custom image
+│   ├── yarn/              # Yarn package manager container
 │   └── terraform-console-machine/  # Terraform console container
 ├── scripts/               # Automation scripts by platform
 │   ├── aws/               # AWS resource management
 │   ├── github/            # Repository automation
 │   └── k8s-registry-io-stat/  # K8s connectivity testing
 ├── terraform/             # Infrastructure as Code
-│   ├── vault/irsa/        # Vault with AWS KMS integration
-│   └── terraform-elasticache-*/  # ElastiCache backup Lambda
+│   ├── vault/irsa/        # Vault auto-unseal with AWS KMS
+│   └── terraform-elasticache-snapshot-backup-lambda/  # ElastiCache backup Lambda
 ├── actions/               # GitHub Actions reusable workflows
 └── til/                   # Engineering notes and learnings
 ```
@@ -305,22 +340,33 @@ See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case 
 GitHub Actions automatically builds and releases on tag push:
 
 ```bash
-# Tool releases (pattern: {tool}/x.y.z)
+# Go/Rust tool releases (pattern: {tool}/x.y.z)
 git tag cocd/1.0.0 && git push --tags
 git tag idled/1.0.0 && git push --tags
 git tag promdrop/1.0.0 && git push --tags
 
+# Container image releases (pattern: {container}/x.y.z)
+git tag filesystem-cleaner/1.0.0 && git push --tags
+git tag actions-runner/1.0.0 && git push --tags
+git tag hugo/1.0.0 && git push --tags
+
 # Note: Not all tools have automated release workflows
+# Rust tools (kk, qg, jvs) currently lack automated releases
 # Check .github/workflows/release-*.yml for available automation
 
-# Available workflows:
-# - release-cocd.yml
-# - release-idled.yml
-# - release-promdrop.yml
-# - release-filesystem-cleaner.yml
-# - release-actions-runner.yml
-# - release-hugo.yml
-# - release-backup-utils.yml
+# Available workflows (Go tools & containers):
+# - release-cocd.yml          (Go CLI tool)
+# - release-idled.yml         (Go CLI tool)
+# - release-promdrop.yml      (Go CLI tool)
+# - release-filesystem-cleaner.yml  (Container image)
+# - release-actions-runner.yml      (Container image)
+# - release-hugo.yml                (Container image)
+# - release-backup-utils.yml        (Container image)
+
+# Rust tools without automated releases (manual release required):
+# - kk (domain connectivity checker)
+# - qg (QR code generator)
+# - jvs (Java version scanner)
 ```
 
 ## Testing Guidelines
@@ -328,8 +374,16 @@ git tag promdrop/1.0.0 && git push --tags
 **Current State**: Most tools lack test files but Makefiles include test targets.
 
 **When Adding Tests**:
+
+Go projects:
 - Place unit tests alongside source files (`*_test.go`)
 - Use table-driven tests for multiple scenarios
 - Mock AWS API calls using interfaces
 - Follow Go's standard testing package conventions
 - Test core logic in `internal/` and `pkg/` packages
+
+Rust projects:
+- Place unit tests in same file using `#[cfg(test)]` module
+- Integration tests in `tests/` directory
+- Use `cargo test --verbose` for running tests
+- Mock external dependencies using traits
