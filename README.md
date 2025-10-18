@@ -1,7 +1,5 @@
 # o
 
-![1](https://github.com/user-attachments/assets/9b1068ca-55eb-4ed1-a61b-734f1c1bf911)
-
 A monorepo containing Kubernetes tools, container images, and DevOps automation resources.
 
 ## Announcement
