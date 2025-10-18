@@ -1,38 +1,94 @@
 # Binary name
 BINARY_NAME=kk
 
-# Main package path
-CMD_PATH=./cmd/kk
-
 # Default target: build
 all: build
 
-# Build the application
+# Build the application (debug mode)
 build:
-	@echo "Tidying $(BINARY_NAME) ..."
-	@go mod tidy
-	@echo "$(BINARY_NAME) tidied."
-	
-	@echo "Building $(BINARY_NAME) ..."
-	@go build -o $(BINARY_NAME) $(CMD_PATH)
-	@echo "$(BINARY_NAME) built successfully."
+	@echo "Building $(BINARY_NAME) (debug)..."
+	@cargo build
+	@echo "$(BINARY_NAME) built successfully (target/debug/$(BINARY_NAME))"
 
-# Optimized release build (strip debug info, reduce size)
+# Optimized release build
 release:
-	@echo "Building $(BINARY_NAME) for release ..."
-	@go build -ldflags="-s -w" -o $(BINARY_NAME) $(CMD_PATH)
-	@echo "$(BINARY_NAME) built successfully (release)."
+	@echo "Building $(BINARY_NAME) for release..."
+	@cargo build --release
+	@echo "$(BINARY_NAME) built successfully (target/release/$(BINARY_NAME))"
 
-# Remove built binary
+# Build for all platforms (requires cross)
+build-all:
+	@echo "Building $(BINARY_NAME) for all platforms..."
+	@cargo build --release --target x86_64-unknown-linux-gnu
+	@cargo build --release --target x86_64-apple-darwin
+	@cargo build --release --target aarch64-apple-darwin
+	@cargo build --release --target x86_64-pc-windows-gnu
+	@echo "Multi-platform build completed"
+
+# Run the application
+run:
+	@echo "Running $(BINARY_NAME)..."
+	@cargo run -- --config configs/domain-example.yaml
+
+# Run with verbose logging
+dev:
+	@echo "Running $(BINARY_NAME) with debug logging..."
+	@cargo run -- --config configs/domain-example.yaml --verbose
+
+# Remove built artifacts
 clean:
-	@echo "Cleaning $(BINARY_NAME) ..."
-	@rm -f $(BINARY_NAME)
+	@echo "Cleaning $(BINARY_NAME)..."
+	@cargo clean
 	@echo "$(BINARY_NAME) cleaned."
 
-# Run tests (for future use when tests are added)
+# Run tests
 test:
-	@echo "Running tests ..."
-	@go test ./... -v
+	@echo "Running tests..."
+	@cargo test --verbose
 
-# Define phony targets (.PHONY)
-.PHONY: all build release clean test
+# Format code
+fmt:
+	@echo "Formatting code..."
+	@cargo fmt
+
+# Run clippy (linter)
+lint:
+	@echo "Running clippy..."
+	@cargo clippy -- -D warnings
+
+# Check code without building
+check:
+	@echo "Checking code..."
+	@cargo check
+
+# Update dependencies
+deps:
+	@echo "Updating dependencies..."
+	@cargo update
+	@echo "Dependencies updated."
+
+# Install binary to cargo bin directory
+install:
+	@echo "Installing $(BINARY_NAME)..."
+	@cargo install --path .
+	@echo "$(BINARY_NAME) installed to ~/.cargo/bin/"
+
+# Show help
+help:
+	@echo "Available targets:"
+	@echo "  make build      - Build the binary (debug mode)"
+	@echo "  make release    - Build optimized release binary"
+	@echo "  make build-all  - Build for all platforms (requires cross)"
+	@echo "  make run        - Run the application"
+	@echo "  make dev        - Run with debug logging"
+	@echo "  make clean      - Clean build artifacts"
+	@echo "  make test       - Run tests"
+	@echo "  make fmt        - Format code"
+	@echo "  make lint       - Run clippy linter"
+	@echo "  make check      - Check code without building"
+	@echo "  make deps       - Update dependencies"
+	@echo "  make install    - Install to ~/.cargo/bin/"
+	@echo "  make help       - Show this help"
+
+# Define phony targets
+.PHONY: all build release build-all run dev clean test fmt lint check deps install help

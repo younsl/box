@@ -59,11 +59,11 @@ box/
 │   ├── jdk-version-scanner/    # JDK version scanning tool
 │   ├── promdrop/          # Prometheus metric filter generator
 │   └── policies/          # Kyverno and CEL admission policies
-├── tools/                 # CLI utilities (Go-based)
-│   ├── cocd/              # GitHub Actions deployment monitor
-│   ├── idled/             # AWS idle resource scanner
-│   ├── kk/                # Domain connectivity checker
-│   └── qg/                # QR code generator
+├── tools/                 # CLI utilities
+│   ├── cocd/              # GitHub Actions deployment monitor (Go)
+│   ├── idled/             # AWS idle resource scanner (Go)
+│   ├── kk/                # Domain connectivity checker (Rust)
+│   └── qg/                # QR code generator (Rust)
 ├── containers/            # Custom container images
 │   ├── actions-runner/    # GitHub Actions runner
 │   ├── filesystem-cleaner/# File system cleanup tool
@@ -158,11 +158,20 @@ idled s3                          # S3 buckets (global)
 # - EIP: Unassociated addresses
 ```
 
-### kk - Domain Connectivity Checker
+### kk - Domain Connectivity Checker (Rust)
 
 ```bash
 # Check domain connectivity
-./kk --config configs/domain-example.yaml
+./target/release/kk --config configs/domain-example.yaml
+
+# Or use Makefile
+make run        # Build and run with example config
+make dev        # Run with verbose logging
+
+# Build commands
+make build      # Debug build
+make release    # Optimized release build
+make install    # Install to ~/.cargo/bin/
 
 # Configuration format (YAML):
 domains:
@@ -171,13 +180,28 @@ domains:
   - https://registry.k8s.io/v2/
 ```
 
-### qg - QR Code Generator
+**Note**: kk is written in Rust (previously Go). Uses Tokio for async concurrency and Clap for CLI.
+
+### qg - QR Code Generator (Rust)
 
 ```bash
 # Generate QR code from URL
-./qg [flags] <url>
-./qg --help              # Show usage
+./target/release/qg https://github.com/
+
+# Or use Makefile
+make run        # Build and run with example URL
+
+# Build commands
+make build      # Debug build
+make release    # Optimized release build
+make install    # Install to ~/.cargo/bin/
+
+# Custom options
+qg --width 200 --height 200 --filename custom.png https://example.com
+qg --quiet https://example.com  # Suppress output
 ```
+
+**Note**: qg is written in Rust (previously Go). Uses qrcode crate for generation and Clap for CLI.
 
 ### promdrop - Prometheus Metric Filter Generator
 
