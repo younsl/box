@@ -1,6 +1,6 @@
 # Docker Build Guide
 
-This guide explains how to build and run promdrop-rs using Docker/Podman.
+This guide explains how to build and run promdrop using Docker/Podman.
 
 ## Prerequisites
 

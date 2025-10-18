@@ -1,4 +1,4 @@
-use promdrop::{grouper, output, parser, models};
+use promdrop::{grouper, models, output, parser};
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -254,11 +254,7 @@ fn test_yaml_parsing_validity() {
 
     for section in job_sections {
         // Skip the first line (the summary comment) and try to parse the YAML
-        let yaml_part = section
-            .lines()
-            .skip(1)
-            .collect::<Vec<_>>()
-            .join("\n");
+        let yaml_part = section.lines().skip(1).collect::<Vec<_>>().join("\n");
 
         if !yaml_part.trim().is_empty() {
             let parse_result: Result<models::JobConfig, _> = serde_yaml::from_str(&yaml_part);

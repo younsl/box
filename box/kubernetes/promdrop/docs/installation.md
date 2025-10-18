@@ -56,7 +56,7 @@ Check the [releases page](https://github.com/younsl/promdrop/releases) for avail
 ```bash
 # Clone the repository
 git clone https://github.com/younsl/o.git
-cd o/box/kubernetes/promdrop-rs
+cd o/box/kubernetes/promdrop
 
 # Build release version
 cargo build --release
@@ -68,8 +68,8 @@ cargo build --release
 ### Using Make
 
 ```bash
-# Navigate to promdrop-rs directory
-cd o/box/kubernetes/promdrop-rs
+# Navigate to promdrop directory
+cd o/box/kubernetes/promdrop
 
 # Build debug version
 make build

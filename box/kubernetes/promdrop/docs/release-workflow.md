@@ -1,12 +1,12 @@
 # Release Workflow
 
-This document describes the automated release process for promdrop-rs.
+This document describes the automated release process for promdrop.
 
 ## Release Triggers
 
 The release workflow is triggered by:
 
-1. **Git Tag Push** - Tags matching pattern `promdrop-rs/x.y.z`
+1. **Git Tag Push** - Tags matching pattern `promdrop/x.y.z`
 2. **Manual Workflow Dispatch** - Via GitHub Actions UI
 
 ## Workflow Structure
@@ -91,8 +91,8 @@ git checkout main
 git pull origin main
 
 # Create and push release tag
-git tag promdrop-rs/1.0.0
-git push origin promdrop-rs/1.0.0
+git tag promdrop/1.0.0
+git push origin promdrop/1.0.0
 ```
 
 The workflow will automatically:
@@ -104,7 +104,7 @@ The workflow will automatically:
 ### Option 2: Manual Workflow Dispatch
 
 1. Go to GitHub Actions
-2. Select "Release promdrop-rs" workflow
+2. Select "Release promdrop" workflow
 3. Click "Run workflow"
 4. Enter version (e.g., "1.0.0")
 5. Click "Run workflow"
@@ -118,15 +118,15 @@ Follow semantic versioning (SemVer):
 - **Patch** (0.0.1): Bug fixes, backward compatible
 
 Examples:
-- `promdrop-rs/1.0.0` - First stable release
-- `promdrop-rs/1.1.0` - Added new features
-- `promdrop-rs/1.1.1` - Bug fixes
+- `promdrop/1.0.0` - First stable release
+- `promdrop/1.1.0` - Added new features
+- `promdrop/1.1.1` - Bug fixes
 
 ## Workflow Environment Variables
 
 ```yaml
 PROJECT_NAME: promdrop
-PROJECT_BASE_DIR: box/kubernetes/promdrop-rs
+PROJECT_BASE_DIR: box/kubernetes/promdrop
 REGISTRY: ghcr.io
 IMAGE_NAME: younsl/promdrop
 VERSION: {github.ref_name or input.version}
@@ -211,7 +211,7 @@ Fix:
 Before release:
 ```bash
 # Run tests locally
-cd box/kubernetes/promdrop-rs
+cd box/kubernetes/promdrop
 cargo test --verbose
 cargo clippy -- -D warnings
 cargo fmt --check
@@ -230,7 +230,7 @@ After successful release:
 1. Verify release on GitHub Releases page
 2. Test binary downloads:
    ```bash
-   curl -LO https://github.com/younsl/o/releases/download/promdrop-rs/1.0.0/promdrop-linux-amd64.tar.gz
+   curl -LO https://github.com/younsl/o/releases/download/promdrop/1.0.0/promdrop-linux-amd64.tar.gz
    tar -xzf promdrop-linux-amd64.tar.gz
    ./promdrop-linux-amd64 --version
    ```

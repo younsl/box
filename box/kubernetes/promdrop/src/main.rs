@@ -65,7 +65,9 @@ fn main() -> Result<()> {
     let parsed = parser::parse_metrics_file(&cli.input_file)?;
 
     if parsed.summary_data.is_empty() {
-        println!("[Info] No unused metrics data found to process (check additional_metric_counts).");
+        println!(
+            "[Info] No unused metrics data found to process (check additional_metric_counts)."
+        );
         return Ok(());
     }
 
@@ -110,7 +112,10 @@ fn main() -> Result<()> {
     );
     println!(
         "[Info] Output file for combined YAML: '{}'",
-        cli.output_file.canonicalize().unwrap_or(cli.output_file.clone()).display()
+        cli.output_file
+            .canonicalize()
+            .unwrap_or(cli.output_file.clone())
+            .display()
     );
 
     // Generate .txt files for each job

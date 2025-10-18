@@ -37,8 +37,7 @@ fn test_end_to_end_conversion() {
 
     // For now, let's verify the input file structure
     let content = fs::read_to_string(&input_file).expect("Failed to read input file");
-    let parsed: serde_json::Value =
-        serde_json::from_str(&content).expect("Failed to parse JSON");
+    let parsed: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
 
     // Verify structure
     assert!(
@@ -76,8 +75,7 @@ fn test_sample_data_has_multiple_jobs() {
         .join("sample-metrics.json");
 
     let content = fs::read_to_string(&input_file).expect("Failed to read input file");
-    let parsed: serde_json::Value =
-        serde_json::from_str(&content).expect("Failed to parse JSON");
+    let parsed: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
 
     // Collect all unique jobs
     let mut jobs = std::collections::HashSet::new();
@@ -103,8 +101,7 @@ fn test_sample_data_metric_distribution() {
         .join("sample-metrics.json");
 
     let content = fs::read_to_string(&input_file).expect("Failed to read input file");
-    let parsed: serde_json::Value =
-        serde_json::from_str(&content).expect("Failed to parse JSON");
+    let parsed: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
 
     // Count metrics per job
     let mut job_metric_counts: std::collections::HashMap<String, usize> =

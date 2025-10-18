@@ -45,7 +45,10 @@ pub fn print_group_summary(group_info: &[GroupInfo]) {
     }
 
     table.printstd();
-    println!("  Total metrics included in YAML rules: {}", total_processed);
+    println!(
+        "  Total metrics included in YAML rules: {}",
+        total_processed
+    );
 }
 
 /// Generate summary.txt file
@@ -178,7 +181,10 @@ pub fn generate_yaml_file<P: AsRef<Path>>(
     fs::write(output_path, yaml_content)
         .with_context(|| format!("Failed to write YAML file: {}", output_path.display()))?;
 
-    println!("\n[Success] Combined result saved to '{}'", output_path.display());
+    println!(
+        "\n[Success] Combined result saved to '{}'",
+        output_path.display()
+    );
 
     Ok(processed_count)
 }
@@ -218,6 +224,9 @@ mod tests {
     #[test]
     fn test_sanitize_filename() {
         assert_eq!(sanitize_filename("normal-name"), "normal-name");
-        assert_eq!(sanitize_filename("name/with:special*chars"), "name_with_special_chars");
+        assert_eq!(
+            sanitize_filename("name/with:special*chars"),
+            "name_with_special_chars"
+        );
     }
 }

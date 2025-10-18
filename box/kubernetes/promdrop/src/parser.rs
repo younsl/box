@@ -14,8 +14,8 @@ pub fn parse_metrics_file<P: AsRef<Path>>(path: P) -> Result<ParsedMetrics> {
         .with_context(|| format!("Failed to read JSON file: {}", path.display()))?;
 
     // Parse JSON
-    let data: PrometheusMetricsFile = serde_json::from_str(&content)
-        .context("Failed to parse JSON file")?;
+    let data: PrometheusMetricsFile =
+        serde_json::from_str(&content).context("Failed to parse JSON file")?;
 
     // Build job -> metrics mapping
     let mut job_metrics_map: HashMap<String, Vec<String>> = HashMap::new();

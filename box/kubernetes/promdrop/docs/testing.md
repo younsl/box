@@ -1,6 +1,6 @@
 # Testing Guide
 
-This document describes the testing strategy and structure for promdrop-rs.
+This document describes the testing strategy and structure for promdrop.
 
 ## Test Organization
 
@@ -224,7 +224,7 @@ cargo fmt --check
 
 Ensure you're running from the project root:
 ```bash
-cd /path/to/promdrop-rs
+cd /path/to/promdrop
 cargo test
 ```
 

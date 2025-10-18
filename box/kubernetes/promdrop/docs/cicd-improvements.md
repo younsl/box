@@ -6,7 +6,7 @@ This document describes the critical improvements made to the GitHub Actions rel
 
 ### 1. VERSION Extraction from Git Tags
 
-**Problem**: The workflow used `github.ref_name` directly, which includes the full tag path `promdrop-rs/1.0.0`, but only the version number `1.0.0` was needed.
+**Problem**: The workflow used `github.ref_name` directly, which includes the full tag path `promdrop/1.0.0`, but only the version number `1.0.0` was needed.
 
 **Solution**: Added dedicated `extract-version` job that properly extracts the version:
 
@@ -20,8 +20,8 @@ extract-version:
       id: get-version
       run: |
         if [ "${{ github.event_name }}" = "push" ]; then
-          # Extract version from tag (promdrop-rs/1.0.0 -> 1.0.0)
-          VERSION="${GITHUB_REF#refs/tags/promdrop-rs/}"
+          # Extract version from tag (promdrop/1.0.0 -> 1.0.0)
+          VERSION="${GITHUB_REF#refs/tags/promdrop/}"
         else
           # Use manual input version
           VERSION="${{ inputs.version }}"
@@ -138,13 +138,13 @@ build-binaries:
   needs: extract-version
   env:
     PROJECT_NAME: promdrop
-    PROJECT_BASE_DIR: box/kubernetes/promdrop-rs
+    PROJECT_BASE_DIR: box/kubernetes/promdrop
     VERSION: ${{ needs.extract-version.outputs.version }}
 
 build-docker:
   needs: extract-version
   env:
-    PROJECT_BASE_DIR: box/kubernetes/promdrop-rs
+    PROJECT_BASE_DIR: box/kubernetes/promdrop
     REGISTRY: ghcr.io
     IMAGE_NAME: younsl/promdrop
     VERSION: ${{ needs.extract-version.outputs.version }}
@@ -167,7 +167,7 @@ curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash 
 
 # Test the workflow
 cd /path/to/o
-act -W .github/workflows/release-promdrop-rs.yml --secret-file .secrets
+act -W .github/workflows/release-promdrop.yml --secret-file .secrets
 ```
 
 ### Manual Validation
@@ -180,12 +180,12 @@ Before pushing a release tag, validate:
    brew install actionlint
 
    # Check workflow syntax
-   actionlint .github/workflows/release-promdrop-rs.yml
+   actionlint .github/workflows/release-promdrop.yml
    ```
 
 2. **Test cross-compilation locally**:
    ```bash
-   cd box/kubernetes/promdrop-rs
+   cd box/kubernetes/promdrop
 
    # Test Linux ARM64 build
    export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
@@ -195,8 +195,8 @@ Before pushing a release tag, validate:
 3. **Test version extraction**:
    ```bash
    # Simulate tag extraction
-   GITHUB_REF="refs/tags/promdrop-rs/1.0.0"
-   VERSION="${GITHUB_REF#refs/tags/promdrop-rs/}"
+   GITHUB_REF="refs/tags/promdrop/1.0.0"
+   VERSION="${GITHUB_REF#refs/tags/promdrop/}"
    echo "Extracted version: ${VERSION}"
    # Should output: 1.0.0
    ```
@@ -206,7 +206,7 @@ Before pushing a release tag, validate:
 ### View Workflow Runs
 
 1. Go to repository's Actions tab
-2. Select "Release promdrop-rs" workflow
+2. Select "Release promdrop" workflow
 3. Click on specific run to see job details
 
 ### Common Issues
@@ -218,7 +218,7 @@ Before pushing a release tag, validate:
 CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
 ```
 
-**Issue**: Version shows as `promdrop-rs/1.0.0` instead of `1.0.0`
+**Issue**: Version shows as `promdrop/1.0.0` instead of `1.0.0`
 
 **Solution**: Verify extract-version job completed successfully and check its output.
 
@@ -262,8 +262,8 @@ If a release fails:
 1. Delete the failed release from GitHub Releases
 2. Delete the git tag:
    ```bash
-   git tag -d promdrop-rs/1.0.0
-   git push origin :refs/tags/promdrop-rs/1.0.0
+   git tag -d promdrop/1.0.0
+   git push origin :refs/tags/promdrop/1.0.0
    ```
 3. Fix the issue
 4. Create new tag with incremented patch version
