@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A monorepo serving as a DevOps toolbox containing Kubernetes utilities, automation scripts, infrastructure code, and engineering documentation.
 
-**Language Migration Notice**: The repository is migrating CLI tools from Go to Rust for better performance, memory safety, and modern tooling. Completed migrations include `kk`, `qg`, and `jvs`. In-progress migrations include `cocd`, `idled`, and `promdrop`.
+**Language Migration Notice**: The repository is migrating CLI tools from Go to Rust for better performance, memory safety, and modern tooling.
+- **Completed**: `kk`, `qg`, `jvs` (container), `promdrop` (container)
+- **In Progress**: `cocd`, `idled`, `filesystem-cleaner` (container)
 
 ## Development Commands
 
@@ -45,7 +47,7 @@ make clean          # Remove build artifacts
 
 ### Rust Projects
 
-Standard Makefile patterns for Rust tools (kk, qg, jvs):
+Standard Makefile patterns for Rust tools (kk, qg, jvs, promdrop):
 
 ```bash
 # Core build commands
@@ -117,8 +119,8 @@ terraform destroy
 ```
 box/
 ├── kubernetes/             # K8s controllers, policies, helm charts
-│   ├── jvs/               # Java Version Scanner (Rust)
-│   ├── promdrop/          # Prometheus metric filter generator
+│   ├── jvs/               # Java Version Scanner (Rust, container)
+│   ├── promdrop/          # Prometheus metric filter generator (Rust, CLI + container)
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
 │   ├── cocd/              # GitHub Actions deployment monitor (Go)
@@ -183,7 +185,34 @@ box/
 - GitHub Actions for releases
 - Multi-arch builds (linux/darwin, amd64/arm64)
 - Automated binary releases with tags
-- Container image push to ECR
+- Container image push to ECR and GHCR
+
+**Rust Cross-Compilation Requirements**:
+
+Rust cross-compilation is more complex than Go and requires additional setup:
+
+```yaml
+# For ARM64 cross-compilation on x86_64 (GitHub Actions example)
+- name: Install cross-compilation tools (Linux ARM64)
+  if: matrix.target == 'aarch64-unknown-linux-gnu'
+  run: |
+    sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+- name: Configure cross-compilation (Linux ARM64)
+  if: matrix.target == 'aarch64-unknown-linux-gnu'
+  run: |
+    echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+    echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+    echo "CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++" >> $GITHUB_ENV
+```
+
+**Why Rust cross-compilation is more complex than Go**:
+- Go: Self-contained compiler with built-in cross-compilation (`GOOS=linux GOARCH=arm64 go build`)
+- Rust: Requires system linker and C toolchain for target architecture
+- Rust crates often depend on C libraries (openssl, sqlite, etc.)
+- Must install target-specific gcc/g++ and configure linker paths
+
+See `.github/workflows/release-promdrop.yml` for complete ARM64 cross-compilation example.
 
 ## AWS Integration Points
 
@@ -299,16 +328,37 @@ jvs --skip-daemonset=false --verbose -n default
 - Generates kubectl-style tables and per-namespace statistics
 - Configurable concurrency, timeouts, and DaemonSet filtering
 
-### promdrop - Prometheus Metric Filter Generator
+### promdrop - Prometheus Metric Filter Generator (Rust)
 
 ```bash
 # Generate metric drop configs from mimirtool analysis
 # First run mimirtool to analyze metrics:
 mimirtool analyze prometheus --output=prometheus-metrics.json
 
-# Then generate drop configs:
-./promdrop --file prometheus-metrics.json
+# Then generate drop configs (Rust version):
+./target/release/promdrop --file prometheus-metrics.json
+
+# Or use Makefile
+make run        # Build and run with example
+make release    # Optimized release build
+
+# Custom output locations
+promdrop --file prometheus-metrics.json \
+  --txt-output-dir ./unused \
+  --output combined_relabel_configs.yaml
+
+# Container usage
+docker run --rm -v $(pwd):/data \
+  ghcr.io/younsl/promdrop:latest \
+  --file /data/prometheus-metrics.json
 ```
+
+**Technical Details**:
+- Built with Rust using serde for JSON/YAML parsing
+- CLI built with Clap for argument parsing
+- Available as both CLI binary and container image
+- Multi-arch Docker images (linux/amd64, linux/arm64)
+- Automated releases via GitHub Actions (tag pattern: `promdrop/x.y.z`)
 
 ## Performance & API Guidelines
 
@@ -340,24 +390,20 @@ See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case 
 GitHub Actions automatically builds and releases on tag push:
 
 ```bash
-# Go/Rust tool releases (pattern: {tool}/x.y.z)
-git tag cocd/1.0.0 && git push --tags
-git tag idled/1.0.0 && git push --tags
-git tag promdrop/1.0.0 && git push --tags
+# CLI tool releases (pattern: {tool}/x.y.z)
+git tag cocd/1.0.0 && git push --tags      # Go
+git tag idled/1.0.0 && git push --tags     # Go
+git tag promdrop/1.0.0 && git push --tags  # Rust
 
 # Container image releases (pattern: {container}/x.y.z)
 git tag filesystem-cleaner/1.0.0 && git push --tags
 git tag actions-runner/1.0.0 && git push --tags
 git tag hugo/1.0.0 && git push --tags
 
-# Note: Not all tools have automated release workflows
-# Rust tools (kk, qg, jvs) currently lack automated releases
-# Check .github/workflows/release-*.yml for available automation
-
-# Available workflows (Go tools & containers):
+# Available workflows:
 # - release-cocd.yml          (Go CLI tool)
 # - release-idled.yml         (Go CLI tool)
-# - release-promdrop.yml      (Go CLI tool)
+# - release-promdrop.yml      (Rust CLI + container)
 # - release-filesystem-cleaner.yml  (Container image)
 # - release-actions-runner.yml      (Container image)
 # - release-hugo.yml                (Container image)
@@ -366,7 +412,7 @@ git tag hugo/1.0.0 && git push --tags
 # Rust tools without automated releases (manual release required):
 # - kk (domain connectivity checker)
 # - qg (QR code generator)
-# - jvs (Java version scanner)
+# - jvs (Java version scanner DaemonSet)
 ```
 
 ## Testing Guidelines

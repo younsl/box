@@ -97,7 +97,7 @@ terraform.rc
 #----------------------------------
 # Temporary ad-hoc script
 #----------------------------------
-commit-history-cleaner.sh
+/commit-history-cleaner.sh
 
 # Ignore original script file
 !box/script/github/commit-history-cleaner/commit-history-cleaner.sh
