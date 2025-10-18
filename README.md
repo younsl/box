@@ -10,10 +10,10 @@ Migrating all Go-based CLI tools and Kubernetes controllers in this repository t
 
 **Migration Status**:
 
-| Status | Tools |
-|--------|-------|
-| Completed | `kk`, `qg`, `jvs` |
-| In Progress | `cocd`, `idled`, `promdrop` |
+| Status | Applications |
+|--------|--------------|
+| Completed | `kk`, `qg`, `jvs` (container), `promdrop` (container) |
+| In Progress | `cocd`, `idled`, `filesystem-cleaner` (container) |
 
 This is a breaking change effort aimed at building a more robust and maintainable toolset.
 
