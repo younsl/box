@@ -10,9 +10,9 @@ Kubernetes tools, policy resources, and architecture documentation organized by 
 
 | Category | Name | Status | Description |
 |----------|------|--------|-------------|
+| Tools | [jvs](./jvs/) | Active | CLI tool that checks the JDK version of the running Java application pods |
 | Tools | [promdrop](./promdrop/) | Active | Prometheus scrape config generator to drop unused metrics analyzed by [mimirtool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) |
 | Resources | [policies](./policies/) | Active | Collection of [Kyverno](https://kyverno.io/) policies for Kubernetes cluster security and governance. |
-| Tools | [jdk-version-scanner](./jdk-version-scanner/) | Active | CLI tool that checks the JDK version of the running Java application pods |
 | Documentation | [mermaids](./mermaids/) | Active | Mermaid diagrams explaining Kubernetes component relationships and architecture. |
 
 ## License
