@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.24.5-blue?style=flat-square&color=black&logo=go&logoColor=white)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square&color=black)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/younsl/box?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/box/releases?q=idled)
+[![GitHub release](https://img.shields.io/github/v/release/younsl/o?style=flat-square&color=black&logo=github&logoColor=white&label=release)](https://github.com/younsl/o/releases?q=idled)
 
 idled stands for "idle detector". idled is a CLI tool that finds idle AWS resources across regions and shows the results in a table format.
 
@@ -33,7 +33,7 @@ ARCH=$(arch)
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 
 # Download the latest release
-curl -L -o idled https://github.com/younsl/box/releases/latest/download/idled-$OS-$ARCH
+curl -L -o idled https://github.com/younsl/o/releases/latest/download/idled-$OS-$ARCH
 chmod +x idled
 ./idled --version
 ```
@@ -43,8 +43,8 @@ chmod +x idled
 Build idled from source code using the [Makefile](Makefile):
 
 ```bash
-git clone https://github.com/younsl/box.git
-cd box/box/tools/idled
+git clone https://github.com/younsl/o.git
+cd o/box/tools/idled
 make build
 ```
 

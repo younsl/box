@@ -7,7 +7,7 @@ This script is used to clean all commit history of a specific repository.
 Download cleaner script in the root directory of the repository.
 
 ```bash
-wget -O commit-history-cleaner.sh https://raw.githubusercontent.com/younsl/box/main/box/script/github/commit-history-cleaner/commit-history-cleaner.sh
+wget -O commit-history-cleaner.sh https://raw.githubusercontent.com/younsl/o/main/box/scripts/github/commit-history-cleaner/commit-history-cleaner.sh
 ```
 
 Run `sh` command to execute the script.

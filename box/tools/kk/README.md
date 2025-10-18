@@ -44,8 +44,8 @@ kk/
 
 ```bash
 # Clone the repository (if not already cloned)
-git clone https://github.com/younsl/box.git
-cd box/box/tools/kk
+git clone https://github.com/younsl/o.git
+cd o/box/tools/kk
 
 # Build the project
 make build

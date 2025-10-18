@@ -24,8 +24,8 @@ A simple QR code generator that creates a QR code from a given URL. Written in R
 
 ```bash
 # Clone the repository (if not already cloned)
-git clone https://github.com/younsl/box.git
-cd box/box/tools/qg
+git clone https://github.com/younsl/o.git
+cd o/box/tools/qg
 
 # Build the project
 make build

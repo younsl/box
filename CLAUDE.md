@@ -37,6 +37,39 @@ make deps           # go mod tidy + download
 make clean          # Remove build artifacts
 ```
 
+**Note**: Not all tools have identical Makefile targets. Check project-specific Makefiles for variations:
+- `make mod` (cocd) vs `make deps` (idled, jvs)
+- Some projects include `make vet` or `make lint` targets
+
+### Rust Projects
+
+Standard Makefile patterns for Rust tools (kk, qg, jvs):
+
+```bash
+# Core build commands
+make build          # Build debug binary (target/debug/)
+make release        # Build optimized release binary (target/release/)
+make build-all      # Build for all platforms (requires cross)
+
+# Development workflow
+make run            # Build and run with example
+make dev            # Run with verbose/debug logging
+make install        # Install to ~/.cargo/bin/
+make test           # Run tests (cargo test --verbose)
+
+# Code quality
+make fmt            # Format code (cargo fmt)
+make lint           # Run clippy (cargo clippy -- -D warnings)
+make check          # Check code without building
+make deps           # Update dependencies (cargo update)
+make clean          # Remove build artifacts
+
+# Direct cargo commands for specific tests
+cargo test --verbose                    # Run all tests
+cargo test --verbose test_name          # Run specific test
+cargo test --package package_name       # Run tests for specific package
+```
+
 ### Container Operations
 
 ```bash
@@ -45,10 +78,6 @@ make docker-push    # Push to ECR (requires AWS credentials)
 make deploy         # Deploy to Kubernetes (where available)
 ```
 
-**Note**: Not all tools have identical Makefile targets. Check project-specific Makefiles for variations:
-- `make mod` (cocd) vs `make deps` (idled, jdk-scanner)
-- Some projects include `make vet` or `make lint` targets
-
 ## High-Level Architecture
 
 ### Repository Structure
@@ -56,7 +85,7 @@ make deploy         # Deploy to Kubernetes (where available)
 ```
 box/
 ├── kubernetes/             # K8s controllers, policies, helm charts
-│   ├── jdk-version-scanner/    # JDK version scanning tool
+│   ├── jvs/               # Java Version Scanner (Rust)
 │   ├── promdrop/          # Prometheus metric filter generator
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
@@ -106,6 +135,14 @@ box/
 // Package-based pattern (idled):
 -ldflags "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(BUILD_DATE) -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT)"
 ```
+
+**Rust Application Structure**:
+- `src/main.rs` - CLI entry point with Clap argument parsing
+- `src/lib.rs` - Core library code (if applicable)
+- `src/*.rs` - Module files for specific functionality
+- `Cargo.toml` - Rust dependencies and metadata
+- Tokio async runtime for concurrent operations
+- Structured logging with tracing crate
 
 **CI/CD Pipeline**:
 - GitHub Actions for releases
@@ -203,6 +240,30 @@ qg --quiet https://example.com  # Suppress output
 
 **Note**: qg is written in Rust (previously Go). Uses qrcode crate for generation and Clap for CLI.
 
+### jvs - Java Version Scanner (Rust)
+
+```bash
+# Scan Java versions in Kubernetes pods
+jvs --namespaces production,staging
+
+# Export to CSV
+jvs --namespaces production --output results.csv
+
+# Increase concurrency and timeout
+jvs -n production -c 50 -t 60
+
+# Include DaemonSet pods and enable verbose logging
+jvs --skip-daemonset=false --verbose -n default
+```
+
+**Technical Details**:
+- Built with Tokio for async/concurrent pod scanning
+- Executes `kubectl exec -- java -version` in parallel
+- Parses Java version from stderr using regex
+- Real-time multi-level progress bars (namespace + pod level)
+- Generates kubectl-style tables and per-namespace statistics
+- Configurable concurrency, timeouts, and DaemonSet filtering
+
 ### promdrop - Prometheus Metric Filter Generator
 
 ```bash
@@ -237,7 +298,7 @@ Prefer:
 - Measurement before optimization
 - User experience over theoretical efficiency
 
-See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case study (written in Korean).
+See `box/tools/cocd/docs/performance-optimization-lessons.md` for detailed case study (Korean).
 
 ## Release Workflow
 
