@@ -4,7 +4,7 @@ A monorepo containing Kubernetes tools, container images, and DevOps automation 
 
 ## 🦀 Announcement
 
-Migrating all Go-based CLI tools and Kubernetes controllers in this repository to Rust. All future tools will be developed in Rust instead of Go.
+Migrating all Go-based CLI tools and Kubernetes controllers in this repository to [Rust](https://github.com/rust-lang/rust). All future tools will be developed in Rust instead of Go.
 
 **Why Rust?** Better performance and lower memory footprint, memory safety without garbage collection, superior error handling and type system, and modern tooling ecosystem.
 
