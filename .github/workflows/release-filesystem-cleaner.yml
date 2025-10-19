@@ -1,42 +1,47 @@
 name: Release filesystem-cleaner
-run-name: 📦 [younsl/filesystem-cleaner] Release filesystem-cleaner container image
+run-name: Release filesystem-cleaner ${{ github.ref_name }}
 
 on:
   push:
     tags:
-      - 'filesystem-cleaner/*'
+      - 'filesystem-cleaner/[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag'
+      version:
+        description: "Semantic version to release (e.g. 1.0.0)"
         required: true
-        type: string
+        default: "x.y.z"
 
 env:
   IMAGE_NAME: younsl/filesystem-cleaner
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  check:
+  extract-version:
     runs-on: ubuntu-24.04
     outputs:
-      image_exists: ${{ steps.image_check.outputs.image_exists }}
-      version: ${{ steps.extract_version.outputs.version }}
+      version: ${{ steps.get-version.outputs.version }}
     steps:
-      - name: Extract version from tag
-        id: extract_version
+      - name: Extract version from tag or input
+        id: get-version
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            VERSION=${GITHUB_REF#refs/tags/filesystem-cleaner/}
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract version from tag (filesystem-cleaner/1.0.0 -> 1.0.0)
+            VERSION="${GITHUB_REF#refs/tags/filesystem-cleaner/}"
           else
-            VERSION=${{ github.event.inputs.tag }}
+            # Use manual input version
+            VERSION="${{ inputs.version }}"
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
 
+  check:
+    needs: extract-version
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: read
+    outputs:
+      image_exists: ${{ steps.image_check.outputs.image_exists }}
+    steps:
       - name: Check if image exists on GitHub Container Registry
         id: image_check
         run: |
@@ -51,47 +56,106 @@ jobs:
             echo "image_exists=false" >> $GITHUB_OUTPUT
           else
             ## Check if the specific tag already exists
-            if echo "$TAGS" | jq -e --arg TAG "${{ steps.extract_version.outputs.version }}" '.tags | index($TAG)'; then
-              echo "Image with tag ${{ steps.extract_version.outputs.version }} already exists."
+            if echo "$TAGS" | jq -e --arg TAG "${{ needs.extract-version.outputs.version }}" '.tags | index($TAG)'; then
+              echo "Image with tag ${{ needs.extract-version.outputs.version }} already exists."
               echo "image_exists=true" >> $GITHUB_OUTPUT
             else
-              echo "Image with tag ${{ steps.extract_version.outputs.version }} not found."
+              echo "Image with tag ${{ needs.extract-version.outputs.version }} not found."
               echo "image_exists=false" >> $GITHUB_OUTPUT
             fi
           fi
 
-  release:
-    runs-on: ubuntu-24.04
-    needs: check
+  test:
+    needs: [extract-version, check]
     if: ${{ needs.check.outputs.image_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      PROJECT_BASE_DIR: box/containers/filesystem-cleaner
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_BASE_DIR }}/target
+          key: ${{ runner.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: |
+          cargo test --verbose
+          cargo test --release --verbose
+
+      - name: Run clippy
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo clippy -- -D warnings
+
+      - name: Check formatting
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo fmt --check
+
+  build-docker:
+    needs: [extract-version, check, test]
+    if: ${{ needs.check.outputs.image_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PROJECT_BASE_DIR: box/containers/filesystem-cleaner
+      REGISTRY: ghcr.io
+      VERSION: ${{ needs.extract-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry (ghcr.io)
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Generate build date
-        id: date
-        run: echo "date=$(date -u '+%Y-%m-%d_%H:%M:%S')" >> $GITHUB_OUTPUT
-
-      - name: Build and push multi-arch container image
-        uses: docker/build-push-action@v5
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
         with:
-          context: box/containers/filesystem-cleaner
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.extract-version.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.PROJECT_BASE_DIR }}
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.version }}
-            ghcr.io/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ needs.check.outputs.version }}
-            COMMIT=${{ github.sha }}
-            DATE=${{ steps.date.outputs.date }}
+            VERSION=${{ env.VERSION }}
+            GIT_COMMIT=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
           provenance: false
           sbom: false
-          outputs: type=image,name=target
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

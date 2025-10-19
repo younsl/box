@@ -1,9 +1,11 @@
 # filesystem-cleaner
 
 [![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-younsl%2Ffilesystem--cleaner-000000?style=flat-square&logo=github&logoColor=white)](https://github.com/younsl/o/pkgs/container/filesystem-cleaner)
-[![Go Version](https://img.shields.io/badge/go-1.25-000000?style=flat-square&logo=go&logoColor=white)](./go.mod)
+[![Rust](https://img.shields.io/badge/rust-1.83-000000?style=flat-square&logo=rust&logoColor=white)](./Cargo.toml)
 
-A lightweight Go-based container image for automatic filesystem cleanup in Kubernetes environments. Designed as a sidecar container or init container, it monitors disk usage and intelligently removes files to prevent storage exhaustion. Particularly useful for GitHub Actions self-hosted runners, CI/CD pipelines, and any workloads that generate temporary files requiring periodic cleanup.
+A lightweight Rust-based container image for automatic filesystem cleanup in Kubernetes environments. Designed as a sidecar container or init container, it monitors disk usage and intelligently removes files to prevent storage exhaustion. Particularly useful for GitHub Actions self-hosted runners, CI/CD pipelines, and any workloads that generate temporary files requiring periodic cleanup.
+
+**Note**: This tool was previously implemented in Go and has been migrated to Rust for better performance, memory safety, and modern tooling.
 
 ## Architecture
 
@@ -145,19 +147,18 @@ spec:
 
 ## Configuration
 
-Configure filesystem-cleaner using command-line flags (via `args` in Kubernetes):
+Configure filesystem-cleaner using command-line flags or environment variables:
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--target-paths` | `string` | `/home/runner/_work` | Paths to monitor and clean (comma-separated) |
-| `--usage-threshold-percent` | `int` | `80` | Disk usage percentage to trigger cleanup (0-100) |
-| `--cleanup-mode` | `string` | `interval` | Cleanup mode: `once` or `interval` |
-| `--check-interval-minutes` | `int` | `10` | Check interval in minutes (only used when `--cleanup-mode=interval`) |
-| `--include-patterns` | `string` | `*` | File patterns to include (comma-separated) |
-| `--exclude-patterns` | `string` | `.git,node_modules,*.log` | Patterns to exclude (comma-separated) |
-| `--dry-run` | `bool` | `false` | Preview mode without deletion |
-| `--log-level` | `string` | `info` | Log level: `debug`, `info`, `warn`, `error` |
-| `--version` | `bool` | `false` | Show version information |
+| Flag | Environment Variable | Default | Description |
+|------|---------------------|---------|-------------|
+| `--target-paths` | `TARGET_PATHS` | `/home/runner/_work` | Paths to monitor and clean (comma-separated) |
+| `--usage-threshold-percent` | `USAGE_THRESHOLD_PERCENT` | `80` | Disk usage percentage to trigger cleanup (0-100) |
+| `--cleanup-mode` | `CLEANUP_MODE` | `interval` | Cleanup mode: `once` or `interval` |
+| `--check-interval-minutes` | `CHECK_INTERVAL_MINUTES` | `10` | Check interval in minutes (only used when `--cleanup-mode=interval`) |
+| `--include-patterns` | `INCLUDE_PATTERNS` | `*` | File patterns to include (comma-separated) |
+| `--exclude-patterns` | `EXCLUDE_PATTERNS` | `.git,node_modules,*.log` | Patterns to exclude (comma-separated) |
+| `--dry-run` | `DRY_RUN` | `false` | Preview mode without deletion |
+| `--log-level` | `LOG_LEVEL` | `info` | Log level: `trace`, `debug`, `info`, `warn`, `error` |
 
 ## Building
 
@@ -185,5 +186,19 @@ make dev
 make test
 
 # Format and lint
-make fmt vet lint
+make fmt lint
+
+# Check without building
+make check
 ```
+
+## Migration from Go to Rust
+
+This project was migrated from Go to Rust to leverage:
+
+- **Better performance**: Rust's zero-cost abstractions and efficient compilation
+- **Memory safety**: Rust's ownership system eliminates entire classes of bugs
+- **Modern tooling**: Cargo provides excellent dependency management and build tooling
+- **Smaller binaries**: Optimized release builds with LTO and strip
+
+The Rust implementation maintains full compatibility with the original Go version's command-line interface and Kubernetes deployment patterns.

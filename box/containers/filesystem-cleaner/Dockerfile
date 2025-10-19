@@ -1,44 +1,49 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM rust:1.83-alpine AS builder
 
-# Build arguments
+# Build arguments for version info
 ARG VERSION=dev
-ARG COMMIT=none
-ARG DATE=unknown
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
 
 WORKDIR /app
 
-# Install dependencies
-RUN apk add --no-cache git make
+# Install build dependencies including UPX for binary compression
+RUN apk add --no-cache musl-dev git upx
 
-# Copy go mod files
-COPY go.mod go.sum ./
-RUN go mod download
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+COPY build.rs ./
+
+# Create dummy main to cache dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
 
 # Copy source code
-COPY . .
+COPY src ./src
 
-# Build binary with build args as environment variables
-RUN VERSION=${VERSION} COMMIT=${COMMIT} DATE=${DATE} make build
+# Build for release with version info from build args
+RUN touch src/main.rs && \
+    VERGEN_GIT_SHA=${GIT_COMMIT} VERGEN_BUILD_TIMESTAMP="${BUILD_DATE}" \
+    cargo build --release --locked
 
-# Final stage
-FROM alpine:3.19
+# Strip debug symbols and compress with UPX
+RUN strip /app/target/release/filesystem-cleaner && \
+    upx --best --lzma /app/target/release/filesystem-cleaner
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates tzdata
+# Runtime stage
+FROM alpine:3.19 AS runtime
 
-# Create non-root user
+# Create non-root user (no ca-certificates or tzdata - not needed for filesystem operations)
 RUN addgroup -g 1000 cleaner && \
     adduser -D -u 1000 -G cleaner cleaner
 
+USER cleaner
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/bin/filesystem-cleaner /app/filesystem-cleaner
-
-# Set ownership
-RUN chown -R cleaner:cleaner /app
-
-USER cleaner
+# Copy compressed binary with ownership set (no separate chown layer needed)
+COPY --from=builder --chown=cleaner:cleaner /app/target/release/filesystem-cleaner /app/filesystem-cleaner
 
 ENTRYPOINT ["/app/filesystem-cleaner"]
