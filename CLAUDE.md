@@ -8,7 +8,7 @@ A monorepo serving as a DevOps toolbox containing Kubernetes utilities, automati
 
 **Language Migration Notice**: The repository is migrating CLI tools from Go to Rust for better performance, memory safety, and modern tooling.
 - **Completed**: `kk`, `qg`, `jvs` (container), `promdrop` (container)
-- **In Progress**: `cocd`, `idled`, `filesystem-cleaner` (container)
+- **In Progress**: `cocd`, `filesystem-cleaner` (container)
 
 ## Development Commands
 
@@ -42,7 +42,7 @@ make clean          # Remove build artifacts
 ```
 
 **Note**: Not all tools have identical Makefile targets. Check project-specific Makefiles for variations:
-- `make mod` (cocd) vs `make deps` (idled, jvs)
+- `make mod` (cocd) vs `make deps` (other Go projects)
 - Some projects include `make vet` or `make lint` targets
 
 ### Rust Projects
@@ -124,7 +124,6 @@ box/
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
 │   ├── cocd/              # GitHub Actions deployment monitor (Go)
-│   ├── idled/             # AWS idle resource scanner (Go)
 │   ├── kk/                # Domain connectivity checker (Rust)
 │   └── qg/                # QR code generator (Rust)
 ├── containers/            # Custom container images
@@ -168,9 +167,6 @@ box/
 // Common ldflags patterns in Makefiles:
 // Simple pattern (cocd):
 -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
-
-// Package-based pattern (idled):
--ldflags "-X $(VERSION_PKG).version=$(VERSION) -X $(VERSION_PKG).buildDate=$(BUILD_DATE) -X $(VERSION_PKG).gitCommit=$(GIT_COMMIT)"
 ```
 
 **Rust Application Structure**:
@@ -219,7 +215,6 @@ See `.github/workflows/release-promdrop.yml` for complete ARM64 cross-compilatio
 - **ECR**: Container registry for Kubernetes deployments
 - **IAM/IRSA**: Service account to IAM role mapping
 - **KMS**: Vault auto-unseal encryption
-- **EC2**: Instance and resource management (idled scanner)
 
 Configure AWS credentials via environment variables or IAM instance profiles.
 
@@ -241,22 +236,6 @@ export COCD_CONFIG_PATH="./config.yaml"
 # Repository scanning limitation
 # ⚠️ No org-level workflow API exists
 # Must iterate repositories individually
-```
-
-### idled - AWS Idle Resource Scanner
-
-```bash
-# Scan idle resources across regions
-idled ec2 --regions all          # EC2 instances
-idled ebs --regions us-east-1    # EBS volumes
-idled s3                          # S3 buckets (global)
-
-# Service-specific idle criteria:
-# - EC2: Stopped instances
-# - EBS: Unattached volumes
-# - S3: No access for 90+ days
-# - Lambda: No invocations in 30+ days
-# - EIP: Unassociated addresses
 ```
 
 ### kk - Domain Connectivity Checker (Rust)
@@ -392,7 +371,6 @@ GitHub Actions automatically builds and releases on tag push:
 ```bash
 # CLI tool releases (pattern: {tool}/x.y.z)
 git tag cocd/1.0.0 && git push --tags      # Go
-git tag idled/1.0.0 && git push --tags     # Go
 git tag promdrop/1.0.0 && git push --tags  # Rust
 
 # Container image releases (pattern: {container}/x.y.z)
@@ -402,7 +380,6 @@ git tag hugo/1.0.0 && git push --tags
 
 # Available workflows:
 # - release-cocd.yml          (Go CLI tool)
-# - release-idled.yml         (Go CLI tool)
 # - release-promdrop.yml      (Rust CLI + container)
 # - release-filesystem-cleaner.yml  (Container image)
 # - release-actions-runner.yml      (Container image)
