@@ -1,0 +1,18 @@
+# Rust
+target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Output files
+unused/
+*.yaml
+*.txt
+
+# OS
+.DS_Store
+Thumbs.db

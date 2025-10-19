@@ -1,0 +1,43 @@
+[package]
+name = "filesystem-cleaner"
+version = "0.1.0"
+edition = "2021"
+authors = ["younsl"]
+description = "Kubernetes sidecar filesystem cleaner for managing disk space"
+license = "MIT"
+
+[dependencies]
+# CLI argument parsing
+clap = { version = "4.5", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# File globbing
+globset = "=0.4.15"
+
+# System information
+sysinfo = "0.32"
+
+# Serialization (for future config file support)
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+tempfile = "3.13"
+
+[build-dependencies]
+chrono = "0.4"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+opt-level = 3

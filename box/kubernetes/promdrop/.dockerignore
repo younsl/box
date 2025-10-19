@@ -1,0 +1,28 @@
+# Build artifacts
+target/
+
+# Documentation
+docs/
+README.md
+*.md
+
+# Tests
+tests/
+
+# CI/CD
+.github/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output files
+unused/
+*.yaml
+*.txt
+
+# Makefile
+Makefile
