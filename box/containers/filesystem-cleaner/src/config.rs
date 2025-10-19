@@ -14,7 +14,13 @@ fn build_version() -> &'static str {
     };
 
     // Use Box::leak to create a static string
-    Box::leak(format!("{}\nCommit: {}\nBuild Date: {}", VERSION, COMMIT, BUILD_DATE).into_boxed_str())
+    Box::leak(
+        format!(
+            "{}\nCommit: {}\nBuild Date: {}",
+            VERSION, COMMIT, BUILD_DATE
+        )
+        .into_boxed_str(),
+    )
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -132,7 +138,10 @@ mod tests {
     #[test]
     fn test_cleanup_mode_from_str() {
         assert_eq!("once".parse::<CleanupMode>().unwrap(), CleanupMode::Once);
-        assert_eq!("interval".parse::<CleanupMode>().unwrap(), CleanupMode::Interval);
+        assert_eq!(
+            "interval".parse::<CleanupMode>().unwrap(),
+            CleanupMode::Interval
+        );
         assert_eq!("ONCE".parse::<CleanupMode>().unwrap(), CleanupMode::Once);
         assert!("invalid".parse::<CleanupMode>().is_err());
     }

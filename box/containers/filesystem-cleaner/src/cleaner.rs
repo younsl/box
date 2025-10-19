@@ -63,9 +63,8 @@ impl Cleaner {
                 self.perform_cleanup().await;
 
                 // Run periodic cleanup
-                let mut interval = time::interval(Duration::from_secs(
-                    self.config.check_interval_minutes * 60,
-                ));
+                let mut interval =
+                    time::interval(Duration::from_secs(self.config.check_interval_minutes * 60));
 
                 loop {
                     interval.tick().await;
@@ -342,9 +341,9 @@ impl Cleaner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use std::fs::File;
     use std::io::Write;
+    use tempfile::TempDir;
 
     fn create_test_args() -> Args {
         Args {
@@ -391,12 +390,21 @@ mod tests {
         let temp_path = temp_dir.path();
 
         // Create test files
-        File::create(temp_path.join("test1.txt")).unwrap().write_all(b"test").unwrap();
-        File::create(temp_path.join("test2.log")).unwrap().write_all(b"log").unwrap();
+        File::create(temp_path.join("test1.txt"))
+            .unwrap()
+            .write_all(b"test")
+            .unwrap();
+        File::create(temp_path.join("test2.log"))
+            .unwrap()
+            .write_all(b"log")
+            .unwrap();
 
         // Create excluded directory
         fs::create_dir(temp_path.join(".git")).unwrap();
-        File::create(temp_path.join(".git/config")).unwrap().write_all(b"config").unwrap();
+        File::create(temp_path.join(".git/config"))
+            .unwrap()
+            .write_all(b"config")
+            .unwrap();
 
         let mut args = create_test_args();
         args.target_paths = vec![temp_path.to_path_buf()];
@@ -408,6 +416,8 @@ mod tests {
         assert_eq!(files.len(), 2);
         assert!(files.iter().any(|f| f.path.ends_with("test1.txt")));
         assert!(files.iter().any(|f| f.path.ends_with("test2.log")));
-        assert!(!files.iter().any(|f| f.path.to_string_lossy().contains(".git")));
+        assert!(!files
+            .iter()
+            .any(|f| f.path.to_string_lossy().contains(".git")));
     }
 }

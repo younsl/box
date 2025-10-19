@@ -16,7 +16,9 @@ fn main() {
 
     // Get build timestamp - prefer env var, fallback to current time
     let timestamp = env::var("VERGEN_BUILD_TIMESTAMP").unwrap_or_else(|_| {
-        chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string()
+        chrono::Utc::now()
+            .format("%Y-%m-%d %H:%M:%S UTC")
+            .to_string()
     });
 
     println!("cargo:rustc-env=VERGEN_GIT_SHA={}", git_hash);
