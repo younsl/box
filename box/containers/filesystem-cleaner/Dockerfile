@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.83-alpine AS builder
+FROM rust:1.90-alpine3.22 AS builder
 
 # Build arguments for version info
 ARG VERSION=dev
@@ -34,7 +34,7 @@ RUN strip /app/target/release/filesystem-cleaner && \
     upx --best --lzma /app/target/release/filesystem-cleaner
 
 # Runtime stage
-FROM alpine:3.19 AS runtime
+FROM alpine:3.22 AS runtime
 
 # Create non-root user (no ca-certificates or tzdata - not needed for filesystem operations)
 RUN addgroup -g 1000 cleaner && \
