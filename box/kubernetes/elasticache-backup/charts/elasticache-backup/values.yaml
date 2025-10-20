@@ -104,9 +104,11 @@ securityContext:
 # -- Environment variables
 env:
   # -- (string) Log level (debug, info, warn, error)
-  logLevel: "info"
+  logLevel: info
   # -- (string) Log format (json or pretty)
-  logFormat: "json"
+  logFormat: json
+  # -- (int) Timezone offset in hours for snapshot filename generation (e.g., 9 for Asia/Seoul UTC+9, 0 for UTC)
+  timezoneOffsetHours: 9
 
 # -- (object) Node labels for pod assignment
 # @default -- `{}`

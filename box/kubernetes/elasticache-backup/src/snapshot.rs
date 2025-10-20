@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use aws_sdk_elasticache::types::Snapshot;
 use aws_sdk_elasticache::Client as ElastiCacheClient;
-use chrono::Utc;
+use chrono::{FixedOffset, Utc};
 use std::time::{Duration, Instant};
 use tracing::{debug, info, warn};
 
@@ -12,7 +12,15 @@ pub async fn create_snapshot(client: &ElastiCacheClient, cache_cluster_id: &str)
     let snapshot_start_time = Instant::now();
 
     // Generate snapshot name with cluster ID and date
-    let date_str = Utc::now().format("%Y%m%d").to_string();
+    // Use TZ environment variable to determine timezone offset (default: UTC+9 for Asia/Seoul)
+    let tz_offset = std::env::var("TZ_OFFSET_HOURS")
+        .ok()
+        .and_then(|v| v.parse::<i32>().ok())
+        .unwrap_or(9); // Default to UTC+9 (Asia/Seoul)
+
+    let timezone = FixedOffset::east_opt(tz_offset * 3600)
+        .expect("Failed to create timezone offset");
+    let date_str = Utc::now().with_timezone(&timezone).format("%Y%m%d").to_string();
     let snapshot_name = format!("{}-{}", cache_cluster_id, date_str);
 
     info!(

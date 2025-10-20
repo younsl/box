@@ -68,6 +68,8 @@ spec:
               value: {{ .Values.env.logLevel | quote }}
             - name: LOG_FORMAT
               value: {{ .Values.env.logFormat | quote }}
+            - name: TZ_OFFSET_HOURS
+              value: {{ .Values.env.timezoneOffsetHours | quote }}
             resources:
               {{- toYaml .Values.resources | nindent 14 }}
             securityContext:
