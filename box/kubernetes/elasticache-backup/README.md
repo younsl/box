@@ -1,5 +1,8 @@
 # elasticache-backup
 
+[![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-elasticache--backup-blue?logo=docker)](https://github.com/younsl/o/pkgs/container/elasticache-backup)
+[![Rust Version](https://img.shields.io/badge/rust-1.90-orange?logo=rust)](https://www.rust-lang.org/)
+
 ElastiCache snapshot backup to S3 automation - Rust-based container application.
 
 ## Overview
