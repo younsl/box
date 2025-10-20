@@ -10,6 +10,7 @@ Kubernetes tools, policy resources, and architecture documentation organized by 
 
 | Category | Name | Status | Description |
 |----------|------|--------|-------------|
+| Tools | [elasticache-backup](./elasticache-backup/) | Active | ElastiCache snapshot backup to S3 automation running as Kubernetes CronJob |
 | Tools | [jvs](./jvs/) | Active | CLI tool that checks the JDK version of the running Java application pods |
 | Tools | [promdrop](./promdrop/) | Active | Prometheus scrape config generator to drop unused metrics analyzed by [mimirtool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) |
 | Resources | [policies](./policies/) | Active | Collection of [Kyverno](https://kyverno.io/) policies for Kubernetes cluster security and governance. |

@@ -12,7 +12,7 @@ Migrating all Go-based CLI tools and Kubernetes controllers in this repository t
 
 | Status | Applications |
 |--------|--------------|
-| Completed | [`kk`](./box/tools/kk), [`qg`](./box/tools/qg), [`jvs`](./box/kubernetes/jvs) (container), [`promdrop`](./box/kubernetes/promdrop) (container), [`filesystem-cleaner`](./box/containers/filesystem-cleaner) (container) |
+| Completed | [`kk`](./box/tools/kk), [`qg`](./box/tools/qg), [`jvs`](./box/kubernetes/jvs) (container), [`promdrop`](./box/kubernetes/promdrop) (container), [`filesystem-cleaner`](./box/containers/filesystem-cleaner) (container), [`elasticache-backup`](./box/kubernetes/elasticache-backup) (container) |
 | In Progress | [`cocd`](./box/tools/cocd), [`idled`](./box/tools/idled) |
 
 This is a breaking change effort aimed at building a more robust and maintainable toolset.

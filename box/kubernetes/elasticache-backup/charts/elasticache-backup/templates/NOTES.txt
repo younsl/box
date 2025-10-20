@@ -1,0 +1,41 @@
+ElastiCache Backup has been installed successfully!
+
+Configuration:
+- Cache Cluster ID: {{ .Values.elasticache.cacheClusterId }}
+- S3 Bucket: {{ .Values.s3.bucketName }}
+- Region: {{ .Values.elasticache.region }}
+- Schedule: {{ .Values.cronjob.schedule }}
+
+To check the CronJob status:
+  kubectl get cronjob {{ include "elasticache-backup.fullname" . }} -n {{ .Release.Namespace }}
+
+To view recent jobs:
+  kubectl get jobs -l app.kubernetes.io/name={{ include "elasticache-backup.name" . }} -n {{ .Release.Namespace }}
+
+To view logs from the latest job:
+  kubectl logs -l app.kubernetes.io/name={{ include "elasticache-backup.name" . }} -n {{ .Release.Namespace }} --tail=100
+
+To manually trigger a backup job:
+  kubectl create job --from=cronjob/{{ include "elasticache-backup.fullname" . }} manual-backup-$(date +%s) -n {{ .Release.Namespace }}
+
+{{- if not .Values.elasticache.cacheClusterId }}
+
+WARNING: elasticache.cacheClusterId is not set!
+Please set the cache cluster ID in values.yaml or via --set flag.
+{{- end }}
+
+{{- if not .Values.s3.bucketName }}
+
+WARNING: s3.bucketName is not set!
+Please set the S3 bucket name in values.yaml or via --set flag.
+{{- end }}
+
+{{- if .Values.serviceAccount.create }}
+{{- if not .Values.serviceAccount.annotations }}
+
+REMINDER: Don't forget to configure IRSA for AWS permissions!
+Add the following annotation to serviceAccount in values.yaml:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
+{{- end }}
+{{- end }}

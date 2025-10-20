@@ -1,0 +1,9 @@
+target/
+Cargo.lock
+*.md
+*.txt
+.git/
+.gitignore
+k8s/
+Makefile
+.github/
