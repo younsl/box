@@ -18,9 +18,12 @@ pub async fn create_snapshot(client: &ElastiCacheClient, cache_cluster_id: &str)
         .and_then(|v| v.parse::<i32>().ok())
         .unwrap_or(9); // Default to UTC+9 (Asia/Seoul)
 
-    let timezone = FixedOffset::east_opt(tz_offset * 3600)
-        .expect("Failed to create timezone offset");
-    let date_str = Utc::now().with_timezone(&timezone).format("%Y%m%d").to_string();
+    let timezone =
+        FixedOffset::east_opt(tz_offset * 3600).expect("Failed to create timezone offset");
+    let date_str = Utc::now()
+        .with_timezone(&timezone)
+        .format("%Y%m%d")
+        .to_string();
     let snapshot_name = format!("{}-{}", cache_cluster_id, date_str);
 
     info!(
