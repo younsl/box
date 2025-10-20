@@ -1,9 +1,45 @@
+# Build artifacts
 target/
-Cargo.lock
-*.md
-*.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
 .git/
 .gitignore
-k8s/
-Makefile
+
+# CI/CD
 .github/
+
+# Documentation
+README.md
+LICENSE
+*.md
+*.txt
+
+# Kubernetes manifests
+k8s/
+*.yaml
+*.yml
+!Cargo.toml
+!Cargo.lock
+
+# Development files
+Makefile
+
+# Test files
+tests/
+benches/
+
+# Example configs
+examples/
+configs/
+
+# Misc
+.DS_Store
+Thumbs.db
+.dockerignore

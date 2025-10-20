@@ -1,46 +1,42 @@
-# Build stage
-FROM rust:1.90-slim AS builder
+# Build stage - Alpine with musl for multi-arch support
+FROM --platform=$BUILDPLATFORM rust:1.90-alpine AS builder
+
+# Build arguments for cross-compilation
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    pkg-config \
-    libssl-dev \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# Install build dependencies for musl
+RUN apk add --no-cache \
+    musl-dev \
+    pkgconfig \
+    openssl-dev \
+    openssl-libs-static
 
-# Copy manifests
+# Copy source files
 COPY Cargo.toml Cargo.lock* ./
-
-# Copy source code
 COPY src ./src
 
-# Build release binary
+# Build for the target platform
+# rust:1.90-alpine already has the correct musl toolchain for the native arch
 RUN cargo build --release
 
-# Runtime stage
+# Runtime stage - Minimal Alpine (multi-arch)
 FROM alpine:3.22 AS runtime
 
-WORKDIR /app
-
-# Install runtime dependencies
+# Install only essential runtime dependencies
 RUN apk add --no-cache \
-    ca-certificates \
-    libgcc
+    ca-certificates && \
+    rm -rf /var/cache/apk/*
 
 # Create non-root user
-RUN adduser -D -u 1000 -s /bin/sh appuser && \
-    chown -R appuser:appuser /app
+RUN adduser -D -u 1000 -s /bin/sh appuser
 
 # Copy binary from builder
 COPY --from=builder /app/target/release/elasticache-backup /usr/local/bin/elasticache-backup
 
 # Switch to non-root user
 USER appuser
-
-# Health check endpoint (not applicable for batch jobs)
-# Health monitoring should be done via Kubernetes Job/CronJob status
 
 ENTRYPOINT ["/usr/local/bin/elasticache-backup"]

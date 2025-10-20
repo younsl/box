@@ -55,14 +55,30 @@ clean: ## Remove build artifacts
 install: release ## Install to ~/.cargo/bin/
 	cargo install --path .
 
-docker-build: ## Build Docker image
+docker-build: ## Build Docker image for current platform
 	docker build -t $(IMAGE_NAME):$(VERSION) -t $(IMAGE_NAME):latest .
 
-docker-push: ## Push to ECR
+docker-build-multiarch: ## Build multi-arch Docker image (amd64, arm64)
+	docker buildx build \
+		--platform $(PLATFORMS) \
+		-t $(IMAGE_NAME):$(VERSION) \
+		-t $(IMAGE_NAME):latest \
+		--load \
+		.
+
+docker-push: ## Push to ECR (single arch)
 	docker tag $(IMAGE_NAME):$(VERSION) $(ECR_REGISTRY)/$(IMAGE_NAME):$(VERSION)
 	docker tag $(IMAGE_NAME):latest $(ECR_REGISTRY)/$(IMAGE_NAME):latest
 	docker push $(ECR_REGISTRY)/$(IMAGE_NAME):$(VERSION)
 	docker push $(ECR_REGISTRY)/$(IMAGE_NAME):latest
+
+docker-push-multiarch: ## Push multi-arch image to ECR
+	docker buildx build \
+		--platform $(PLATFORMS) \
+		-t $(ECR_REGISTRY)/$(IMAGE_NAME):$(VERSION) \
+		-t $(ECR_REGISTRY)/$(IMAGE_NAME):latest \
+		--push \
+		.
 
 build-all: ## Build for all platforms (requires cross)
 	@echo "Building for linux/amd64..."
