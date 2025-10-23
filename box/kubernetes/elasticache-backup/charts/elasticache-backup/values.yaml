@@ -1,0 +1,136 @@
+# Default values for elasticache-backup
+
+# -- Container image configuration
+image:
+  # -- (string) Container image registry
+  registry: ghcr.io
+  # -- (string) Container image repository
+  repository: younsl/elasticache-backup
+  # -- (string) Container image tag (overrides the image tag whose default is the chart appVersion)
+  tag: ""
+  # -- (string) Container image pull policy
+  pullPolicy: Always
+
+# -- (list) Image pull secrets for private container registries
+# @default -- `[]`
+imagePullSecrets: []
+  # - name: ghcr-secret
+  # - name: ecr-secret
+
+# -- ElastiCache configuration
+elasticache:
+  # -- (string) ElastiCache cluster ID (read replica node) - REQUIRED
+  cacheClusterId: ""
+  # -- (string) AWS region where ElastiCache cluster is located
+  region: ap-northeast-2
+
+# -- S3 configuration
+s3:
+  # -- (string) S3 bucket name for storing RDB files - REQUIRED
+  bucketName: ""
+
+# -- CronJob schedule configuration
+cronjob:
+  # -- (bool) Suspend CronJob execution (useful for maintenance)
+  suspend: false
+  # -- (string) Cron schedule expression (default: daily at 00:10 KST / 15:10 UTC)
+  schedule: "10 15 * * *"
+  # -- (string) Timezone for schedule (requires Kubernetes 1.25+). Examples: "Asia/Seoul", "UTC", "America/New_York"
+  timeZone: ""
+  # -- (int) Number of successful job history to retain
+  successfulJobsHistoryLimit: 3
+  # -- (int) Number of failed job history to retain
+  failedJobsHistoryLimit: 3
+  # -- (string) Concurrency policy for CronJob (Allow, Forbid, Replace)
+  concurrencyPolicy: Forbid
+  # -- (string) Restart policy for failed jobs
+  restartPolicy: OnFailure
+  # -- (int) Number of retries before marking job as failed
+  backoffLimit: 2
+  # -- (int) Maximum duration in seconds for job to complete (1 hour)
+  activeDeadlineSeconds: 3600
+
+# -- Snapshot operation configuration
+snapshot:
+  # -- (int) Maximum wait time for snapshot completion in seconds (30 minutes)
+  timeout: 1800
+  # -- (int) Maximum wait time for S3 export completion in seconds (5 minutes)
+  exportTimeout: 300
+  # -- (int) Snapshot status check interval in seconds
+  checkInterval: 30
+
+# -- Service Account configuration
+serviceAccount:
+  # -- (bool) Specifies whether a service account should be created
+  create: true
+  # -- (string) The name of the service account to use
+  name: elasticache-backup
+  # -- (object) Annotations to add to the service account (e.g., IRSA for AWS permissions)
+  # @default -- `{}`
+  annotations: {}
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/elasticache-backup-role
+
+# -- Resource requests and limits
+# @default -- See below
+resources:
+  # -- (object) Resource requests
+  requests:
+    # -- (string) Memory request
+    memory: "128Mi"
+    # -- (string) CPU request
+    cpu: "100m"
+  # -- (object) Resource limits
+  limits:
+    # -- (string) Memory limit
+    memory: "256Mi"
+
+# -- Security context for the container
+# @default -- See below
+securityContext:
+  # -- (bool) Whether a process can gain more privileges than its parent process
+  allowPrivilegeEscalation: false
+  # -- (bool) Run container as non-root user
+  runAsNonRoot: true
+  # -- (int) User ID to run the container
+  runAsUser: 1000
+  # -- (object) Linux capabilities to drop
+  capabilities:
+    # -- (list) Drop all capabilities
+    drop:
+    - ALL
+  # -- (bool) Mount root filesystem as read-only
+  readOnlyRootFilesystem: true
+
+# -- Environment variables
+env:
+  # -- (string) Log level (debug, info, warn, error)
+  logLevel: info
+  # -- (string) Log format (json or pretty)
+  logFormat: json
+  # -- (int) Timezone offset in hours for snapshot filename generation (e.g., 9 for Asia/Seoul UTC+9, 0 for UTC)
+  timezoneOffsetHours: 9
+
+# -- (object) Node labels for pod assignment
+# @default -- `{}`
+nodeSelector: {}
+
+# -- (list) Tolerations for pod assignment
+# @default -- `[]`
+tolerations: []
+
+# -- (object) Affinity rules for pod assignment
+# @default -- `{}`
+affinity: {}
+
+# -- (object) DNS configuration for the pod
+# @default -- `{}`
+dnsConfig: {}
+  # nameservers:
+  #   - 1.1.1.1
+  # searches:
+  #   - ns1.svc.cluster-domain.example
+  #   - my.dns.search.suffix
+  # options:
+  #   - name: ndots
+  #     value: "2"
+  #   - name: edns0

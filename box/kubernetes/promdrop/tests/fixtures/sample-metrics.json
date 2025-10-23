@@ -1,0 +1,81 @@
+{
+  "additional_metric_counts": [
+    {
+      "metric": "http_requests_total",
+      "job_counts": [
+        {"job": "api-server"},
+        {"job": "web-server"}
+      ]
+    },
+    {
+      "metric": "http_requests_duration_seconds",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    },
+    {
+      "metric": "http_errors_total",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    },
+    {
+      "metric": "grpc_requests_total",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    },
+    {
+      "metric": "grpc_response_time_seconds",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    },
+    {
+      "metric": "database_connections_active",
+      "job_counts": [
+        {"job": "api-server"},
+        {"job": "db-proxy"}
+      ]
+    },
+    {
+      "metric": "database_queries_total",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    },
+    {
+      "metric": "cache_hits_total",
+      "job_counts": [
+        {"job": "web-server"}
+      ]
+    },
+    {
+      "metric": "cache_misses_total",
+      "job_counts": [
+        {"job": "web-server"}
+      ]
+    },
+    {
+      "metric": "memory_usage_bytes",
+      "job_counts": [
+        {"job": "api-server"},
+        {"job": "web-server"},
+        {"job": "db-proxy"}
+      ]
+    },
+    {
+      "metric": "cpu_usage_percent",
+      "job_counts": [
+        {"job": "api-server"},
+        {"job": "web-server"}
+      ]
+    },
+    {
+      "metric": "orphan_metric_without_prefix",
+      "job_counts": [
+        {"job": "api-server"}
+      ]
+    }
+  ]
+}

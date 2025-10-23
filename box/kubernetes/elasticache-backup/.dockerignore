@@ -1,0 +1,45 @@
+# Build artifacts
+target/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation
+README.md
+LICENSE
+*.md
+*.txt
+
+# Kubernetes manifests
+k8s/
+*.yaml
+*.yml
+!Cargo.toml
+!Cargo.lock
+
+# Development files
+Makefile
+
+# Test files
+tests/
+benches/
+
+# Example configs
+examples/
+configs/
+
+# Misc
+.DS_Store
+Thumbs.db
+.dockerignore

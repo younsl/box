@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ElastiCacheSnapshotManagement",
+      "Effect": "Allow",
+      "Action": [
+        "elasticache:CreateSnapshot",
+        "elasticache:DescribeSnapshots",
+        "elasticache:DeleteSnapshot",
+        "elasticache:CopySnapshot"
+      ],
+      "Resource": [
+        "arn:aws:elasticache:*:*:cluster:*",
+        "arn:aws:elasticache:*:*:snapshot:*"
+      ]
+    },
+    {
+      "Sid": "S3BucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::your-backup-bucket/*"
+    },
+    {
+      "Sid": "S3BucketList",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::your-backup-bucket"
+    }
+  ]
+}

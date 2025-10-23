@@ -1,0 +1,10 @@
+# This is an example configuration file for the kk CLI.
+
+domains:
+  - https://stackoverflow.com
+  - https://www.github.com
+  - https://www.stackoverflow.com
+  - https://registry.k8s.io/v2/
+  # If you omit http:// or https://, kk will automatically add https:// to the domain.
+  - www.google.com
+  - reddit.com
