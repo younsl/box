@@ -2,28 +2,19 @@
 
 A monorepo containing Kubernetes tools, container images, and DevOps automation resources.
 
-## Announcement
+## Built with Rust
 
-Migrating all Go-based CLI tools and Kubernetes controllers in this repository to [Rust](https://github.com/rust-lang/rust) 1.90. All future tools will be developed in Rust instead of Go.
+All applications in [`kubernetes/`](./box/kubernetes/), [`tools/`](./box/tools/), and [`containers/`](./box/containers/) are built with **[Rust](https://github.com/rust-lang/rust) 1.90+** (except `cocd` which uses Go).
 
-**Why Rust?** Better performance and lower memory footprint, memory safety without garbage collection, superior error handling and type system, and modern tooling ecosystem.
-
-**Migration Status**:
-
-| Status | Applications |
-|--------|--------------|
-| Completed | [`kk`](./box/tools/kk), [`qg`](./box/tools/qg), [`jvs`](./box/kubernetes/jvs) (container), [`promdrop`](./box/kubernetes/promdrop) (container), [`filesystem-cleaner`](./box/containers/filesystem-cleaner) (container), [`elasticache-backup`](./box/kubernetes/elasticache-backup) (container) |
-| In Progress | [`cocd`](./box/tools/cocd) |
-
-This is a breaking change effort aimed at building a more robust and maintainable toolset.
+Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
 
 ## Featured content
 
 Kubernetes utilities, container images, automation scripts, infrastructure code, and engineering documentation.
 
-- **[tools](./box/tools/)** - CLI utilities (Go: cocd, idled | Rust: kk, qg)
-- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers (jvs, promdrop)
-- **[containers](./box/containers/)** - Custom container images
+- **[tools](./box/tools/)** - CLI utilities (Go: [cocd](./box/tools/cocd) | Rust: [kk](./box/tools/kk), [qg](./box/tools/qg) | Archived: [idled](./box/tools/idled))
+- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers ([podver](./box/kubernetes/podver), [promdrop](./box/kubernetes/promdrop), [elasticache-backup](./box/kubernetes/elasticache-backup), [policies](./box/kubernetes/policies))
+- **[containers](./box/containers/)** - Custom container images ([actions-runner](./box/containers/actions-runner), [filesystem-cleaner](./box/containers/filesystem-cleaner), [hugo](./box/containers/hugo), [ab](./box/containers/ab), [mageai](./box/containers/mageai), [yarn](./box/containers/yarn), [terraform-console-machine](./box/containers/terraform-console-machine))
 - **[terraform](./box/terraform/)** - Infrastructure as Code
 - **[actions](./box/actions/)** - Reusable GitHub Actions workflows
 - **[scripts](./box/scripts/)** - Automation scripts for AWS, GitHub, and K8s

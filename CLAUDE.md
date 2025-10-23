@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A monorepo serving as a DevOps toolbox containing Kubernetes utilities, automation scripts, infrastructure code, and engineering documentation.
 
-All applications in `kubernetes/` and `tools/` are built with **[Rust](https://github.com/rust-lang/rust) 1.90+** (except `cocd` which uses Go). Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
+All applications in `kubernetes/`, `tools/`, and `containers/` are built with **[Rust](https://github.com/rust-lang/rust) 1.90+** (except `cocd` which uses Go). Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
 
 ## Development Commands
 
@@ -107,6 +107,7 @@ box/
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
 │   ├── cocd/              # GitHub Actions deployment monitor (Go, TUI)
+│   ├── idled/             # AWS idle resource scanner (moved to private repo)
 │   ├── kk/                # Domain connectivity checker (Rust)
 │   └── qg/                # QR code generator (Rust)
 ├── containers/            # Custom container images
