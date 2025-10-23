@@ -6,10 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A monorepo serving as a DevOps toolbox containing Kubernetes utilities, automation scripts, infrastructure code, and engineering documentation.
 
-**Language Migration Notice**: The repository is actively migrating CLI tools from Go to Rust for better performance, memory safety, and modern tooling.
-- **Completed**: `kk`, `qg`, `podver` (container), `promdrop` (container), `filesystem-cleaner` (container), `elasticache-backup` (container)
-- **In Progress**: `cocd`
-- **Deprecated**: `idled` (moved to private repository)
+All applications in `kubernetes/` and `tools/` are built with **[Rust](https://github.com/rust-lang/rust) 1.90+** (except `cocd` which uses Go). Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
 
 ## Development Commands
 
