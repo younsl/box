@@ -4,7 +4,7 @@ A monorepo containing Kubernetes tools, container images, and DevOps automation 
 
 ## Built with Rust
 
-All applications in [`kubernetes/`](./box/kubernetes/), [`tools/`](./box/tools/), and [`containers/`](./box/containers/) are built with **[Rust](https://github.com/rust-lang/rust) 1.90+** (except `cocd` which uses Go).
+All applications in [kubernetes/](./box/kubernetes/), [tools/](./box/tools/), and [containers/](./box/containers/) are built with [Rust](https://github.com/rust-lang/rust) 1.90+ (except `cocd` which uses Go).
 
 Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
 
