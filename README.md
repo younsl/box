@@ -12,9 +12,9 @@ Rust provides key operational benefits: minimal container sizes, low memory foot
 
 Kubernetes utilities, container images, automation scripts, infrastructure code, and engineering documentation.
 
-- **[tools](./box/tools/)** - CLI utilities (Go: [cocd](./box/tools/cocd) | Rust: [kk](./box/tools/kk), [qg](./box/tools/qg) | Archived: [idled](./box/tools/idled))
-- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers ([podver](./box/kubernetes/podver), [promdrop](./box/kubernetes/promdrop), [elasticache-backup](./box/kubernetes/elasticache-backup), [policies](./box/kubernetes/policies))
-- **[containers](./box/containers/)** - Custom container images ([actions-runner](./box/containers/actions-runner), [filesystem-cleaner](./box/containers/filesystem-cleaner), [hugo](./box/containers/hugo), [ab](./box/containers/ab), [mageai](./box/containers/mageai), [yarn](./box/containers/yarn), [terraform-console-machine](./box/containers/terraform-console-machine))
+- **[tools](./box/tools/)** - CLI utilities (Go: cocd | Rust: kk, qg | Archived: idled)
+- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers (podver, promdrop, elasticache-backup, policies)
+- **[containers](./box/containers/)** - Custom container images (actions-runner, filesystem-cleaner, hugo, ab, mageai, yarn, terraform-console-machine)
 - **[terraform](./box/terraform/)** - Infrastructure as Code
 - **[actions](./box/actions/)** - Reusable GitHub Actions workflows
 - **[scripts](./box/scripts/)** - Automation scripts for AWS, GitHub, and K8s
