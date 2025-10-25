@@ -1,5 +1,10 @@
 # promdrop (Rust)
 
+[![Release](https://img.shields.io/github/v/release/younsl/o?filter=promdrop*)](https://github.com/younsl/o/releases?q=promdrop)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-promdrop-blue)](https://github.com/younsl/o/pkgs/container/promdrop)
+[![Rust](https://img.shields.io/badge/rust-1.90%2B-orange.svg)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A Rust implementation of promdrop - a CLI tool that generates Prometheus `metric_relabel_configs` to drop unused metrics, helping reduce monitoring costs.
 
 ## Features
