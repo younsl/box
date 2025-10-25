@@ -8,13 +8,13 @@ This directory contains [Kubernetes](https://kubernetes.io/) related resources i
 
 Kubernetes tools, policy resources, and architecture documentation organized by category.
 
-| Category | Name | Status | Description |
-|----------|------|--------|-------------|
-| Kubernetes Addon | [elasticache-backup](./elasticache-backup/) | Active | ElastiCache snapshot backup to S3 automation running as Kubernetes [CronJob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) |
-| Tools | [podver](./podver/) | Active | CLI tool that scans and reports Java and Node.js runtime versions across pods in a cluster |
-| Tools | [promdrop](./promdrop/) | Active | Prometheus scrape config generator to drop unused metrics analyzed by [mimirtool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) |
-| Resources | [policies](./policies/) | Active | Collection of [Kyverno](https://kyverno.io/) policies for Kubernetes cluster security and governance. |
-| Documentation | [mermaids](./mermaids/) | Active | Mermaid diagrams explaining Kubernetes component relationships and architecture. |
+| Category | Name | Language | Status | Description |
+|----------|------|----------|--------|-------------|
+| Kubernetes Addon | [elasticache-backup](./elasticache-backup/) | Rust | Active | ElastiCache snapshot backup to S3 automation running as Kubernetes [CronJob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) |
+| Tools | [podver](./podver/) | Rust | Active | CLI tool that scans and reports Java and Node.js runtime versions across pods in a cluster |
+| Tools | [promdrop](./promdrop/) | Rust | Active | Prometheus scrape config generator to drop unused metrics analyzed by [mimirtool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) |
+| Resources | [policies](./policies/) | - | Active | Collection of [Kyverno](https://kyverno.io/) policies for Kubernetes cluster security and governance. |
+| Documentation | [mermaids](./mermaids/) | - | Active | Mermaid diagrams explaining Kubernetes component relationships and architecture. |
 
 ## License
 
