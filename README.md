@@ -10,12 +10,12 @@ Rust provides key operational benefits: minimal container sizes, low memory foot
 
 ## Featured content
 
-Kubernetes utilities, container images, automation scripts, infrastructure code, and engineering documentation.
+Production-ready tools, controllers, and automation resources for Kubernetes and cloud infrastructure.
 
-- **[tools](./box/tools/)** - CLI utilities (Go: cocd | Rust: kk, qg | Archived: idled)
-- **[kubernetes](./box/kubernetes/)** - K8s resources, policies, and controllers (podver, promdrop, elasticache-backup, policies)
-- **[containers](./box/containers/)** - Custom container images (actions-runner, filesystem-cleaner, hugo, ab, mageai, yarn, terraform-console-machine)
-- **[terraform](./box/terraform/)** - Infrastructure as Code
-- **[actions](./box/actions/)** - Reusable GitHub Actions workflows
-- **[scripts](./box/scripts/)** - Automation scripts for AWS, GitHub, and K8s
-- **[til](./box/til/)** - Engineering notes and learnings
+- **[tools](./box/tools/)** - CLI tools for monitoring and testing
+- **[kubernetes](./box/kubernetes/)** - Controllers and admission policies
+- **[containers](./box/containers/)** - Runtime images for CI/CD and data platforms
+- **[terraform](./box/terraform/)** - Infrastructure modules
+- **[actions](./box/actions/)** - Reusable workflow templates
+- **[scripts](./box/scripts/)** - AWS, GitHub, and K8s automation
+- **[til](./box/til/)** - Engineering notes
