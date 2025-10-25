@@ -1,9 +1,10 @@
 [package]
-name = "kk-rs"
+name = "kk"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.90"
 authors = ["younsl"]
-description = "A CLI tool that checks domain connectivity (Rust port of kk)"
+description = "A CLI tool that checks domain connectivity"
 license = "MIT"
 
 [[bin]]
