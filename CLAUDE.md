@@ -76,7 +76,8 @@ make deploy         # Deploy to Kubernetes (where available)
 **Container-Specific Notes**:
 - **filesystem-cleaner**: Includes `make all` target that runs fmt + lint + test + build
 - **elasticache-backup**: Supports multi-arch builds and has `run-json` target for JSON log testing
-- **actions-runner**, **hugo**: Have specialized build workflows for multi-arch images
+- **actions-runner**: Has specialized build workflow for multi-arch images
+- **hugo**, **backup-utils**: Built from external sources via workflow_dispatch (no local Dockerfile)
 - Update ECR_REGISTRY variable in Makefiles before pushing
 
 ### Terraform Projects
@@ -113,7 +114,6 @@ box/
 ├── containers/            # Custom container images
 │   ├── actions-runner/    # GitHub Actions runner
 │   ├── filesystem-cleaner/# File system cleanup tool (Rust)
-│   ├── hugo/              # Hugo static site generator image
 │   ├── ab/                # Apache Bench container
 │   ├── mageai/            # Mage AI custom image
 │   ├── yarn/              # Yarn package manager container
@@ -425,7 +425,6 @@ git tag promdrop/1.0.0 && git push --tags  # Rust
 git tag filesystem-cleaner/1.0.0 && git push --tags
 git tag elasticache-backup/1.0.0 && git push --tags
 git tag actions-runner/1.0.0 && git push --tags
-git tag hugo/1.0.0 && git push --tags
 
 # Available workflows:
 # - release-cocd.yml                (Go CLI tool)
@@ -433,8 +432,8 @@ git tag hugo/1.0.0 && git push --tags
 # - release-filesystem-cleaner.yml  (Rust container)
 # - release-elasticache-backup.yml  (Rust container)
 # - release-actions-runner.yml      (Container image)
-# - release-hugo.yml                (Container image)
-# - release-backup-utils.yml        (Container image)
+# - release-hugo.yml                (Workflow dispatch - builds from external source)
+# - release-backup-utils.yml        (Workflow dispatch - builds from external source)
 
 # Rust tools without automated releases (manual release required):
 # - kk (domain connectivity checker)
