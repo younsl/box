@@ -54,7 +54,7 @@ jobs:
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "${LDFLAGS}" -o bin/cocd-${{ matrix.goos }}-${{ matrix.goarch }} cmd/cocd/main.go
 
       - name: Upload binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cocd-${{ matrix.goos }}-${{ matrix.goarch }}
           path: box/tools/cocd/bin/cocd-${{ matrix.goos }}-${{ matrix.goarch }}

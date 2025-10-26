@@ -182,7 +182,7 @@ jobs:
           ls -lh "${BINARY_NAME}.tar.gz"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: ${{ env.PROJECT_BASE_DIR }}/${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
