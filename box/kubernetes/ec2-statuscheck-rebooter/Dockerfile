@@ -20,12 +20,21 @@ RUN apk add --no-cache \
 # Copy manifests and build script
 COPY Cargo.toml Cargo.lock build.rs ./
 
-# Copy source code
+# Create dummy src directory to cache dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs
+
+# Build dependencies only (this layer will be cached)
+# Reduce parallelism to avoid OOM
+RUN CARGO_BUILD_JOBS=2 cargo build --release && \
+    rm -rf src target/release/deps/ec2_statuscheck_rebooter* target/release/ec2-statuscheck-rebooter*
+
+# Copy actual source code
 COPY src ./src
 
-# Build release binary with static linking
-# Note: Git commit will be extracted from GITHUB_SHA env var in CI builds
-RUN cargo build --release
+# Build actual binary with reduced parallelism
+# Disable incremental compilation to reduce memory usage
+RUN CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=2 cargo build --release
 
 # Runtime stage
 FROM alpine:3.22 AS runtime
