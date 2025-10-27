@@ -223,40 +223,46 @@ jobs:
         id: checksums
         working-directory: release-assets
         run: |
-          CHECKSUMS_TABLE="| Platform | Architecture | Binary | SHA256 Checksum |\n"
-          CHECKSUMS_TABLE="${CHECKSUMS_TABLE}|----------|--------------|--------|-----------------|"
+          # Start building the checksums table with actual newlines
+          {
+            echo "| Platform | Architecture | Binary | SHA256 Checksum |"
+            echo "|----------|--------------|--------|-----------------|"
 
-          # Linux amd64
-          if [ -f "kk-linux-amd64.tar.gz" ]; then
-            checksum=$(sha256sum kk-linux-amd64.tar.gz | awk '{print $1}')
-            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| Linux | amd64 | \`kk-linux-amd64.tar.gz\` | \`$checksum\` |"
-          fi
+            # Linux amd64
+            if [ -f "kk-linux-amd64.tar.gz" ]; then
+              checksum=$(sha256sum kk-linux-amd64.tar.gz | awk '{print $1}')
+              echo "| Linux | amd64 | \`kk-linux-amd64.tar.gz\` | \`$checksum\` |"
+            fi
 
-          # Linux arm64
-          if [ -f "kk-linux-arm64.tar.gz" ]; then
-            checksum=$(sha256sum kk-linux-arm64.tar.gz | awk '{print $1}')
-            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| Linux | arm64 | \`kk-linux-arm64.tar.gz\` | \`$checksum\` |"
-          fi
+            # Linux arm64
+            if [ -f "kk-linux-arm64.tar.gz" ]; then
+              checksum=$(sha256sum kk-linux-arm64.tar.gz | awk '{print $1}')
+              echo "| Linux | arm64 | \`kk-linux-arm64.tar.gz\` | \`$checksum\` |"
+            fi
 
-          # macOS amd64
-          if [ -f "kk-darwin-amd64.tar.gz" ]; then
-            checksum=$(sha256sum kk-darwin-amd64.tar.gz | awk '{print $1}')
-            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| macOS | amd64 (Intel) | \`kk-darwin-amd64.tar.gz\` | \`$checksum\` |"
-          fi
+            # macOS amd64
+            if [ -f "kk-darwin-amd64.tar.gz" ]; then
+              checksum=$(sha256sum kk-darwin-amd64.tar.gz | awk '{print $1}')
+              echo "| macOS | amd64 (Intel) | \`kk-darwin-amd64.tar.gz\` | \`$checksum\` |"
+            fi
 
-          # macOS arm64
-          if [ -f "kk-darwin-arm64.tar.gz" ]; then
-            checksum=$(sha256sum kk-darwin-arm64.tar.gz | awk '{print $1}')
-            CHECKSUMS_TABLE="${CHECKSUMS_TABLE}\n| macOS | arm64 (Apple Silicon) | \`kk-darwin-arm64.tar.gz\` | \`$checksum\` |"
-          fi
+            # macOS arm64
+            if [ -f "kk-darwin-arm64.tar.gz" ]; then
+              checksum=$(sha256sum kk-darwin-arm64.tar.gz | awk '{print $1}')
+              echo "| macOS | arm64 (Apple Silicon) | \`kk-darwin-arm64.tar.gz\` | \`$checksum\` |"
+            fi
+          } > checksums_table.txt
 
           # Output to GitHub environment for use in release body
-          echo "CHECKSUMS_TABLE<<EOF" >> $GITHUB_ENV
-          echo -e "$CHECKSUMS_TABLE" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          {
+            echo "CHECKSUMS_TABLE<<EOF"
+            cat checksums_table.txt
+            echo "EOF"
+          } >> $GITHUB_ENV
 
           # Also print to console for debugging
-          echo -e "$CHECKSUMS_TABLE"
+          echo "Generated checksums table:"
+          cat checksums_table.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -267,10 +273,6 @@ jobs:
             # ${{ env.PROJECT_NAME }} ${{ env.VERSION }}
 
             **[kk](https://github.com/${{ github.repository }}/tree/main/box/tools/kk)** (knock-knock) - Fast domain connectivity checker built with Rust.
-
-            ## What's New
-
-            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/box/tools/kk/CHANGELOG.md) for detailed release notes.
 
             ## Features
 
