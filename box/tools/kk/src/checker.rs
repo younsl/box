@@ -103,7 +103,13 @@ async fn perform_check(domain_or_url: &str) -> CheckResult {
 
                 if is_successful_status(code) {
                     status = "OK".to_string();
-                    return CheckResult::new(checked_url, last_duration, status, status_code, attempt);
+                    return CheckResult::new(
+                        checked_url,
+                        last_duration,
+                        status,
+                        status_code,
+                        attempt,
+                    );
                 }
 
                 status = "UNEXPECTED_CODE".to_string();
@@ -170,9 +176,7 @@ pub async fn run_checks(domains: Vec<String>) -> Result<()> {
 
     // Print results table
     use tabled::settings::Style;
-    let table = Table::new(&results)
-        .with(Style::sharp())
-        .to_string();
+    let table = Table::new(&results).with(Style::sharp()).to_string();
     println!("{}", table);
 
     let total_duration = total_start_time.elapsed();
