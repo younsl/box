@@ -1,5 +1,9 @@
 # ec2-statuscheck-rebooter
 
+[![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-ec2--statuscheck--rebooter-black?style=flat-square&logo=docker&logoColor=white)](https://github.com/younsl/o/pkgs/container/ec2-statuscheck-rebooter)
+[![Rust](https://img.shields.io/badge/rust-1.90-black?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![GitHub license](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
+
 Automated reboot for standalone EC2 instances with status check failures.
 
 ## Overview
