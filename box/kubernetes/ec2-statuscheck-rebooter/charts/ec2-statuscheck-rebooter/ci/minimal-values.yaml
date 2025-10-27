@@ -1,0 +1,23 @@
+# Test with minimal resource configuration
+# Validates chart works with very low resource limits
+
+replicaCount: 1
+revisionHistoryLimit: 1
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+
+rebooter:
+  checkIntervalSeconds: 600
+  failureThreshold: 1
+  dryRun: true
+  logFormat: json
+  logLevel: error
+
+resources:
+  limits:
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 32Mi

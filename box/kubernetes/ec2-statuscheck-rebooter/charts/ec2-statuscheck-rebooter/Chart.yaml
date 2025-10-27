@@ -1,0 +1,18 @@
+apiVersion: v2
+name: ec2-statuscheck-rebooter
+description: Automated reboot for standalone EC2 instances outside Kubernetes cluster
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/younsl/o
+keywords:
+  - ec2
+  - aws
+  - automation
+  - monitoring
+  - standalone
+  - external
+maintainers:
+  - name: younsl
+    email: cysl@kakao.com
+    url: https://github.com/younsl

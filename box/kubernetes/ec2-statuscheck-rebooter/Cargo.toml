@@ -1,0 +1,29 @@
+[package]
+name = "ec2-statuscheck-rebooter"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90"
+authors = ["younsl"]
+description = "Automated EC2 instance reboot on status check failures"
+
+[dependencies]
+tokio = { version = "1.41", features = ["full"] }
+aws-config = { version = "1.5", features = ["behavior-version-latest"] }
+aws-sdk-ec2 = "1.78"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "time"] }
+clap = { version = "4.5", features = ["derive", "env"] }
+anyhow = "1.0"
+hyper = { version = "1.5", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+
+[build-dependencies]
+chrono = "0.4"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

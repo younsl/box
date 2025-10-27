@@ -1,0 +1,52 @@
+# Test production-like configuration
+# Validates a realistic production deployment scenario
+
+replicaCount: 1
+revisionHistoryLimit: 10
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/EC2RebooterRole
+
+podAnnotations:
+  prometheus.io/scrape: "false"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+rebooter:
+  checkIntervalSeconds: 300
+  failureThreshold: 2
+  region: us-west-2
+  tagFilters:
+    - Environment=production
+    - ManagedBy=ec2-statuscheck-rebooter
+  dryRun: false
+  logFormat: json
+  logLevel: info
+
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists

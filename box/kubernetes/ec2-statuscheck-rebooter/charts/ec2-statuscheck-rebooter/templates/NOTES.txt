@@ -1,0 +1,27 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+Configuration:
+  Check Interval: {{ .Values.rebooter.checkIntervalSeconds }}s
+  Failure Threshold: {{ .Values.rebooter.failureThreshold }}
+  Dry Run Mode: {{ .Values.rebooter.dryRun }}
+  {{- if .Values.rebooter.tagFilters }}
+  Tag Filters: {{ join ", " .Values.rebooter.tagFilters }}
+  {{- end }}
+
+{{- if .Values.rebooter.dryRun }}
+
+⚠️  DRY RUN MODE is enabled. No instances will be rebooted.
+    To disable dry run mode, set: --set rebooter.dryRun=false
+{{- end }}
+
+To view logs:
+  $ kubectl logs -f deployment/{{ include "ec2-statuscheck-rebooter.fullname" . }} -n {{ .Release.Namespace }}
+
+Documentation: {{ .Chart.Home }}

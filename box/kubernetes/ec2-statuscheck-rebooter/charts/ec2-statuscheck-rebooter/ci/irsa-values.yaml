@@ -1,0 +1,19 @@
+# Test with IRSA (IAM Roles for Service Accounts)
+# Validates ServiceAccount annotations and IRSA integration
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/EC2RebooterRole
+
+rebooter:
+  region: us-east-1
+  tagFilters:
+    - Environment=production
+    - AutoReboot=true
+  checkIntervalSeconds: 180
+  failureThreshold: 3
+  dryRun: true
+  logFormat: json
+  logLevel: info

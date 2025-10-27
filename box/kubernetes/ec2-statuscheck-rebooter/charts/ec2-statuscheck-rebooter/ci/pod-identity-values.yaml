@@ -1,0 +1,18 @@
+# Test with EKS Pod Identity
+# Validates that chart works without ServiceAccount annotations (Pod Identity doesn't need them)
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+  annotations: {}
+
+rebooter:
+  region: ap-northeast-2
+  tagFilters:
+    - Team=platform
+    - Monitoring=enabled
+  checkIntervalSeconds: 300
+  failureThreshold: 2
+  dryRun: false
+  logFormat: json
+  logLevel: debug
