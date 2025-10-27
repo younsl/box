@@ -1,167 +1,95 @@
 # kk
 
-[![Rust Version](https://img.shields.io/badge/Rust-1.75+-orange?style=flat-square&logo=rust&color=black&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square&color=black)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/younsl/o?filter=kk*&style=flat-square&color=black)](https://github.com/younsl/o/releases?q=kk&expanded=true)
+[![Rust](https://img.shields.io/badge/rust-1.90-black?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![GitHub license](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
 
-**kk** stands for **knock-knock**.
-
-A CLI tool that checks the status of domains specified in a YAML configuration file. Written in Rust for performance and reliability.
+**kk** (knock-knock) checks domain connectivity from a YAML config. Fast, concurrent, and reliable.
 
 ## Features
 
-- ✅ Concurrent domain connectivity checks
-- ✅ Automatic HTTPS prefix addition
-- ✅ Configurable retry logic (3 attempts with 2s interval)
-- ✅ Beautiful progress bar and table output
-- ✅ Support for both domains and full URLs
-- ✅ Verbose logging mode
+- Concurrent domain checks with automatic retries
+- Auto-adds HTTPS prefix to bare domains
+- Clean table output with response times
+- Verbose logging for debugging
 
-## Project Structure
+## Quick Start
 
-Following Rust best practices:
+```bash
+# Run with example config
+make run
 
-```
-kk/
-├── src/
-│   ├── main.rs       # CLI entry point
-│   ├── config.rs     # YAML configuration parsing
-│   └── checker.rs    # HTTP connectivity checking logic
-├── configs/
-│   └── domain-example.yaml
-├── Cargo.toml        # Rust dependencies and metadata
-├── Makefile          # Build automation
-└── README.md
+# Or build and run manually
+make release
+./target/release/kk --config configs/domain-example.yaml
 ```
 
 ## Installation
 
-### Prerequisites
-
-- Rust 1.75 or later
-- Cargo (comes with Rust)
-
-### Build from source
+**Prerequisites**: Rust 1.90+ (Edition 2024)
 
 ```bash
-# Clone the repository (if not already cloned)
-git clone https://github.com/younsl/o.git
-cd o/box/tools/kk
-
-# Build the project
-make build
-
-# Or build optimized release version
+# Build release binary
 make release
-```
 
-### Install to system
-
-```bash
 # Install to ~/.cargo/bin/
 make install
-
-# Or use cargo directly
-cargo install --path .
 ```
 
 ## Usage
 
-### Basic usage
-
 ```bash
-# Using the binary directly
-./target/release/kk --config configs/domain-example.yaml
-
-# Or if installed
 kk --config configs/domain-example.yaml
+
+# Enable verbose logging
+kk --config configs/domain-example.yaml --verbose
 ```
 
-### Example output
+### Output
 
 ```console
-$ kk --config configs/domain-example.yaml
-Loaded domain list from 'configs/domain-example.yaml'.
 ┌─────────────────────────────────┬──────┬─────────────────┬──────┬──────────────┐
 │ URL                             │ TIME │ STATUS          │ CODE │ ATTEMPTS     │
 ├─────────────────────────────────┼──────┼─────────────────┼──────┼──────────────┤
 │ https://www.github.com          │ 205ms│ OK              │ 200  │ 1            │
 │ https://registry.k8s.io/v2/     │ 237ms│ OK              │ 200  │ 1            │
 │ https://www.google.com          │ 401ms│ OK              │ 200  │ 1            │
-│ https://stackoverflow.com       │ 591ms│ OK              │ 200  │ 1            │
-│ https://www.stackoverflow.com   │ 830ms│ OK              │ 200  │ 1            │
 │ https://reddit.com              │ 324ms│ UNEXPECTED_CODE │ 403  │ 3 (failed)   │
 └─────────────────────────────────┴──────┴─────────────────┴──────┴──────────────┘
 
-Summary: 5/6 successful checks in 5.3s.
-```
-
-### Verbose mode
-
-Enable debug logging:
-
-```bash
-kk --config configs/domain-example.yaml --verbose
-```
-
-### Makefile targets
-
-```bash
-make build      # Build debug version
-make release    # Build optimized release version
-make run        # Build and run with example config
-make dev        # Run with verbose logging
-make test       # Run tests
-make fmt        # Format code with rustfmt
-make lint       # Run clippy linter
-make clean      # Remove build artifacts
-make install    # Install to ~/.cargo/bin/
+Summary: 3/4 successful checks in 2.1s
 ```
 
 ## Configuration
 
-The configuration file should be in YAML format:
-
 ```yaml
 # configs/domain-example.yaml
 domains:
-  # Full URLs with scheme
-  - https://www.google.com
+  - https://www.google.com       # Full URL
   - https://registry.k8s.io/v2/
-
-  # Domain only (https:// will be added automatically)
-  - reddit.com
+  - reddit.com                   # Auto-prefixes with https://
   - www.github.com
 ```
 
-## Technical Details
-
-Built with Rust for:
-- **Memory safety**: Compile-time borrow checker prevents memory bugs
-- **Concurrency**: Tokio async/await for efficient parallel checks
-- **Type safety**: Strong type system with Result<T, E> error handling
-- **Performance**: Zero-cost abstractions and small binary size (~5MB stripped)
-
-## Dependencies
-
-Major crates used:
-- `clap` - Command-line argument parsing
-- `tokio` - Async runtime
-- `reqwest` - HTTP client
-- `serde` / `serde_yaml` - YAML parsing
-- `indicatif` - Progress bars
-- `tabled` - Table formatting
-- `anyhow` - Error handling
-
-## Testing
+## Development
 
 ```bash
-# Run all tests
-make test
-
-# Or use cargo directly
-cargo test --verbose
+make build      # Debug build
+make release    # Release build
+make test       # Run tests
+make fmt        # Format code
+make lint       # Run clippy
+make clean      # Clean artifacts
 ```
+
+## Built With
+
+- **Rust 1.90+ Edition 2024** - Memory safety, zero-cost abstractions
+- **Tokio** - Async runtime for concurrent checks
+- **Clap** - CLI argument parsing
+- **Reqwest** - HTTP client
+- **Tabled** - Table formatting
 
 ## License
 
-MIT License - See [LICENSE](../../LICENSE) for details
+MIT
