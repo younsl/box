@@ -43,6 +43,8 @@ This tool is specifically designed for monitoring **external EC2 instances** tha
 
 ## Architecture
 
+![Architecture Diagram](docs/assets/1.png)
+
 The tool runs as a Kubernetes Deployment and monitors external EC2 instances using the following workflow:
 
 1. Starts HTTP health check server on port 8080
