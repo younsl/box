@@ -234,10 +234,10 @@ impl Ec2Client {
                 if let Some(instance_id) = instance.instance_id() {
                     let tags = instance.tags();
                     for tag in tags {
-                        if tag.key() == Some("Name") {
-                            if let Some(value) = tag.value() {
-                                tags_map.insert(instance_id.to_string(), value.to_string());
-                            }
+                        if tag.key() == Some("Name")
+                            && let Some(value) = tag.value()
+                        {
+                            tags_map.insert(instance_id.to_string(), value.to_string());
                         }
                     }
                 }

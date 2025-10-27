@@ -17,6 +17,12 @@ pub struct HealthServer {
     ready: Arc<AtomicBool>,
 }
 
+impl Default for HealthServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HealthServer {
     pub fn new() -> Self {
         Self {
