@@ -6,6 +6,8 @@ use tracing::{error, info, warn};
 
 mod cleaner;
 mod config;
+mod matcher;
+mod scanner;
 
 use cleaner::Cleaner;
 use config::Args;
@@ -67,7 +69,7 @@ async fn main() -> Result<()> {
 }
 
 fn setup_logging(level: &str) -> Result<()> {
-    use tracing_subscriber::{fmt, EnvFilter};
+    use tracing_subscriber::{EnvFilter, fmt};
 
     let filter = EnvFilter::try_new(level)
         .or_else(|_| EnvFilter::try_new("info"))

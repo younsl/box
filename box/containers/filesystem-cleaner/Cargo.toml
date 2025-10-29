@@ -1,6 +1,6 @@
 [package]
 name = "filesystem-cleaner"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["younsl"]
 description = "Kubernetes sidecar filesystem cleaner for managing disk space"
@@ -26,6 +26,9 @@ globset = "=0.4.15"
 
 # System information
 sysinfo = "0.32"
+
+# Human-readable byte sizes
+bytesize = "1.3"
 
 # Serialization (for future config file support)
 serde = { version = "1.0", features = ["derive"] }
