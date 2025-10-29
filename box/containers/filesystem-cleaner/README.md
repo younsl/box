@@ -9,6 +9,8 @@ A lightweight Rust-based container image for automatic filesystem cleanup in Kub
 
 ## Architecture
 
+> **Want to understand the internals?** See [Architecture Guide](docs/architecture.md) for component design and Unix philosophy implementation.
+
 ```mermaid
 ---
 title: filesystem-cleaner Architecture
@@ -126,7 +128,7 @@ spec:
     - "--usage-threshold-percent=70"
     - "--cleanup-mode=once"
     - "--include-patterns=*"
-    - "--exclude-patterns=.git,*.log"
+    - "--exclude-patterns=**/.git/**,*.log"
     securityContext:
       runAsUser: 1001  # Same as runner user
       runAsGroup: 1001
@@ -145,6 +147,16 @@ spec:
     emptyDir: {}
 ```
 
+**Common Mistake**: Simple directory names like `groovy-dsl` only match root-level paths. Use `**/groovy-dsl/**` to exclude nested directories.
+
+```yaml
+# ❌ Wrong - only matches root level
+- "--exclude-patterns=groovy-dsl,kotlin-dsl"
+
+# ✅ Correct - matches at any depth
+- "--exclude-patterns=**/groovy-dsl/**,**/kotlin-dsl/**"
+```
+
 ## Configuration
 
 Configure filesystem-cleaner using command-line flags or environment variables:
@@ -155,10 +167,12 @@ Configure filesystem-cleaner using command-line flags or environment variables:
 | `--usage-threshold-percent` | `USAGE_THRESHOLD_PERCENT` | `80` | Disk usage percentage to trigger cleanup (0-100) |
 | `--cleanup-mode` | `CLEANUP_MODE` | `interval` | Cleanup mode: `once` or `interval` |
 | `--check-interval-minutes` | `CHECK_INTERVAL_MINUTES` | `10` | Check interval in minutes (only used when `--cleanup-mode=interval`) |
-| `--include-patterns` | `INCLUDE_PATTERNS` | `*` | File patterns to include (comma-separated) |
-| `--exclude-patterns` | `EXCLUDE_PATTERNS` | `.git,node_modules,*.log` | Patterns to exclude (comma-separated) |
+| `--include-patterns` | `INCLUDE_PATTERNS` | `*` | Glob patterns to include (e.g., `*.tmp`, `**/cache/**`) |
+| `--exclude-patterns` | `EXCLUDE_PATTERNS` | `**/.git/**,**/node_modules/**,*.log` | Glob patterns to exclude (e.g., `**/.git/**`, `**/node_modules/**`) |
 | `--dry-run` | `DRY_RUN` | `false` | Preview mode without deletion |
 | `--log-level` | `LOG_LEVEL` | `info` | Log level: `trace`, `debug`, `info`, `warn`, `error` |
+
+> 📖 **Glob patterns** are applied only to files within `--target-paths`. For detailed pattern syntax and examples, see [Glob Pattern Guide](docs/glob-patterns.md).
 
 ## Building
 

@@ -1,3 +1,13 @@
+# Example Pod configurations for filesystem-cleaner
+#
+# Glob Pattern Usage:
+#   - Use **/.git/** to exclude .git directories at any depth
+#   - Use **/node_modules/** to exclude node_modules directories at any depth
+#   - Use *.log to exclude all .log files at any depth
+#   - Simple names like "node_modules" only match root-level directories
+#
+# For more details, see: docs/glob-patterns.md
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -11,8 +21,8 @@ spec:
     - "--target-paths=/workspace,/tmp/build"
     - "--usage-threshold-percent=70"
     - "--cleanup-mode=once"  # Run once and exit for initContainer
-    - "--include-patterns=*.tmp,*.cache,*.log,*.bak"
-    - "--exclude-patterns=.git,node_modules,.github"
+    - "--include-patterns=*"
+    - "--exclude-patterns=**/.git/**,**/node_modules/**,**/.github/**,*.log"
     - "--log-level=info"
     volumeMounts:
     - name: workspace
@@ -74,7 +84,7 @@ spec:
     - "--cleanup-mode=interval"  # Run periodically as sidecar
     - "--check-interval-minutes=10"
     - "--include-patterns=*"
-    - "--exclude-patterns=.git,node_modules,*.log,.github"
+    - "--exclude-patterns=**/.git/**,**/node_modules/**,**/.github/**,*.log"
     - "--log-level=info"
     volumeMounts:
     - name: work

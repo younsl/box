@@ -83,23 +83,25 @@ pub struct Args {
     )]
     pub check_interval_minutes: u64,
 
-    /// File patterns to include for deletion (comma-separated glob patterns)
+    /// Glob patterns to include for deletion (comma-separated)
+    /// Examples: *.tmp, **/cache/**, */build/*
     #[arg(
         long = "include-patterns",
         env = "INCLUDE_PATTERNS",
         default_value = "*",
         value_delimiter = ',',
-        help = "File patterns to include for deletion (comma-separated)"
+        help = "Glob patterns to include for deletion (e.g., *.tmp, **/cache/**)"
     )]
     pub include_patterns: Vec<String>,
 
-    /// File/directory patterns to exclude from deletion (comma-separated glob patterns)
+    /// Glob patterns to exclude from deletion (comma-separated)
+    /// Examples: **/.git/**, **/node_modules/**, *.log
     #[arg(
         long = "exclude-patterns",
         env = "EXCLUDE_PATTERNS",
-        default_value = ".git,node_modules,*.log",
+        default_value = "**/.git/**,**/node_modules/**,*.log",
         value_delimiter = ',',
-        help = "File/directory patterns to exclude from deletion (comma-separated)"
+        help = "Glob patterns to exclude from deletion (e.g., **/.git/**, **/node_modules/**)"
     )]
     pub exclude_patterns: Vec<String>,
 
