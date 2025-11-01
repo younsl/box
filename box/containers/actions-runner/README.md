@@ -1,45 +1,42 @@
-# GitHub Actions Runner with Additional APT Sources
+# Actions Runner
 
-[![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-younsl%2Factions--runner-000000?style=flat-square&logo=github&logoColor=white)](https://github.com/younsl/o/pkgs/container/actions-runner)
-[![GitHub license](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
+[![GHCR](https://img.shields.io/badge/ghcr.io-younsl%2Factions--runner-000000?style=flat-square&logo=github&logoColor=white)](https://github.com/younsl/o/pkgs/container/actions-runner)
+[![License](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
 
-Custom [GitHub Actions runner image](https://github.com/actions/actions-runner-controller/tree/master/runner) with additional APT mirror sources for improved package availability and download speeds.
+GitHub Actions runner optimized for Korea with multiple APT package sources for faster and more reliable downloads.
 
-## Base Image
+## What's Inside
 
-- `summerwind/actions-runner:v2.328.0-ubuntu-22.04` from [docker hub](https://hub.docker.com/r/summerwind/actions-runner/tags)
+**Base:** `summerwind/actions-runner:v2.329.0-ubuntu-24.04`
 
-## Features
+**Additions:**
+- Multiple APT package sources (includes Kakao mirror)
+- Build essentials (`make`)
 
-- Adds Kakao mirror for faster package downloads in Korea and fault tolerance against frequent outages of archive.ubuntu.com and security.ubuntu.com package repositories
-- Maintains compatibility with the original runner image
-- Easy to extend with more mirror sources
+## Why This Image
 
-## Build
+- **Faster downloads** in Korea with local package sources
+- **High availability** through multiple package servers
+- **Drop-in replacement** for standard runner images
+
+## Quick Start
 
 ```bash
-docker build -t actions-runner-kakao . --platform linux/amd64
+# Build
+docker build -t actions-runner . --platform linux/amd64
+
+# Use in your runner deployment
+# (Replace summerwind/actions-runner with this image)
 ```
-
-## Usage
-
-This image can be used as a drop-in replacement for the standard GitHub Actions runner image in self-hosted runner deployments.
 
 ## Customization
 
-To add or modify mirror sources, edit the `additional-sources.list` file.
+Edit `additional-sources.list` to add or modify APT repository sources.
 
-You can also install additional utilities like `make` or `aws-cli` using the package manager, for example:
+## Changelog
 
-```dockerfile
-# Install make and other build essentials
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    make \
-    && rm -rf /var/lib/apt/lists/*
-```
+See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
 
 ## References
 
-- [GitHub Community Discussion on APT mirrors](https://github.com/orgs/community/discussions/160684)
 - [Actions Runner Available Images](https://github.com/actions/runner-images?tab=readme-ov-file#available-images)
