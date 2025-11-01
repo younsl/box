@@ -1,5 +1,8 @@
 # GitHub Actions Runner with Additional APT Sources
 
+[![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-younsl%2Factions--runner-000000?style=flat-square&logo=github&logoColor=white)](https://github.com/younsl/o/pkgs/container/actions-runner)
+[![GitHub license](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
+
 Custom [GitHub Actions runner image](https://github.com/actions/actions-runner-controller/tree/master/runner) with additional APT mirror sources for improved package availability and download speeds.
 
 ## Base Image
