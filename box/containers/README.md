@@ -13,7 +13,7 @@ Production-ready container images for DevOps automation, development tooling, an
 | 1 | [**actions-runner**](./actions-runner/) | Custom actions-runner with additional tools | [actions-runner](https://github.com/younsl/charts/tree/main/charts/actions-runner) | [ghcr.io/younsl/actions-runner](https://github.com/younsl/o/pkgs/container/actions-runner) |
 | 2 | [**ab**](./ab/) | Lightweight load testing | - | - |
 | 3 | [**mageai**](./mageai/0.9.73-custom.1/) | Custom mageai 0.9.73 image | - | - |
-| 4 | [**backup-utils**](/.github/workflows/release-backup-utils.yml) | GitHub Enterprise backup/restore tools (uses original Dockerfile) | [backup-utils](https://github.com/younsl/charts/tree/main/charts/backup-utils) | [ghcr.io/younsl/backup-utils](https://github.com/younsl/o/pkgs/container/backup-utils) ⚠️ **Deprecated** - GitHub Enterprise Server 3.17+ includes built-in backup service |
+| 4 | [**backup-utils**](/.github/workflows/release-backup-utils.yml) | GitHub Enterprise backup/restore tools (uses original Dockerfile) | [backup-utils](https://github.com/younsl/charts/tree/main/charts/backup-utils) | [ghcr.io/younsl/backup-utils](https://github.com/younsl/o/pkgs/container/backup-utils) ⚠️ **Deprecated** - GitHub Enterprise Server 3.17+ includes [built-in backup service](https://docs.github.com/en/enterprise-server@latest/admin/backing-up-and-restoring-your-instance/backup-service-for-github-enterprise-server/configuring-the-backup-service) |
 | 5 | [**filesystem-cleaner**](./filesystem-cleaner/) | Sidecar container that monitors and cleans specified directories | - | [ghcr.io/younsl/filesystem-cleaner](https://github.com/younsl/o/pkgs/container/filesystem-cleaner) |
 
 ## References
