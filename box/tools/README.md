@@ -2,6 +2,10 @@
 
 Kubernetes and automation CLI tools.
 
+## Core Principles
+
+Built on the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy): "Do One Thing and Do It Well". Each CLI tool solves one specific operational problem, and internally, the application architecture follows the same principle with small, focused modules.
+
 ## Tool List
 
 | Category | Name | Language | Description |
@@ -10,3 +14,7 @@ Kubernetes and automation CLI tools.
 | CLI | [kk](./kk/) (knock knock) | [Rust](./kk/Cargo.toml) | CLI tool that checks the status of domains specified in a YAML configuration file. |
 | CLI | [qg](./qg/) (qr generator) | [Rust](./qg/Cargo.toml) | CLI tool that generates QR code images from text or URLs. |
 | CLI | [s3vget](./s3vget/) (S3 version get) | [Rust](./s3vget/Cargo.toml) | S3 Object Version Downloader with interactive prompts and configurable timezone support. |
+
+## License
+
+All tools and resources in this directory are licensed under the repository's main [MIT License](../../LICENSE).
