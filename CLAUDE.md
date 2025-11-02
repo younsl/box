@@ -42,7 +42,7 @@ make clean          # Remove build artifacts
 
 ### Rust Projects
 
-Standard Makefile patterns for Rust tools (kk, qg, podver, promdrop, filesystem-cleaner, elasticache-backup):
+Standard Makefile patterns for Rust tools (kk, qg, s3vget, podver, promdrop, filesystem-cleaner, elasticache-backup, ec2-statuscheck-rebooter):
 
 ```bash
 # Core build commands
@@ -106,15 +106,17 @@ terraform destroy   # Destroy resources
 ```
 box/
 ├── kubernetes/             # K8s controllers, policies, helm charts
+│   ├── ec2-statuscheck-rebooter/ # EC2 status check auto-rebooter (Rust, container)
+│   ├── elasticache-backup/# ElastiCache S3 backup automation (Rust, container)
 │   ├── podver/            # Pod Version Scanner (Rust, container)
 │   ├── promdrop/          # Prometheus metric filter generator (Rust, CLI + container)
-│   ├── elasticache-backup/# ElastiCache S3 backup automation (Rust, container)
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
 │   ├── cocd/              # GitHub Actions deployment monitor (Go, TUI)
 │   ├── idled/             # AWS idle resource scanner (moved to private repo)
 │   ├── kk/                # Domain connectivity checker (Rust)
-│   └── qg/                # QR code generator (Rust)
+│   ├── qg/                # QR code generator (Rust)
+│   └── s3vget/            # S3 object version downloader (Rust)
 ├── containers/            # Custom container images
 │   ├── actions-runner/    # GitHub Actions runner
 │   ├── filesystem-cleaner/# File system cleanup tool (Rust)
@@ -274,6 +276,48 @@ qg --quiet https://example.com  # Suppress output
 
 **Note**: Uses qrcode crate for generation and Clap for CLI.
 
+### s3vget - S3 Object Version Downloader (Rust)
+
+S3 object version downloader with interactive prompts and configurable timezone support.
+
+```bash
+# Interactive mode with prompts
+./target/release/s3vget
+
+# Or use Makefile
+make run        # Build and run with interactive prompts
+make dev        # Run with verbose logging
+
+# Build commands
+make build      # Debug build
+make release    # Optimized release build
+make install    # Install to ~/.cargo/bin/
+
+# All parameters via CLI
+s3vget \
+  --bucket my-bucket \
+  --key path/to/file.json \
+  --start 2025-10-21 \
+  --end 2025-10-22 \
+  --timezone America/New_York
+
+# Download all versions without date filtering
+s3vget --bucket my-bucket --key path/to/file.json --no-interactive
+
+# Use 'now' as end date
+s3vget -b my-bucket -k path/to/file.json -s 2025-10-01 -e now
+```
+
+**Technical Details**:
+- Built with Tokio for async S3 operations
+- Uses dialoguer for interactive prompts
+- chrono-tz for timezone handling (default: Asia/Seoul)
+- Supports multiple date formats (YYYY-MM-DD, YYYY/MM/DD, YYYYMMDD, 'now')
+- Downloads files with versioned naming: `{version}_{timestamp}_{filename}.{ext}`
+- Pagination support for large version lists
+
+**AWS Permissions Required**: `s3:GetObject`, `s3:GetObjectVersion`, `s3:ListBucket`, `s3:ListBucketVersions`
+
 ### podver - Pod Version Scanner (Rust)
 
 Scans Java and Node.js versions in Kubernetes pods.
@@ -391,6 +435,58 @@ helm install elasticache-backup ./box/kubernetes/elasticache-backup/charts/elast
 
 **Workflow**: Snapshot Creation → Wait → S3 Export → Wait → Cleanup
 
+### ec2-statuscheck-rebooter - EC2 Status Check Auto-Rebooter (Rust)
+
+Automated reboot for standalone EC2 instances with status check failures running as Kubernetes Deployment.
+
+```bash
+# Local testing with dry-run
+make run
+
+# Debug logging mode
+make dev
+
+# Deploy via Helm with EKS Pod Identity (recommended for EKS 1.24+)
+# Prerequisites: Create pod identity association first
+aws eks create-pod-identity-association \
+  --cluster-name my-cluster \
+  --namespace monitoring \
+  --service-account ec2-statuscheck-rebooter \
+  --role-arn arn:aws:iam::ACCOUNT_ID:role/EC2RebooterRole
+
+helm install ec2-statuscheck-rebooter ./box/kubernetes/ec2-statuscheck-rebooter/charts/ec2-statuscheck-rebooter \
+  --namespace monitoring \
+  --create-namespace
+
+# Deploy via Helm with IRSA
+helm install ec2-statuscheck-rebooter ./box/kubernetes/ec2-statuscheck-rebooter/charts/ec2-statuscheck-rebooter \
+  --namespace monitoring \
+  --create-namespace \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+
+# Monitor specific instances using tag filters
+helm install ec2-statuscheck-rebooter ./charts/ec2-statuscheck-rebooter \
+  --set rebooter.tagFilters="{Environment=production,Role=database,AutoReboot=true}" \
+  --set rebooter.checkIntervalSeconds=180 \
+  --set rebooter.failureThreshold=3
+```
+
+**Technical Details**:
+- Monitors **standalone EC2 instances outside the cluster** (not EKS worker nodes)
+- Polls EC2 DescribeInstanceStatus API at configurable intervals
+- Tracks failure counts for instances with impaired status checks
+- Automatically reboots instances when failure threshold is reached
+- Supports both EKS Pod Identity and IRSA authentication
+- Health check endpoints for Kubernetes probes (`/healthz`, `/readyz` on port 8080)
+- Structured JSON/pretty logging for CloudWatch/Loki integration
+- Tag-based filtering for targeting specific instances
+
+**AWS Permissions Required**: `ec2:DescribeInstanceStatus`, `ec2:DescribeInstances`, `ec2:RebootInstances`
+
+**Use Cases**: Legacy applications, database servers, bastion hosts, Windows servers, third-party software on EC2
+
+**Important**: NOT for EKS worker node management - use AWS Node Termination Handler or Karpenter instead.
+
 ## Performance & API Guidelines
 
 ### GitHub API Constraints
@@ -428,20 +524,23 @@ git tag promdrop/1.0.0 && git push --tags  # Rust
 # Container image releases (pattern: {container}/x.y.z)
 git tag filesystem-cleaner/1.0.0 && git push --tags
 git tag elasticache-backup/1.0.0 && git push --tags
+git tag ec2-statuscheck-rebooter/1.0.0 && git push --tags
 git tag actions-runner/1.0.0 && git push --tags
 
 # Available workflows:
-# - release-cocd.yml                (Go CLI tool)
-# - release-promdrop.yml            (Rust CLI + container)
-# - release-filesystem-cleaner.yml  (Rust container)
-# - release-elasticache-backup.yml  (Rust container)
-# - release-actions-runner.yml      (Container image)
-# - release-hugo.yml                (Workflow dispatch - builds from external source)
-# - release-backup-utils.yml        (Workflow dispatch - builds from external source)
+# - release-cocd.yml                    (Go CLI tool)
+# - release-kk.yml                      (Rust CLI + container)
+# - release-promdrop.yml                (Rust CLI + container)
+# - release-filesystem-cleaner.yml      (Rust container)
+# - release-elasticache-backup.yml      (Rust container)
+# - release-ec2-statuscheck-rebooter.yml (Rust container)
+# - release-actions-runner.yml          (Container image)
+# - release-hugo.yml                    (Workflow dispatch - builds from external source)
+# - release-backup-utils.yml            (Workflow dispatch - builds from external source)
 
 # Rust tools without automated releases (manual release required):
-# - kk (domain connectivity checker)
 # - qg (QR code generator)
+# - s3vget (S3 object version downloader)
 # - podver (Pod version scanner - has Makefile docker-build/push targets)
 ```
 

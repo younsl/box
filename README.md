@@ -4,10 +4,6 @@ o stands for operation essentials. Production-ready Kubernetes tools, Helm chart
 
 All applications in [kubernetes/](./box/kubernetes/), [tools/](./box/tools/), and [containers/](./box/containers/) are built with Rust 1.90+ (except `cocd` which uses Go). Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
 
-## Design Philosophy
-
-Kubernetes addons and tools follow the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) of "Do One Thing and Do It Well". Rather than building monolithic solutions, each component is designed to solve specific operational problems with focus and simplicity.
-
 ## Featured content
 
 Production-ready tools, controllers, and automation resources for Kubernetes and cloud infrastructure.
