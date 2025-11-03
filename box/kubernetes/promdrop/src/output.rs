@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use prettytable::{row, Table};
+use prettytable::{Table, row};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
