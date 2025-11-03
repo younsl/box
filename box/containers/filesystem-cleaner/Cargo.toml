@@ -22,7 +22,7 @@ anyhow = "1.0"
 thiserror = "1.0"
 
 # File globbing
-globset = "=0.4.15"
+globset = "=0.4.18"
 
 # System information
 sysinfo = "0.32"
