@@ -1,0 +1,9 @@
+# Kakao APT Mirror
+# Additional mirror source for faster package downloads in Korea
+# DEB822 format with explicit key specification for enhanced security
+Enabled: yes
+Types: deb
+URIs: http://mirror.kakao.com/ubuntu/
+Suites: jammy jammy-updates jammy-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
