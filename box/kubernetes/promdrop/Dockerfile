@@ -1,5 +1,8 @@
 # Build stage
-FROM rust:1.90-slim as builder
+FROM rust:1.90-alpine as builder
+
+# Install build dependencies
+RUN apk add --no-cache musl-dev
 
 WORKDIR /build
 
@@ -14,18 +17,16 @@ COPY src ./src
 RUN cargo build --release
 
 # Runtime stage
-FROM debian:bookworm-slim
+FROM alpine:3.22
 
 # Install CA certificates for HTTPS
-RUN apt-get update && \
-    apt-get install -y ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates
 
 # Copy binary from builder
 COPY --from=builder /build/target/release/promdrop /usr/local/bin/promdrop
 
 # Create non-root user
-RUN useradd -m -u 1000 promdrop
+RUN adduser -D -u 1000 promdrop
 
 # Set working directory
 WORKDIR /data
