@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.90-alpine AS builder
+FROM rust:1.91-alpine AS builder
 
 # Build arguments for version information
 ARG GITHUB_SHA
