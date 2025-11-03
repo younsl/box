@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.90-alpine3.22 AS builder
+FROM rust:1.91-alpine3.22 AS builder
 
 # Build arguments for version info
 ARG VERSION=dev
