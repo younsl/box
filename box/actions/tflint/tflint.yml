@@ -1,0 +1,58 @@
+name: Terraform Lint
+run-name: ✨ Lint terraform codes by tflint on ${{ github.ref_name }}
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  tflint:
+    runs-on: [self-hosted, linux, build]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      id: checkout
+
+    # Cache tflint plugins to avoid rate limiting for tflint --init
+    # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+    - name: Cache plugin dir
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: ~/.tflint.d/plugins
+        key: tflint-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          tflint-${{ runner.os }}-
+          
+    - name: Setup tflint
+      uses: actions/setup-tflint@v4
+      id: setup
+      with:
+        tflint_version: v0.55.1
+
+    - name: Show version
+      id: version
+      run: tflint --version
+
+    - name: List changed terraform directories
+      id: changed-dirs
+      uses: actions/changed-files@v42
+      with:
+        files: |
+          **/*.tf
+        dir_names: true
+  
+    - name: Run tflint
+      id: tflint
+      if: steps.changed-dirs.outputs.all_changed_files != ''
+      run: |
+        echo "🔍 List of changed directories:"
+        for dir in ${{ steps.changed-dirs.outputs.all_changed_files }}; do
+          echo "📁 Working directory: ${GITHUB_WORKSPACE}/$dir"
+          tflint --init --chdir="${GITHUB_WORKSPACE}/$dir" && \
+          tflint --format=compact --chdir="${GITHUB_WORKSPACE}/$dir" || exit 1
+        done

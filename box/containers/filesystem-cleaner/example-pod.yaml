@@ -1,0 +1,103 @@
+# Example Pod configurations for filesystem-cleaner
+#
+# Glob Pattern Usage:
+#   - Use **/.git/** to exclude .git directories at any depth
+#   - Use **/node_modules/** to exclude node_modules directories at any depth
+#   - Use *.log to exclude all .log files at any depth
+#   - Simple names like "node_modules" only match root-level directories
+#
+# For more details, see: docs/glob-patterns.md
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod-with-cleaner
+spec:
+  initContainers:
+  # Filesystem cleaner as initContainer - runs once before main container
+  - name: filesystem-cleaner
+    image: filesystem-cleaner:latest
+    args:
+    - "--target-paths=/workspace,/tmp/build"
+    - "--usage-threshold-percent=70"
+    - "--cleanup-mode=once"  # Run once and exit for initContainer
+    - "--include-patterns=*"
+    - "--exclude-patterns=**/.git/**,**/node_modules/**,**/.github/**,*.log"
+    - "--log-level=info"
+    volumeMounts:
+    - name: workspace
+      mountPath: /workspace
+    - name: temp
+      mountPath: /tmp/build
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+  
+  containers:
+  - name: main-app
+    image: your-app:latest
+    volumeMounts:
+    - name: workspace
+      mountPath: /workspace
+    - name: temp
+      mountPath: /tmp/build
+  
+  volumes:
+  - name: workspace
+    emptyDir: {}
+  - name: temp
+    emptyDir: {}
+
+---
+# Example for GitHub Actions Runner with cleaner sidecar
+apiVersion: v1
+kind: Pod
+metadata:
+  name: github-actions-runner-with-cleaner
+spec:
+  containers:
+  # Main actions runner container
+  - name: runner
+    image: summerwind/actions-runner:latest
+    env:
+    - name: RUNNER_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: runner-secret
+          key: token
+    volumeMounts:
+    - name: work
+      mountPath: /home/runner/_work
+  
+  # Filesystem cleaner as sidecar - runs periodically
+  - name: filesystem-cleaner
+    image: filesystem-cleaner:latest
+    args:
+    - "--target-paths=/home/runner/_work"
+    - "--usage-threshold-percent=80"
+    - "--cleanup-mode=interval"  # Run periodically as sidecar
+    - "--check-interval-minutes=10"
+    - "--include-patterns=*"
+    - "--exclude-patterns=**/.git/**,**/node_modules/**,**/.github/**,*.log"
+    - "--log-level=info"
+    volumeMounts:
+    - name: work
+      mountPath: /home/runner/_work
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+  
+  volumes:
+  - name: work
+    emptyDir:
+      sizeLimit: 50Gi

@@ -1,0 +1,70 @@
+# Dependabot configuration for monorepo dependency management
+# Reference: https://github.blog/changelog/2024-06-25-simplified-dependabot-yml-configuration-with-multi-directory-key-directories-and-wildcard-glob-support/
+# Multi-directory support: https://github.blog/changelog/2024-04-29-dependabot-multi-directory-configuration-public-beta-now-available/
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "actions"
+
+  - package-ecosystem: "docker"
+    directories:
+      - "/box/containers/*"
+      - "/box/kubernetes/*"
+    schedule:
+      interval: "daily"
+      time: "10:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "docker-dependencies"
+
+  - package-ecosystem: "gomod"
+    directories:
+      - "/box/tools/*"
+      - "/box/kubernetes/*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "go-dependencies"
+
+  - package-ecosystem: "terraform"
+    directories:
+      - "/box/terraform/*"
+      - "/box/terraform/*/*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "terraform-dependencies"
+
+  - package-ecosystem: "cargo"
+    directories:
+      - "/box/tools/kk"
+      - "/box/tools/qg"
+      - "/box/tools/s3vget"
+      - "/box/kubernetes/promdrop"
+      - "/box/kubernetes/podver"
+      - "/box/kubernetes/elasticache-backup"
+      - "/box/kubernetes/ec2-statuscheck-rebooter"
+      - "/box/containers/filesystem-cleaner"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "rust"

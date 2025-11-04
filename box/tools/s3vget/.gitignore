@@ -1,0 +1,55 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo.lock should be ignored for libraries, but kept for binaries
+# Uncomment the following line if this is a library:
+# Cargo.lock
+
+# Build output
+debug/
+release/
+*.o
+*.so
+*.dylib
+*.dll
+
+# Testing
+*.profraw
+*.profdata
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.directory
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Binary output
+s3vget

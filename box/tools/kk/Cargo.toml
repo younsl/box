@@ -1,0 +1,52 @@
+[package]
+name = "kk"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+authors = ["younsl"]
+description = "A CLI tool that checks domain connectivity"
+license = "MIT"
+
+[[bin]]
+name = "kk"
+path = "src/main.rs"
+
+[dependencies]
+# CLI argument parsing
+clap = { version = "4.5", features = ["derive", "cargo"] }
+
+# YAML parsing
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+
+# HTTP client (using rustls instead of OpenSSL for easier cross-compilation)
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+
+# Async runtime (for parallel requests)
+tokio = { version = "1.41", features = ["full"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Terminal spinner
+indicatif = "0.17"
+
+# Table formatting
+tabled = "0.17"
+
+# Time utilities
+chrono = "0.4"
+
+[dev-dependencies]
+tempfile = "3.15"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

@@ -1,0 +1,137 @@
+# -- (int) Number of replicas
+replicaCount: 1
+
+# -- (int) Number of ReplicaSets to retain for rollback
+revisionHistoryLimit: 10
+
+image:
+  # -- (string) Image repository
+  repository: ghcr.io/younsl/ec2-statuscheck-rebooter
+  # -- (string) Image pull policy
+  pullPolicy: IfNotPresent
+  # -- (string) Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+# -- (list) Image pull secrets
+imagePullSecrets: []
+# -- (string) String to partially override ec2-statuscheck-rebooter.fullname
+nameOverride: ""
+# -- (string) String to fully override ec2-statuscheck-rebooter.fullname
+fullnameOverride: ""
+
+serviceAccount:
+  # -- (bool) Specifies whether a service account should be created
+  create: true
+  # -- (bool) Automatically mount a ServiceAccount's API credentials
+  automountServiceAccountToken: true
+  # -- (object) Annotations to add to the service account
+  annotations: {}
+    # Example for EKS IRSA:
+    # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+  # -- (string) The name of the service account to use
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# -- (object) Annotations to add to the pod
+podAnnotations: {}
+
+# -- (string) Priority class name for pod scheduling
+priorityClassName: ""
+
+# -- (object) Pod Security Context
+podSecurityContext:
+  # -- (bool) Run container as non-root user
+  runAsNonRoot: true
+  # -- (int) User ID for the pod
+  runAsUser: 1000
+  # -- (int) Group ID for the pod
+  runAsGroup: 1000
+  # -- (int) FSGroup that owns the pod's volumes
+  fsGroup: 1000
+
+# -- (object) Security Context for container
+securityContext:
+  # -- (bool) Prevent privilege escalation
+  allowPrivilegeEscalation: false
+  # -- (object) Drop all capabilities
+  capabilities:
+    drop:
+    - ALL
+  # -- (bool) Mount root filesystem as read-only
+  readOnlyRootFilesystem: true
+
+# EC2 StatusCheck Rebooter configuration
+rebooter:
+  # -- (int) Check interval in seconds between status checks
+  checkIntervalSeconds: 300
+
+  # -- (int) Number of consecutive failures before reboot
+  failureThreshold: 2
+
+  # -- (string) AWS region (leave empty to use default from IRSA/instance metadata)
+  region: ""
+
+  # -- (list) Comma-separated tag filters for EC2 instances (format: Key=Value)
+  tagFilters: []
+  ## Examples:
+  ## Monitor production database servers:
+  #   tagFilters:
+  #     - Environment=production
+  #     - Application=database
+  ## Monitor with Kubernetes-style tags:
+  #   tagFilters:
+  #     - node.kubernetes.io/name=web
+  #     - app.kubernetes.io/component=frontend
+  ## Monitor bastion hosts with auto-reboot enabled:
+  #   tagFilters:
+  #     - Role=bastion
+  #     - AutoReboot=true
+
+  # -- (bool) Dry run mode (no actual reboot will be performed)
+  dryRun: false
+
+  # -- (string) Log format: json or pretty
+  logFormat: json
+
+  # -- (string) Log level: trace, debug, info, warn, error
+  logLevel: info
+
+# Health check probe configuration
+livenessProbe:
+  # -- (int) Initial delay before liveness probe starts
+  initialDelaySeconds: 10
+  # -- (int) How often to perform the probe
+  periodSeconds: 30
+  # -- (int) Timeout for the probe
+  timeoutSeconds: 5
+  # -- (int) Number of failures before marking as unhealthy
+  failureThreshold: 3
+
+readinessProbe:
+  # -- (int) Initial delay before readiness probe starts
+  initialDelaySeconds: 5
+  # -- (int) How often to perform the probe
+  periodSeconds: 10
+  # -- (int) Timeout for the probe
+  timeoutSeconds: 5
+  # -- (int) Number of failures before marking as not ready
+  failureThreshold: 3
+
+resources:
+  limits:
+    # -- (string) Memory limit
+    memory: 128Mi
+  requests:
+    # -- (string) CPU request
+    cpu: 100m
+    # -- (string) Memory request
+    memory: 64Mi
+
+# -- (object) Node labels for pod assignment
+nodeSelector: {}
+
+# -- (list) Tolerations for pod assignment
+tolerations: []
+
+# -- (object) Affinity for pod assignment
+affinity: {}

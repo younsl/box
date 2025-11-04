@@ -1,0 +1,31 @@
+[package]
+name = "qg"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.91"
+authors = ["younsl"]
+description = "A simple QR code generator"
+license = "MIT"
+
+[[bin]]
+name = "qg"
+path = "src/main.rs"
+
+[dependencies]
+# CLI argument parsing
+clap = { version = "4.5", features = ["derive"] }
+
+# QR code generation
+qrcode = "0.14"
+
+# Image encoding
+image = "0.25"
+
+# Error handling
+anyhow = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

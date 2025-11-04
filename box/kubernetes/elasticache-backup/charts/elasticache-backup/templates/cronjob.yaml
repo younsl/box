@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "elasticache-backup.fullname" . }}
+  labels:
+    {{- include "elasticache-backup.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  {{- if .Values.cronjob.timeZone }}
+  timeZone: {{ .Values.cronjob.timeZone | quote }}
+  {{- end }}
+  suspend: {{ .Values.cronjob.suspend }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.cronjob.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "elasticache-backup.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- if .Values.serviceAccount.create }}
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+          {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.dnsConfig }}
+          dnsConfig:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+          - name: {{ .Chart.Name }}
+            image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            args:
+            - --cache-cluster-id=$(CACHE_CLUSTER_ID)
+            - --s3-bucket-name=$(S3_BUCKET_NAME)
+            - --region=$(AWS_REGION)
+            - --snapshot-timeout={{ .Values.snapshot.timeout }}
+            - --export-timeout={{ .Values.snapshot.exportTimeout }}
+            - --check-interval={{ .Values.snapshot.checkInterval }}
+            env:
+            - name: CACHE_CLUSTER_ID
+              value: {{ .Values.elasticache.cacheClusterId | quote }}
+            - name: S3_BUCKET_NAME
+              value: {{ .Values.s3.bucketName | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.elasticache.region | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.logLevel | quote }}
+            - name: LOG_FORMAT
+              value: {{ .Values.env.logFormat | quote }}
+            - name: TZ_OFFSET_HOURS
+              value: {{ .Values.env.timezoneOffsetHours | quote }}
+            resources:
+              {{- toYaml .Values.resources | nindent 14 }}
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}

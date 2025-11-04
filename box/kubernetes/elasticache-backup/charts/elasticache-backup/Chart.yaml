@@ -1,0 +1,15 @@
+apiVersion: v2
+name: elasticache-backup
+description: ElastiCache snapshot backup to S3 automation
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - elasticache
+  - redis
+  - backup
+  - snapshot
+  - s3
+maintainers:
+  - name: younsl
+    email: your.email@example.com

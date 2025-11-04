@@ -1,0 +1,365 @@
+name: Release kk
+run-name: Release kk ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'kk/[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic version to release (e.g. 1.0.0)"
+        required: true
+        default: "x.y.z"
+
+jobs:
+  extract-version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Extract version from tag or input
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract version from tag (kk/1.0.0 -> 1.0.0)
+            VERSION="${GITHUB_REF#refs/tags/kk/}"
+          else
+            # Use manual input version
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
+
+  build-binaries:
+    needs: [extract-version]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    env:
+      PROJECT_NAME: kk
+      PROJECT_BASE_DIR: box/tools/kk
+      VERSION: ${{ needs.extract-version.outputs.version }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            platform: linux
+            arch: amd64
+          - os: ubuntu-24.04
+            target: aarch64-unknown-linux-gnu
+            platform: linux
+            arch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: darwin
+            arch: amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: darwin
+            arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        env:
+          DEBIAN_FRONTEND: noninteractive
+
+      - name: Configure cross-compilation (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++" >> $GITHUB_ENV
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_BASE_DIR }}/target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build binary
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: |
+          echo "================================="
+          echo "Building ${{ env.PROJECT_NAME }}"
+          echo "Target: ${{ matrix.target }}"
+          echo "Platform: ${{ matrix.platform }}"
+          echo "Architecture: ${{ matrix.arch }}"
+          echo "Version: ${{ env.VERSION }}"
+          echo "================================="
+
+          # Build with verbose output for debugging
+          cargo build --release --target ${{ matrix.target }} --verbose
+
+          # Define paths
+          BINARY_NAME="${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}"
+          SOURCE_BINARY="target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }}"
+
+          # Verify binary was created
+          if [ ! -f "${SOURCE_BINARY}" ]; then
+            echo "❌ Error: Binary not found at ${SOURCE_BINARY}"
+            echo "Contents of target/${{ matrix.target }}/release/:"
+            ls -la target/${{ matrix.target }}/release/ || echo "Directory not found"
+            exit 1
+          fi
+
+          # Copy and set permissions
+          cp "${SOURCE_BINARY}" "${BINARY_NAME}"
+          chmod +x "${BINARY_NAME}"
+
+          echo "✓ Binary created: ${BINARY_NAME}"
+          ls -lh "${BINARY_NAME}"
+
+          # Basic smoke test
+          echo "Running smoke test..."
+          ./"${BINARY_NAME}" --version || echo "⚠️  Warning: Version check failed (may not work on this platform)"
+
+      - name: Create archive
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: |
+          BINARY_NAME="${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}"
+          tar -czf "${BINARY_NAME}.tar.gz" "${BINARY_NAME}"
+          echo "Created: ${BINARY_NAME}.tar.gz"
+          ls -lh "${BINARY_NAME}.tar.gz"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ env.PROJECT_BASE_DIR }}/${{ env.PROJECT_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+
+  test:
+    needs: [extract-version]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      PROJECT_BASE_DIR: box/tools/kk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_BASE_DIR }}/target
+          key: ${{ runner.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: |
+          cargo test --verbose
+          cargo test --release --verbose
+
+      - name: Run clippy
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo clippy -- -D warnings
+
+      - name: Check formatting
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo fmt --check
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: [extract-version, build-binaries, test]
+    permissions:
+      contents: write
+    env:
+      PROJECT_NAME: kk
+      VERSION: ${{ needs.extract-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+          pattern: kk-*
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -name "*.tar.gz" -exec cp {} release-assets/ \;
+          echo "Release assets:"
+          ls -lh release-assets/
+
+      - name: Generate checksums table
+        id: checksums
+        working-directory: release-assets
+        run: |
+          # Start building the checksums table with actual newlines
+          {
+            echo "| Platform | Architecture | Binary | SHA256 Checksum |"
+            echo "|----------|--------------|--------|-----------------|"
+
+            # Linux amd64
+            if [ -f "kk-linux-amd64.tar.gz" ]; then
+              checksum=$(sha256sum kk-linux-amd64.tar.gz | awk '{print $1}')
+              echo "| Linux | amd64 | \`kk-linux-amd64.tar.gz\` | \`$checksum\` |"
+            fi
+
+            # Linux arm64
+            if [ -f "kk-linux-arm64.tar.gz" ]; then
+              checksum=$(sha256sum kk-linux-arm64.tar.gz | awk '{print $1}')
+              echo "| Linux | arm64 | \`kk-linux-arm64.tar.gz\` | \`$checksum\` |"
+            fi
+
+            # macOS amd64
+            if [ -f "kk-darwin-amd64.tar.gz" ]; then
+              checksum=$(sha256sum kk-darwin-amd64.tar.gz | awk '{print $1}')
+              echo "| macOS | amd64 (Intel) | \`kk-darwin-amd64.tar.gz\` | \`$checksum\` |"
+            fi
+
+            # macOS arm64
+            if [ -f "kk-darwin-arm64.tar.gz" ]; then
+              checksum=$(sha256sum kk-darwin-arm64.tar.gz | awk '{print $1}')
+              echo "| macOS | arm64 (Apple Silicon) | \`kk-darwin-arm64.tar.gz\` | \`$checksum\` |"
+            fi
+          } > checksums_table.txt
+
+          # Output to GitHub environment for use in release body
+          {
+            echo "CHECKSUMS_TABLE<<EOF"
+            cat checksums_table.txt
+            echo "EOF"
+          } >> $GITHUB_ENV
+
+          # Also print to console for debugging
+          echo "Generated checksums table:"
+          cat checksums_table.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          name: ${{ env.PROJECT_NAME }} ${{ env.VERSION }}
+          body: |
+            # ${{ env.PROJECT_NAME }} ${{ env.VERSION }}
+
+            **[kk](https://github.com/${{ github.repository }}/tree/main/box/tools/kk)** (knock-knock) - Fast domain connectivity checker built with Rust.
+
+            ## Features
+
+            - Concurrent domain checks with automatic retries
+            - Auto-adds HTTPS prefix to bare domains
+            - Clean table output with response times
+            - Verbose logging for debugging
+
+            ## Installation
+
+            ### Binary Installation
+
+            Download the appropriate binary for your platform:
+
+            ${{ env.CHECKSUMS_TABLE }}
+
+            **Quick install** (auto-detects platform):
+
+            ```bash
+            # Detect platform
+            ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+            # Download and install
+            curl -LO https://github.com/${{ github.repository }}/releases/download/kk/${{ env.VERSION }}/kk-${OS}-${ARCH}.tar.gz
+            tar -xzf kk-${OS}-${ARCH}.tar.gz
+            chmod +x kk-${OS}-${ARCH}
+            sudo mv kk-${OS}-${ARCH} /usr/local/bin/kk
+
+            # Verify installation
+            kk --version
+            ```
+
+            ### From Source
+
+            Requires Rust 1.90 or later:
+
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd o/box/tools/kk
+            cargo build --release
+            ./target/release/kk --version
+            ```
+
+            ## Usage
+
+            ```bash
+            # Basic usage
+            kk --config configs/domain-example.yaml
+
+            # Enable verbose logging
+            kk --config configs/domain-example.yaml --verbose
+
+            # Show help
+            kk --help
+            ```
+
+            ### Configuration Example
+
+            See the [example configuration file](https://github.com/${{ github.repository }}/blob/main/box/tools/kk/configs/domain-example.yaml) for a complete reference.
+
+            ```yaml
+            # This is an example configuration file for the kk CLI.
+
+            domains:
+              - https://stackoverflow.com
+              - https://www.github.com
+              - https://www.stackoverflow.com
+              - https://registry.k8s.io/v2/
+              # If you omit http:// or https://, kk will automatically add https:// to the domain.
+              - www.google.com
+              - reddit.com
+            ```
+
+            ## Documentation
+
+            - [README](https://github.com/${{ github.repository }}/blob/main/box/tools/kk/README.md)
+            - [Configuration Guide](https://github.com/${{ github.repository }}/blob/main/box/tools/kk/configs/domain-example.yaml)
+
+            ## Built With
+
+            - **Rust 1.90+ Edition 2024** - Memory safety, zero-cost abstractions
+            - **Tokio** - Async runtime for concurrent checks
+            - **Clap** - CLI argument parsing
+            - **Reqwest** - HTTP client
+            - **Tabled** - Table formatting
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}

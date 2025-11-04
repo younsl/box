@@ -1,0 +1,141 @@
+name: Release cocd
+run-name: 📦 Release cocd ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'cocd/*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#cocd/}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        working-directory: box/tools/cocd
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          COMMIT="${{ github.sha }}"
+          DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          
+          LDFLAGS="-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}"
+          
+          mkdir -p bin
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "${LDFLAGS}" -o bin/cocd-${{ matrix.goos }}-${{ matrix.goarch }} cmd/cocd/main.go
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v5
+        with:
+          name: cocd-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: box/tools/cocd/bin/cocd-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#cocd/}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name 'cocd-*' -type f -exec cp {} release/ \;
+          cd release
+          sha256sum cocd-* > checksums.txt
+          ls -la
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: cocd ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          body: |
+            cocd ${{ steps.version.outputs.version }} is now available.
+
+            **cocd** is a TUI (Terminal User Interface) tool for managing GitHub deployments and environments directly from GitHub Actions workflows. It provides an interactive terminal interface for deployment status tracking, environment management, and deployment lifecycle operations within CI/CD pipelines.
+
+            ## Changes
+            
+            See the commit history for detailed changes.
+            
+            ## Downloads
+            
+            cocd does not support Windows or FreeBSD at this time.
+
+            supports the following platforms and architectures:
+            
+            | Platform | Arch | Binary |
+            |----------|------|--------|
+            | Linux | amd64 | `cocd-linux-amd64` |
+            | Linux | arm64 | `cocd-linux-arm64` |
+            | macOS | amd64 | `cocd-darwin-amd64` |
+            | macOS | arm64 | `cocd-darwin-arm64` |
+            
+            Verify downloads with `checksums.txt`.
+
+            ## Installation
+
+            Installation procedure for your platform dynamically:
+
+            ```bash
+            # Get arch and os currently running on the machine
+            ARCH=$(arch)
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/cocd-$OS-$ARCH
+            chmod +x cocd-$OS-$ARCH
+            sudo mv cocd-$OS-$ARCH /usr/local/bin/cocd
+            ```
+          files: |
+            release/cocd-*
+            release/checksums.txt
+          draft: false
+          generate_release_notes: true
+          prerelease: false
