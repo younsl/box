@@ -3,7 +3,7 @@ name = "podver"
 version = "0.1.0"
 edition = "2021"
 authors = ["younsl"]
-rust-version = "1.90"
+rust-version = "1.91"
 
 [[bin]]
 name = "podver"

@@ -2,6 +2,7 @@
 name = "promdrop"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.91"
 authors = ["younsl"]
 description = "Generates Prometheus relabel configs to drop unused metrics"
 license = "MIT"

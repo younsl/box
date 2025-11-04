@@ -2,6 +2,7 @@
 name = "filesystem-cleaner"
 version = "0.3.0"
 edition = "2024"
+rust-version = "1.91"
 authors = ["younsl"]
 description = "Kubernetes sidecar filesystem cleaner for managing disk space"
 license = "MIT"
