@@ -1,8 +1,8 @@
 # o
 
-o stands for operation essentials. Production-ready Kubernetes tools, Helm charts, operational add-ons, and DevOps automation built with [Rust](https://github.com/rust-lang/rust) 1.91+.
+**o** stands for **operation essentials** — a collection of Kubernetes addons and CLI tools for production operations.
 
-All applications in [kubernetes/](./box/kubernetes/), [tools/](./box/tools/), and [containers/](./box/containers/) are built with Rust 1.91+ (except `cocd` which uses Go). Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
+Built primarily with [Rust](https://github.com/rust-lang/rust) 1.91+ (except `cocd` in Go), these tools deliver operational advantages: minimal container sizes, low memory footprint, static binaries with no runtime dependencies, memory safety, and compile-time guarantees for production stability.
 
 ## Featured content
 
