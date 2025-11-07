@@ -39,14 +39,13 @@ kubectl logs -l app.kubernetes.io/name=elasticache-backup --tail=50
 
 - Creates ElastiCache snapshots from read replica nodes
 - Exports snapshots to S3 buckets
+- **Automatic S3 retention management** - Keeps only the N most recent snapshots
 - Automatic cleanup of source snapshots
 - Configurable timeouts and retry intervals
 - Structured JSON logging for CloudWatch/Loki integration
 - IRSA support for AWS authentication
 - Multi-architecture container images
 - Helm chart for easy deployment
-
-**Note**: This tool does NOT manage S3 backup retention. You must configure [S3 Lifecycle Policies](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html) separately to automatically delete old backups from S3.
 
 ## Architecture
 
@@ -68,6 +67,7 @@ elasticache-backup/
 │   ├── cli.rs          # CLI argument parsing
 │   ├── error.rs        # Custom error types
 │   ├── export.rs       # S3 export functionality
+│   ├── retention.rs    # S3 retention management
 │   ├── snapshot.rs     # Snapshot creation and management
 │   └── types.rs        # Shared data types
 ├── charts/             # Helm chart
@@ -115,7 +115,8 @@ The CronJob pod requires an IAM role with the following permissions. This policy
       "Effect": "Allow",
       "Action": [
         "s3:PutObject",
-        "s3:PutObjectAcl"
+        "s3:PutObjectAcl",
+        "s3:DeleteObject"
       ],
       "Resource": "arn:aws:s3:::your-backup-bucket/*"
     },
@@ -143,7 +144,8 @@ The CronJob pod requires an IAM role with the following permissions. This policy
 | `DeleteSnapshot` | `elasticache:DeleteSnapshot` | Cleans up source snapshot after export |
 | `PutObject` | `s3:PutObject` | Writes snapshot data to S3 |
 | `PutObjectAcl` | `s3:PutObjectAcl` | Sets object ACL during S3 export |
-| `ListBucket` | `s3:ListBucket` | Lists objects in backup bucket |
+| `ListBucket` | `s3:ListBucket` | Lists objects in backup bucket for retention |
+| `DeleteObject` | `s3:DeleteObject` | Deletes old snapshots during retention cleanup |
 
 ## Installation
 
@@ -163,6 +165,12 @@ elasticache:
 
 s3:
   bucketName: "your-elasticache-backups"
+
+snapshot:
+  timeout: 1800
+  exportTimeout: 300
+  checkInterval: 30
+  retentionCount: 7  # Keep only the 7 most recent snapshots (0 = unlimited)
 
 serviceAccount:
   create: true
@@ -260,6 +268,7 @@ kubectl create job --from=cronjob/elasticache-backup manual-backup-$(date +%s)
 | `--snapshot-timeout` | - | `1800` | Max wait time for snapshot creation (seconds, 30 min) |
 | `--export-timeout` | - | `300` | Max wait time for S3 export (seconds, 5 min) |
 | `--check-interval` | - | `30` | Status check interval (seconds) |
+| `--retention-count` | `RETENTION_COUNT` | `0` | Number of snapshots to retain (0 = unlimited) |
 
 **Additional Environment Variables:**
 
@@ -324,6 +333,30 @@ docker push YOUR_REGISTRY/elasticache-backup:0.1.0
 3. **S3 Export**: Initiates copy to S3 bucket
 4. **Export Wait**: Waits for export to complete (max 5 min)
 5. **Cleanup**: Deletes source snapshot (export snapshot remains in S3)
+6. **Retention**: Deletes old snapshots from S3 to maintain retention count
+
+## Retention Management
+
+The retention feature automatically manages S3 snapshot count by:
+
+- Listing all snapshots with the cluster ID prefix
+- Sorting by last modified date (newest first)
+- Keeping only the N most recent snapshots
+- Deleting older snapshots with detailed logging
+
+**Example**: With `snapshot.retentionCount: 7`, only the 7 most recent snapshots are kept. Older snapshots are automatically deleted after each successful backup.
+
+**Configuration**:
+- Set `snapshot.retentionCount: 0` to disable retention (unlimited snapshots)
+- Set `snapshot.retentionCount: N` to keep only N most recent snapshots
+- Default: `7` snapshots
+
+**Logging**: During retention cleanup, the tool logs:
+- Total objects found
+- Objects to keep vs delete
+- Each deletion with size and timestamp
+- Total deleted count and size
+- Operation duration
 
 ## Monitoring
 

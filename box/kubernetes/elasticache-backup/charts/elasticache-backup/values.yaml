@@ -58,6 +58,8 @@ snapshot:
   exportTimeout: 300
   # -- (int) Snapshot status check interval in seconds
   checkInterval: 30
+  # -- (int) Number of snapshots to retain in S3 (0 = unlimited, no cleanup)
+  retentionCount: 7
 
 # -- Service Account configuration
 serviceAccount:

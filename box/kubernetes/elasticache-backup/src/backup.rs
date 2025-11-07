@@ -1,11 +1,13 @@
 use anyhow::Result;
 use aws_config::BehaviorVersion;
 use aws_sdk_elasticache::Client as ElastiCacheClient;
+use aws_sdk_s3::Client as S3Client;
 use std::time::Instant;
 use tracing::{info, info_span};
 
 use crate::cli::Args;
 use crate::export;
+use crate::retention;
 use crate::snapshot;
 use crate::types::StepTimings;
 
@@ -14,7 +16,7 @@ pub async fn run(
     args: &Args,
     step_timings: &mut StepTimings,
     snapshot_name_out: &mut Option<String>,
-) -> Result<(String, String)> {
+) -> Result<(String, String, usize)> {
     // Initialize AWS SDK
     let config = aws_config::defaults(BehaviorVersion::latest())
         .region(aws_config::Region::new(args.region.clone()))
@@ -22,6 +24,7 @@ pub async fn run(
         .await;
 
     let elasticache_client = ElastiCacheClient::new(&config);
+    let s3_client = S3Client::new(&config);
 
     // Step 1: Create snapshot
     let _span = info_span!("step_1_snapshot_creation").entered();
@@ -98,5 +101,49 @@ pub async fn run(
     info!(duration_seconds = step_timings.cleanup, "Cleanup completed");
     drop(_span);
 
-    Ok((target_snapshot_name, s3_location))
+    // Step 6: Retention cleanup
+    let _span = info_span!("step_6_retention_cleanup").entered();
+    let step6_start = Instant::now();
+    let deleted_count = if args.retention_count > 0 {
+        info!(
+            retention_count = args.retention_count,
+            "Starting retention cleanup"
+        );
+        match retention::cleanup_old_snapshots(
+            &s3_client,
+            &args.s3_bucket_name,
+            &args.cache_cluster_id,
+            args.retention_count,
+        )
+        .await
+        {
+            Ok(count) => {
+                step_timings.retention = step6_start.elapsed().as_secs_f64();
+                info!(
+                    deleted_count = count,
+                    duration_seconds = step_timings.retention,
+                    "Retention cleanup completed"
+                );
+                count
+            }
+            Err(e) => {
+                step_timings.retention = step6_start.elapsed().as_secs_f64();
+                info!(
+                    error = %e,
+                    duration_seconds = step_timings.retention,
+                    "Retention cleanup failed, continuing"
+                );
+                0
+            }
+        }
+    } else {
+        info!(
+            retention_count = 0,
+            "Retention cleanup disabled, unlimited retention"
+        );
+        0
+    };
+    drop(_span);
+
+    Ok((target_snapshot_name, s3_location, deleted_count))
 }

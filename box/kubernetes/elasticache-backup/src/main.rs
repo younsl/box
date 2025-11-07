@@ -7,11 +7,12 @@ mod backup;
 mod cli;
 mod error;
 mod export;
+mod retention;
 mod snapshot;
 mod types;
 
 use cli::Args;
-use types::{ExecutionSummary, StepTimings};
+use types::{ExecutionSummary, RetentionInfo, StepTimings};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -62,8 +63,18 @@ async fn main() -> Result<()> {
     let mut snapshot_name: Option<String> = None;
 
     match backup::run(&args, &mut step_timings, &mut snapshot_name).await {
-        Ok((target_snapshot, s3_location)) => {
+        Ok((target_snapshot, s3_location, deleted_count)) => {
             let total_time = lambda_start_time.elapsed().as_secs_f64();
+
+            let retention_info = if args.retention_count > 0 {
+                Some(RetentionInfo {
+                    enabled: true,
+                    retention_count: args.retention_count,
+                    deleted_count,
+                })
+            } else {
+                None
+            };
 
             let summary = ExecutionSummary {
                 status: "Success".to_string(),
@@ -75,6 +86,7 @@ async fn main() -> Result<()> {
                 target_snapshot_name: Some(target_snapshot.clone()),
                 s3_location: Some(s3_location.clone()),
                 s3_bucket: args.s3_bucket_name.clone(),
+                retention_info,
             };
 
             info!(
@@ -83,6 +95,7 @@ async fn main() -> Result<()> {
                 s3_export_seconds = summary.step_timings.s3_export,
                 export_wait_seconds = summary.step_timings.export_wait,
                 cleanup_seconds = summary.step_timings.cleanup,
+                retention_seconds = summary.step_timings.retention,
                 total_execution_seconds = total_time,
                 "Execution timing summary"
             );
@@ -108,6 +121,7 @@ async fn main() -> Result<()> {
                 s3_export_seconds = step_timings.s3_export,
                 export_wait_seconds = step_timings.export_wait,
                 cleanup_seconds = step_timings.cleanup,
+                retention_seconds = step_timings.retention,
                 total_execution_seconds = total_time,
                 "Execution timing summary (error)"
             );

@@ -27,4 +27,8 @@ pub struct Args {
     /// Snapshot status check interval in seconds
     #[arg(long, default_value = "30")]
     pub check_interval: u64,
+
+    /// Number of snapshots to retain in S3 (0 = unlimited)
+    #[arg(long, env = "RETENTION_COUNT", default_value = "0")]
+    pub retention_count: u32,
 }
