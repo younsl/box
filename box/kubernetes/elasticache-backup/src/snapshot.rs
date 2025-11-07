@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use aws_sdk_elasticache::types::Snapshot;
 use aws_sdk_elasticache::Client as ElastiCacheClient;
+use aws_sdk_elasticache::types::Snapshot;
 use chrono::{FixedOffset, Utc};
 use std::time::{Duration, Instant};
 use tracing::{debug, info, warn};
