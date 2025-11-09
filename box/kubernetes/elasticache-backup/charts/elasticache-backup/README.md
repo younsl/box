@@ -127,7 +127,7 @@ The following table lists the configurable parameters and their default values.
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| younsl | <your.email@example.com> |  |
+| younsl | <cysl@kakao.com> | <https://github.com/younsl> |
 
 ## License
 
