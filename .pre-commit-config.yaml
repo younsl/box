@@ -6,7 +6,6 @@ repos:
     hooks:
       - id: helm-docs
         args:
-          # Search for charts only under box/kubernetes/ directory
           - --chart-search-root=box/kubernetes
-          # Use custom template from .github/templates/
-          - --template-files=.github/templates/README.md.gotmpl
+          - --template-files=README.md.gotmpl
+          - --sort-values-order=file
