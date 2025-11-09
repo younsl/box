@@ -1,0 +1,196 @@
+name: Release elasticache-backup Helm Chart
+run-name: Release elasticache-backup chart ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'elasticache-backup/charts/[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Chart version to release (e.g. 1.0.0)"
+        required: true
+        default: "x.y.z"
+
+env:
+  CHART_NAME: elasticache-backup
+  CHART_PATH: box/kubernetes/elasticache-backup/charts/elasticache-backup
+  REGISTRY: ghcr.io
+  REGISTRY_PATH: ghcr.io/younsl/charts
+
+jobs:
+  extract-version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Extract version from tag or input
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract version from tag (elasticache-backup/charts/1.0.0 -> 1.0.0)
+            VERSION="${GITHUB_REF#refs/tags/elasticache-backup/charts/}"
+          else
+            # Use manual input version
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
+
+  check:
+    needs: extract-version
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: read
+    outputs:
+      chart_exists: ${{ steps.chart_check.outputs.chart_exists }}
+    steps:
+      - name: Check if chart version exists on GitHub Container Registry
+        id: chart_check
+        run: |
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
+          TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
+            https://ghcr.io/v2/younsl/charts/${{ env.CHART_NAME }}/tags/list)
+          echo "TAGS: $TAGS"
+
+          ## Check if TAGS is empty or null
+          if [[ -z "$TAGS" || "$TAGS" == "null" ]]; then
+            echo "No tags found, treating as chart not existing."
+            echo "chart_exists=false" >> $GITHUB_OUTPUT
+          else
+            ## Check if the specific version already exists
+            if echo "$TAGS" | jq -e --arg TAG "${{ needs.extract-version.outputs.version }}" '.tags | index($TAG)'; then
+              echo "Chart with version ${{ needs.extract-version.outputs.version }} already exists."
+              echo "chart_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "Chart with version ${{ needs.extract-version.outputs.version }} not found."
+              echo "chart_exists=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  lint:
+    needs: [extract-version, check]
+    if: ${{ needs.check.outputs.chart_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          check-latest: true
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
+
+      - name: Run chart-testing (lint)
+        run: |
+          ct lint --target-branch ${{ github.event.repository.default_branch }} \
+            --chart-dirs box/kubernetes/elasticache-backup/charts \
+            --charts ${{ env.CHART_PATH }}
+
+      - name: Validate chart version matches release version
+        run: |
+          CHART_VERSION=$(helm show chart ${{ env.CHART_PATH }} | grep '^version:' | awk '{print $2}')
+          RELEASE_VERSION="${{ needs.extract-version.outputs.version }}"
+
+          echo "Chart version: ${CHART_VERSION}"
+          echo "Release version: ${RELEASE_VERSION}"
+
+          if [ "${CHART_VERSION}" != "${RELEASE_VERSION}" ]; then
+            echo "Error: Chart version (${CHART_VERSION}) does not match release version (${RELEASE_VERSION})"
+            echo "Please update Chart.yaml version to ${RELEASE_VERSION}"
+            exit 1
+          fi
+
+  generate-docs:
+    needs: [extract-version, check, lint]
+    if: ${{ needs.check.outputs.chart_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up helm-docs
+        run: |
+          cd /tmp
+          wget https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz
+          tar -xzf helm-docs_1.14.2_Linux_x86_64.tar.gz
+          sudo mv helm-docs /usr/local/bin/
+          helm-docs --version
+
+      - name: Generate README from template
+        run: |
+          cd ${{ env.CHART_PATH }}
+          helm-docs --template-files=../../../../.github/templates/README.md.gotmpl
+
+      - name: Check if README was generated/updated
+        id: readme_check
+        run: |
+          if [ -f "${{ env.CHART_PATH }}/README.md" ]; then
+            echo "README.md exists"
+            echo "readme_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "README.md was not generated"
+            echo "readme_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload README as artifact
+        if: steps.readme_check.outputs.readme_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-readme
+          path: ${{ env.CHART_PATH }}/README.md
+          retention-days: 1
+
+  package-and-publish:
+    needs: [extract-version, check, lint, generate-docs]
+    if: ${{ needs.check.outputs.chart_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: Download README artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chart-readme
+          path: ${{ env.CHART_PATH }}
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+
+      - name: Package Helm chart
+        run: |
+          helm package ${{ env.CHART_PATH }} --version ${{ needs.extract-version.outputs.version }}
+
+      - name: Push Helm chart to OCI registry
+        run: |
+          helm push ${{ env.CHART_NAME }}-${{ needs.extract-version.outputs.version }}.tgz oci://${{ env.REGISTRY_PATH }}
+
+      - name: Logout from registry
+        if: always()
+        run: |
+          helm registry logout ${{ env.REGISTRY }}

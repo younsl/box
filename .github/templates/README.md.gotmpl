@@ -1,0 +1,90 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Installation
+
+### List available versions
+
+This chart is distributed via OCI registry, so you need to use [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) instead of `helm search repo` to discover available versions:
+
+```console
+crane ls ghcr.io/younsl/charts/{{ template "chart.name" . }}
+```
+
+If you need to install crane on macOS, you can easily install it using [Homebrew](https://brew.sh/), the package manager.
+
+```bash
+brew install crane
+```
+
+### Install the chart
+
+Install the chart with the release name `{{ template "chart.name" . }}`:
+
+```console
+helm install {{ template "chart.name" . }} oci://ghcr.io/younsl/charts/{{ template "chart.name" . }}
+```
+
+Install with custom values:
+
+```console
+helm install {{ template "chart.name" . }} oci://ghcr.io/younsl/charts/{{ template "chart.name" . }} -f values.yaml
+```
+
+Install a specific version:
+
+```console
+helm install {{ template "chart.name" . }} oci://ghcr.io/younsl/charts/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
+```
+
+### Install from local chart
+
+Download {{ template "chart.name" . }} chart and install from local directory:
+
+```console
+helm pull oci://ghcr.io/younsl/charts/{{ template "chart.name" . }} --untar --version {{ template "chart.version" . }}
+helm install {{ template "chart.name" . }} ./{{ template "chart.name" . }}
+```
+
+The `--untar` option downloads and unpacks the chart files into a directory for easy viewing and editing.
+
+## Upgrade
+
+```console
+helm upgrade {{ template "chart.name" . }} oci://ghcr.io/younsl/charts/{{ template "chart.name" . }}
+```
+
+## Uninstall
+
+```console
+helm uninstall {{ template "chart.name" . }}
+```
+
+## Configuration
+
+The following table lists the configurable parameters and their default values.
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+## License
+
+This chart is licensed under the Apache License 2.0. See [LICENSE](https://github.com/younsl/o/blob/main/LICENSE) for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a [Pull Request](https://github.com/younsl/o/pulls).
+
+{{ template "helm-docs.versionFooter" . }}
