@@ -114,50 +114,8 @@ jobs:
             exit 1
           fi
 
-  generate-docs:
-    needs: [extract-version, check, lint]
-    if: ${{ needs.check.outputs.chart_exists == 'false' }}
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up helm-docs
-        run: |
-          cd /tmp
-          wget https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz
-          tar -xzf helm-docs_1.14.2_Linux_x86_64.tar.gz
-          sudo mv helm-docs /usr/local/bin/
-          helm-docs --version
-
-      - name: Generate README from template
-        run: |
-          cd ${{ env.CHART_PATH }}
-          helm-docs --template-files=../../../../.github/templates/README.md.gotmpl
-
-      - name: Check if README was generated/updated
-        id: readme_check
-        run: |
-          if [ -f "${{ env.CHART_PATH }}/README.md" ]; then
-            echo "README.md exists"
-            echo "readme_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "README.md was not generated"
-            echo "readme_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload README as artifact
-        if: steps.readme_check.outputs.readme_exists == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: chart-readme
-          path: ${{ env.CHART_PATH }}/README.md
-          retention-days: 1
-
   package-and-publish:
-    needs: [extract-version, check, lint, generate-docs]
+    needs: [extract-version, check, lint]
     if: ${{ needs.check.outputs.chart_exists == 'false' }}
     runs-on: ubuntu-24.04
     permissions:
@@ -171,12 +129,6 @@ jobs:
         uses: azure/setup-helm@v4
         with:
           version: v3.16.3
-
-      - name: Download README artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: chart-readme
-          path: ${{ env.CHART_PATH }}
 
       - name: Login to GitHub Container Registry
         run: |
