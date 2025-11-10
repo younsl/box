@@ -13,10 +13,10 @@ path = "src/main.rs"
 
 [dependencies]
 # AWS SDK
-aws-config = "1.5"
-aws-sdk-elasticache = "1.93"
+aws-config = "1.8"
+aws-sdk-elasticache = "1.49"
 aws-sdk-s3 = "1.56"
-aws-smithy-types = "1.2"
+aws-smithy-types = "1.3"
 
 # Async runtime
 tokio = { version = "1.40", features = ["full"] }
