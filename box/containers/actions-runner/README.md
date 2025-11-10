@@ -5,12 +5,13 @@
 
 GitHub Actions runner optimized for Korea with multiple APT package sources for faster and more reliable downloads.
 
-## What's Inside
+## Base Image
 
-**Base:** `summerwind/actions-runner:v2.329.0-ubuntu-24.04`
+Built on [`summerwind/actions-runner:v2.329.0-ubuntu-24.04`](https://hub.docker.com/r/summerwind/actions-runner/tags)
 
-**Additions:**
-- Multiple APT package sources (includes Kakao mirror)
+## Additions
+
+- Multiple APT package sources (includes Kakao mirror) using [DEB822 format](https://repolib.readthedocs.io/en/latest/deb822-format.html) (official standard since Ubuntu 24.04)
 - Build essentials (`make`)
 
 ## Why This Image
