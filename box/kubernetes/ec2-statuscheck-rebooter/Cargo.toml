@@ -9,7 +9,7 @@ description = "Automated EC2 instance reboot on status check failures"
 [dependencies]
 tokio = { version = "1.41", features = ["full"] }
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }
-aws-sdk-ec2 = "1.78"
+aws-sdk-ec2 = "1.177"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "time"] }
 clap = { version = "4.5", features = ["derive", "env"] }
