@@ -71,6 +71,8 @@ serviceAccount:
   # @default -- `{}`
   annotations: {}
     # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/elasticache-backup-role
+  # -- (bool) Automatically mount service account token in pods
+  automountServiceAccountToken: true
 
 # -- Resource requests and limits
 # @default -- See below

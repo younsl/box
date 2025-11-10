@@ -4,6 +4,8 @@
 
 ElastiCache snapshot backup to S3 automation
 
+**Homepage:** <https://github.com/younsl/o>
+
 ## Installation
 
 ### List available versions
@@ -97,10 +99,11 @@ The following table lists the configurable parameters and their default values.
 | snapshot.exportTimeout | int | `300` | Maximum wait time for S3 export completion in seconds (5 minutes) |
 | snapshot.checkInterval | int | `30` | Snapshot status check interval in seconds |
 | snapshot.retentionCount | int | `7` | Number of snapshots to retain in S3 (0 = unlimited, no cleanup) |
-| serviceAccount | object | `{"annotations":{},"create":true,"name":"elasticache-backup"}` | Service Account configuration |
+| serviceAccount | object | `{"annotations":{},"automountServiceAccountToken":true,"create":true,"name":"elasticache-backup"}` | Service Account configuration |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `"elasticache-backup"` | The name of the service account to use |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account (e.g., IRSA for AWS permissions) |
+| serviceAccount.automountServiceAccountToken | bool | `true` | Automatically mount service account token in pods |
 | resources | object | See below | Resource requests and limits |
 | resources.requests | object | `{"cpu":"100m","memory":"128Mi"}` | Resource requests |
 | resources.requests.memory | string | `"128Mi"` | Memory request |
@@ -122,6 +125,10 @@ The following table lists the configurable parameters and their default values.
 | tolerations | list | `[]` | Tolerations for pod assignment |
 | affinity | object | `{}` | Affinity rules for pod assignment |
 | dnsConfig | object | `{}` | DNS configuration for the pod |
+
+## Source Code
+
+* <https://github.com/younsl/o/tree/main/box/kubernetes/elasticache-backup>
 
 ## Maintainers
 

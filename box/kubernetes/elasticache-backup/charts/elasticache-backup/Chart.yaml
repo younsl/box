@@ -10,7 +10,21 @@ keywords:
   - backup
   - snapshot
   - s3
+  - aws
+  - kubernetes
+  - cronjob
 maintainers:
   - name: younsl
     email: cysl@kakao.com
     url: https://github.com/younsl
+home: https://github.com/younsl/o
+sources:
+  - https://github.com/younsl/o/tree/main/box/kubernetes/elasticache-backup
+annotations:
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/license: MIT
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://github.com/younsl/o/blob/main/box/kubernetes/elasticache-backup/README.md
+    - name: Container Image
+      url: https://github.com/younsl/o/pkgs/container/elasticache-backup
