@@ -13,7 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 # AWS SDK
-aws-config = "1.5"
+aws-config = "1.8"
 aws-sdk-elasticache = "1.49"
 aws-sdk-s3 = "1.56"
 aws-smithy-types = "1.3"
