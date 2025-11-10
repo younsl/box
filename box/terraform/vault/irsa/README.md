@@ -8,7 +8,7 @@ This Terraform code is designed to set up the necessary resources for Vault's Au
 
 ## Reference
 
-This Terraform code is referenced in the blog post [Vault Auto Unseal with KMS on EKS](https://younsl.github.io/blog/k8s/vault-eks/), which provides a detailed guide on how to implement Vault's Auto Unseal feature in an EKS (Elastic Kubernetes Service) environment.
+This Terraform code is referenced in the blog post [Vault Auto Unseal with KMS on EKS](https://younsl.github.io/blog/vault-eks/), which provides a detailed guide on how to implement Vault's Auto Unseal feature in an EKS (Elastic Kubernetes Service) environment.
 
 ## Usage
 
