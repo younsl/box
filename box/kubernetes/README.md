@@ -14,8 +14,8 @@ Kubernetes tools, policy resources, and architecture documentation organized by 
 
 | Category | Name | Language | Status | Description |
 |----------|------|----------|--------|-------------|
-| Kubernetes Addon | [ec2-statuscheck-rebooter](./ec2-statuscheck-rebooter/) | [Rust](./ec2-statuscheck-rebooter/Cargo.toml) | Active | Automated reboot for standalone EC2 instances with status check failures running as Kubernetes [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) |
-| Kubernetes Addon | [elasticache-backup](./elasticache-backup/) | [Rust](./elasticache-backup/Cargo.toml) | Active | ElastiCache snapshot backup to S3 automation running as Kubernetes [CronJob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) |
+| Kubernetes Addon | [ec2-statuscheck-rebooter](./ec2-statuscheck-rebooter/) | [Rust](./ec2-statuscheck-rebooter/Cargo.toml) | Active | Automated reboot for standalone EC2 instances with status check failures running as Kubernetes [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) (Helm chart available) |
+| Kubernetes Addon | [elasticache-backup](./elasticache-backup/) | [Rust](./elasticache-backup/Cargo.toml) | Active | ElastiCache snapshot backup to S3 automation running as Kubernetes [CronJob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) (Helm chart available) |
 | Tools | [podver](./podver/) | [Rust](./podver/Cargo.toml) | Active | CLI tool that scans and reports Java and Node.js runtime versions across pods in a cluster |
 | Tools | [promdrop](./promdrop/) | [Rust](./promdrop/Cargo.toml) | Active | Prometheus scrape config generator to drop unused metrics analyzed by [mimirtool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) |
 | Resources | [policies](./policies/) | - | Active | Collection of [Kyverno](https://kyverno.io/) policies for Kubernetes cluster security and governance. |
