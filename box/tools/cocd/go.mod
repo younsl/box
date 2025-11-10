@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.19
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.20.1
-	golang.org/x/oauth2 v0.32.0
+	golang.org/x/oauth2 v0.33.0
 	golang.org/x/term v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 )
