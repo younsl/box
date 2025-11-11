@@ -1,3 +1,8 @@
+<div align="center">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="Kubernetes" width="80" height="80"/>
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg" alt="Redis" width="80" height="80"/>
+</div>
+
 # Redis Console
 
 [![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-redis--console-black?style=flat-square&logo=docker&logoColor=white)](https://github.com/younsl/o/pkgs/container/redis-console)
