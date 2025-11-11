@@ -1,14 +1,17 @@
-# TIL (Today I Learned)
+# Engineering Notes
 
-Engineering notes and operational learnings from production systems.
+Production system learnings and operational notes.
 
 Raw notes that may be published to the [blog](https://github.com/younsl/younsl.github.io) after refinement.
 
 ## Topics
 
-- **Kubernetes & Orchestration**: ArgoCD application controller, node health monitoring, HPA configuration
-- **Observability & Monitoring**: Loki, Promtail, OpenTelemetry, New Relic APM optimization and troubleshooting
-- **Container Runtime**: Docker-in-Docker, cgroup v2 challenges
-- **Infrastructure**: Valkey migration journey, service mesh with Istio
-- **Programming & Development**: Rust development notes
-- **Best Practices**: Joel Test, engineering guidelines and team processes
+- **Kubernetes**: ArgoCD, node health monitoring
+- **Observability**: OpenTelemetry, Loki, Promtail, New Relic
+- **Infrastructure**: Valkey migration, Istio service mesh
+- **Container**: Docker-in-Docker, cgroup v2
+- **Development**: Rust, engineering practices
+
+## License
+
+All content in this directory is licensed under the MIT License. See [/LICENSE](/LICENSE) for details.
