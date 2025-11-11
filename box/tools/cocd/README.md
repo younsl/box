@@ -26,6 +26,14 @@ DevOps Engineers and SREs can use cocd to manage GitHub Actions workflows throug
 
 ## Architecture
 
+cocd connects to GitHub API (both GitHub.com and GitHub Enterprise Server) to monitor and manage workflow runs:
+
+1. **Authentication** - Uses GitHub Personal Access Token via config file, environment variable, or GitHub CLI
+2. **Repository Discovery** - Fetches repository list from the specified organization
+3. **Workflow Scanning** - Iterates through each repository to collect workflow runs (GitHub API has no org-level workflow endpoint)
+4. **TUI Display** - Presents aggregated data in an interactive terminal interface with real-time updates
+5. **Job Actions** - Allows approval or cancellation of workflows through the API
+
 <img width="676" height="265" alt="image" src="https://github.com/user-attachments/assets/003b6092-f25a-4672-b10d-0b7526cae163" />
 
 ## Documentation
