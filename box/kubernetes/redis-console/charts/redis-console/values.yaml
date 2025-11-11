@@ -1,0 +1,133 @@
+# Default values for redis-console
+
+# -- Container image configuration
+image:
+  # -- (string) Container image registry
+  registry: ghcr.io
+  # -- (string) Container image repository
+  repository: younsl/redis-console
+  # -- (string) Container image tag (overrides the image tag whose default is the chart appVersion)
+  tag: ""
+  # -- (string) Container image pull policy
+  pullPolicy: Always
+
+# -- (list) Image pull secrets for private container registries
+# @default -- `[]`
+imagePullSecrets: []
+  # - name: ghcr-secret
+  # - name: ecr-secret
+
+# -- Deployment configuration
+deployment:
+  # -- (int) Number of replicas
+  replicas: 1
+
+# -- Service Account configuration
+serviceAccount:
+  # -- (bool) Specifies whether a service account should be created
+  create: true
+  # -- (string) The name of the service account to use
+  name: redis-console
+  # -- (object) Annotations to add to the service account (e.g., IRSA for AWS permissions)
+  # @default -- `{}`
+  annotations: {}
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/redis-console-role
+  # -- (bool) Automatically mount service account token in pods
+  automountServiceAccountToken: true
+
+config:
+  # -- (bool) Create Secret for cluster configuration
+  create: true
+
+  # -- (string) Use existing Secret instead of creating a new one
+  # If set, config.create is ignored and this Secret will be used
+  # The Secret must contain a key named "config.yaml"
+  existingSecretName: ""
+
+  # -- Redis cluster configurations
+  # Creates a Secret containing config.yaml at /etc/redis/clusters/config.yaml
+  # @default -- See example below
+  clusters: []
+    # - alias: production
+    #   host: redis-prod.example.com
+    #   port: 6379
+    #   password: ""
+    #   tls: false
+    #   clusterMode: false
+    #   description: "Production Redis cluster"
+    # - alias: staging
+    #   host: redis-staging.example.com
+    #   port: 6379
+    #   password: "my-secret-password"
+    #   tls: true
+    #   clusterMode: false
+    #   description: "Staging environment"
+
+  # -- AWS region for ElastiCache operations (optional)
+  awsRegion: ""
+  # awsRegion: ap-northeast-2
+
+# -- Resource requests and limits
+# @default -- See below
+resources:
+  # -- (object) Resource requests
+  requests:
+    # -- (string) Memory request
+    memory: "128Mi"
+    # -- (string) CPU request
+    cpu: "100m"
+  # -- (object) Resource limits
+  limits:
+    # -- (string) Memory limit
+    memory: "256Mi"
+
+# -- Security context for the container
+# @default -- See below
+securityContext:
+  # -- (bool) Whether a process can gain more privileges than its parent process
+  allowPrivilegeEscalation: false
+  # -- (bool) Run container as non-root user
+  runAsNonRoot: false
+  # -- (int) User ID to run the container
+  runAsUser: 0
+  # -- (object) Linux capabilities to drop
+  capabilities:
+    # -- (list) Drop all capabilities
+    drop:
+    - ALL
+
+# -- Environment variables
+env: {}
+  # AWS_REGION: ap-northeast-2
+  # REDIS_PASSWORD: ""
+
+# -- (object) Node labels for pod assignment
+# @default -- `{}`
+nodeSelector: {}
+
+# -- (list) Tolerations for pod assignment
+# @default -- `[]`
+tolerations: []
+
+# -- (object) Affinity rules for pod assignment
+# @default -- `{}`
+affinity: {}
+
+# -- (object) DNS configuration for the pod
+# @default -- `{}`
+dnsConfig: {}
+  # nameservers:
+  #   - 1.1.1.1
+  # searches:
+  #   - ns1.svc.cluster-domain.example
+  # options:
+  #   - name: ndots
+  #     value: "2"
+
+# -- (object) Pod annotations
+# @default -- `{}`
+podAnnotations: {}
+
+# -- (object) Pod labels
+# @default -- `{}`
+podLabels: {}

@@ -1,0 +1,159 @@
+name: Release redis-console
+run-name: Release redis-console ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'redis-console/[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic version to release (e.g. 1.0.0)"
+        required: true
+        default: "x.y.z"
+
+env:
+  IMAGE_NAME: younsl/redis-console
+
+jobs:
+  extract-version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Extract version from tag or input
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract version from tag (redis-console/1.0.0 -> 1.0.0)
+            VERSION="${GITHUB_REF#refs/tags/redis-console/}"
+          else
+            # Use manual input version
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
+
+  check:
+    needs: extract-version
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: read
+    outputs:
+      image_exists: ${{ steps.image_check.outputs.image_exists }}
+    steps:
+      - name: Check if image exists on GitHub Container Registry
+        id: image_check
+        run: |
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
+          TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
+            https://ghcr.io/v2/${{ env.IMAGE_NAME }}/tags/list)
+          echo "TAGS: $TAGS"
+
+          ## Check if TAGS is empty or null
+          if [[ -z "$TAGS" || "$TAGS" == "null" ]]; then
+            echo "No tags found, treating as image not existing."
+            echo "image_exists=false" >> $GITHUB_OUTPUT
+          else
+            ## Check if the specific tag already exists
+            if echo "$TAGS" | jq -e --arg TAG "${{ needs.extract-version.outputs.version }}" '.tags | index($TAG)'; then
+              echo "Image with tag ${{ needs.extract-version.outputs.version }} already exists."
+              echo "image_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "Image with tag ${{ needs.extract-version.outputs.version }} not found."
+              echo "image_exists=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  test:
+    needs: [extract-version, check]
+    if: ${{ needs.check.outputs.image_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      PROJECT_BASE_DIR: box/kubernetes/redis-console
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_BASE_DIR }}/target
+          key: ${{ runner.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: |
+          cargo test --verbose
+          cargo test --release --verbose
+
+      - name: Run clippy
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo clippy -- -D warnings
+
+      - name: Check formatting
+        working-directory: ${{ env.PROJECT_BASE_DIR }}
+        run: cargo fmt --check
+
+  build-docker:
+    needs: [extract-version, check, test]
+    if: ${{ needs.check.outputs.image_exists == 'false' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PROJECT_BASE_DIR: box/kubernetes/redis-console
+      REGISTRY: ghcr.io
+      VERSION: ${{ needs.extract-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.extract-version.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.PROJECT_BASE_DIR }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

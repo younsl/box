@@ -1,0 +1,32 @@
+# Redis Console Configuration Example
+# Place this file at:
+#   - /etc/redis/clusters/config.yaml (container)
+#   - ~/.config/redis-console/config.yaml (local)
+
+# List of Redis clusters
+clusters:
+  - alias: production
+    host: redis-prod.example.com
+    port: 6379
+    password: ""  # Optional: Redis AUTH password
+    tls: false    # Enable TLS connection
+    cluster_mode: false  # Enable Redis Cluster mode
+    description: "Production Redis cluster"  # Optional description
+
+  - alias: staging
+    host: redis-staging.example.com
+    port: 6379
+    password: "staging-password"
+    tls: true
+    cluster_mode: false
+    description: "Staging environment"
+
+  - alias: local-dev
+    host: localhost
+    port: 6379
+    tls: false
+    cluster_mode: false
+    description: "Local development Redis"
+
+# AWS region for ElastiCache operations (optional)
+aws_region: ap-northeast-2

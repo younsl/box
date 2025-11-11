@@ -1,0 +1,8 @@
+# Test configuration for redis-console
+clusters:
+  - alias: dev 
+    host: localhost
+    port: 6379
+    tls: false
+    cluster_mode: false
+    description: "Local Redis instance for testing"

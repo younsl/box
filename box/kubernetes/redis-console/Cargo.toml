@@ -1,0 +1,23 @@
+[package]
+name = "redis-console"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+authors = ["younsl"]
+description = "Interactive CLI for managing multiple Redis clusters"
+license = "MIT"
+
+[dependencies]
+tokio = { version = "1.40", features = ["full"] }
+redis = { version = "0.26", features = ["tokio-comp", "connection-manager"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+anyhow = "1.0"
+thiserror = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+rustyline = "14.0"
+colored = "2.1"
+tabled = "0.16"
+aws-config = "1.5"
+aws-sdk-elasticache = "1.45"
+dirs = "5.0"
