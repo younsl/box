@@ -133,7 +133,7 @@ docker run --rm -it \
 
 ### Available Commands
 
-Once in the REPL, you can use these commands:
+After starting redis-console, the prompt changes to tty.redis-console> and you can use these commands in the REPL:
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
@@ -145,10 +145,18 @@ Once in the REPL, you can use these commands:
 
 ### Example Session
 
+Start the Redis Console (or run **redis-console** inside a Kubernetes pod):
+
 ```bash
 $ redis-console
-Redis Console - Interactive CLI
-================================
+
+    ____           ___          ______                       __
+   / __ \___  ____/ (_)____    / ____/___  ____  _________  / /__
+  / /_/ / _ \/ __  / / ___/   / /   / __ \/ __ \/ ___/ __ \/ / _ \
+ / _, _/  __/ /_/ / (__  )   / /___/ /_/ / / / (__  ) /_/ / /  __/
+/_/ |_|\___/\__,_/_/____/    \____/\____/_/ /_/____/\____/_/\___/
+
+Interactive CLI for managing multiple Redis clusters - v0.1.0
 
 Available Commands:
   help, h  - Show this help message
@@ -161,8 +169,12 @@ When connected, you can execute any Redis command directly:
   Example: GET mykey
   Example: SET mykey value
   Example: KEYS *
+```
 
-redis-console> ls
+List all configured clusters with health status:
+
+```bash
+tty.redis-console> ls
 Checking 3 clusters from ~/.config/redis-console/config.yaml
 
 ┌────┬────────────┬─────────────────────────────┬──────┬─────────┬────────────┬─────┬────────────┐
@@ -172,11 +184,21 @@ Checking 3 clusters from ~/.config/redis-console/config.yaml
 │ 1  │ staging    │ redis-staging.example.com   │ 6379 │ 7.2.4   │ standalone │ Yes │ Healthy    │
 │ 2  │ local      │ localhost                   │ 6379 │ 7.2.4   │ standalone │ No  │ Healthy    │
 └────┴────────────┴─────────────────────────────┴──────┴─────────┴────────────┴─────┴────────────┘
+```
 
-redis-console> connect 2
+**Note**: Only redis clusters with "Healthy" status can be connected. Unhealthy clusters will fail to connect.
+
+Connect to a cluster by ID or alias:
+
+```bash
+tty.redis-console> connect 2
 Connecting to local...
 Connected to local
+```
 
+Once connected to a cluster, execute Redis commands directly:
+
+```bash
 tty.redis-console [local]> SET mykey "Hello World"
 OK
 
@@ -185,7 +207,11 @@ tty.redis-console [local]> GET mykey
 
 tty.redis-console [local]> KEYS *
 1) "mykey"
+```
 
+Check Redis server information:
+
+```bash
 tty.redis-console [local]> info
 Redis Server Info:
 # Server
@@ -193,7 +219,11 @@ redis_version:7.2.4
 redis_mode:standalone
 os:Linux 6.6.26-linuxkit x86_64
 ...
+```
 
+Disconnect and exit:
+
+```bash
 tty.redis-console [local]> quit
 Disconnected from local
 
@@ -234,6 +264,8 @@ make build-all      # Build for linux/darwin (amd64/arm64)
 ## Architecture
 
 ### Project Structure
+
+This project follows the standard Rust project structure:
 
 ```
 redis-console/
@@ -355,11 +387,11 @@ Core features are production-ready. Future enhancements focus on automation and 
 - [x] Colorized output for better readability
 
 **Planned:**
-- [ ] AWS ElastiCache direct integration
+- [ ] AWS ElastiCache direct integration with cluster auto-discovery via AWS API
 - [ ] Batch command execution from file
 - [ ] Command aliases and shortcuts
 - [ ] Export/import functionality
-- [ ] Connection pooling
+- [ ] Connection pooling for faster cluster switching without reconnection overhead
 
 ## Contributing
 
