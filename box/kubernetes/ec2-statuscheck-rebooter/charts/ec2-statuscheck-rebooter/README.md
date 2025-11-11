@@ -73,20 +73,24 @@ The following table lists the configurable parameters and their default values.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| nameOverride | string | `""` | String to partially override ec2-statuscheck-rebooter.fullname |
+| fullnameOverride | string | `""` | String to fully override ec2-statuscheck-rebooter.fullname |
 | replicaCount | int | `1` | Number of replicas |
 | revisionHistoryLimit | int | `10` | Number of ReplicaSets to retain for rollback |
+| strategy | object | `{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0},"type":"RollingUpdate"}` | Deployment strategy |
 | image.repository | string | `"ghcr.io/younsl/ec2-statuscheck-rebooter"` | Image repository |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion |
 | imagePullSecrets | list | `[]` | Image pull secrets |
-| nameOverride | string | `""` | String to partially override ec2-statuscheck-rebooter.fullname |
-| fullnameOverride | string | `""` | String to fully override ec2-statuscheck-rebooter.fullname |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.automountServiceAccountToken | bool | `true` | Automatically mount a ServiceAccount's API credentials |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
+| serviceAccount.imagePullSecrets | list | `[]` | Image pull secrets to attach to the service account |
 | serviceAccount.name | string | `""` | The name of the service account to use If not set and create is true, a name is generated using the fullname template |
 | podAnnotations | object | `{}` | Annotations to add to the pod |
+| podLabels | object | `{}` | Labels to add to the pod |
 | priorityClassName | string | `""` | Priority class name for pod scheduling |
+| runtimeClassName | string | `""` | Runtime class name for the pod |
 | podSecurityContext | object | `{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000}` | Pod Security Context |
 | podSecurityContext.runAsNonRoot | bool | `true` | Run container as non-root user |
 | podSecurityContext.runAsUser | int | `1000` | User ID for the pod |
@@ -96,6 +100,7 @@ The following table lists the configurable parameters and their default values.
 | securityContext.allowPrivilegeEscalation | bool | `false` | Prevent privilege escalation |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | Drop all capabilities |
 | securityContext.readOnlyRootFilesystem | bool | `true` | Mount root filesystem as read-only |
+| extraEnv | list | `[]` | Additional environment variables for the container |
 | rebooter.checkIntervalSeconds | int | `300` | Check interval in seconds between status checks |
 | rebooter.failureThreshold | int | `2` | Number of consecutive failures before reboot |
 | rebooter.region | string | `""` | AWS region (leave empty to use default from IRSA/instance metadata) |
@@ -114,6 +119,11 @@ The following table lists the configurable parameters and their default values.
 | resources.limits.memory | string | `"128Mi"` | Memory limit |
 | resources.requests.cpu | string | `"100m"` | CPU request |
 | resources.requests.memory | string | `"64Mi"` | Memory request |
+| resizePolicy | list | `[]` | Container resize policy for CPU and memory Allows in-place resource updates without pod restart (beta since Kubernetes 1.33) |
+| dnsPolicy | string | `""` | DNS policy for the pod Options: Default, ClusterFirst (default), ClusterFirstWithHostNet, None |
+| dnsConfig | object | `{}` | DNS configuration for the pod |
+| volumes | list | `[]` | Additional volumes for the pod |
+| volumeMounts | list | `[]` | Additional volume mounts for the container |
 | nodeSelector | object | `{}` | Node labels for pod assignment |
 | tolerations | list | `[]` | Tolerations for pod assignment |
 | affinity | object | `{}` | Affinity for pod assignment |

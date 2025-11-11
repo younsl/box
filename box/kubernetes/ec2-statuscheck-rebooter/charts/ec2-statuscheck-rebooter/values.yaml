@@ -1,8 +1,21 @@
+# -- (string) String to partially override ec2-statuscheck-rebooter.fullname
+nameOverride: ""
+
+# -- (string) String to fully override ec2-statuscheck-rebooter.fullname
+fullnameOverride: ""
+
 # -- (int) Number of replicas
 replicaCount: 1
 
 # -- (int) Number of ReplicaSets to retain for rollback
 revisionHistoryLimit: 10
+
+# -- (object) Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
 
 image:
   # -- (string) Image repository
@@ -14,10 +27,7 @@ image:
 
 # -- (list) Image pull secrets
 imagePullSecrets: []
-# -- (string) String to partially override ec2-statuscheck-rebooter.fullname
-nameOverride: ""
-# -- (string) String to fully override ec2-statuscheck-rebooter.fullname
-fullnameOverride: ""
+  # - name: my-dockerhub-regcred 
 
 serviceAccount:
   # -- (bool) Specifies whether a service account should be created
@@ -28,6 +38,9 @@ serviceAccount:
   annotations: {}
     # Example for EKS IRSA:
     # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+  # -- (list) Image pull secrets to attach to the service account
+  imagePullSecrets: []
+    # - name: mmy-dockerhub-regcred
   # -- (string) The name of the service account to use
   # If not set and create is true, a name is generated using the fullname template
   name: ""
@@ -35,8 +48,14 @@ serviceAccount:
 # -- (object) Annotations to add to the pod
 podAnnotations: {}
 
+# -- (object) Labels to add to the pod
+podLabels: {}
+
 # -- (string) Priority class name for pod scheduling
 priorityClassName: ""
+
+# -- (string) Runtime class name for the pod
+runtimeClassName: ""
 
 # -- (object) Pod Security Context
 podSecurityContext:
@@ -59,6 +78,16 @@ securityContext:
     - ALL
   # -- (bool) Mount root filesystem as read-only
   readOnlyRootFilesystem: true
+
+# -- (list) Additional environment variables for the container
+extraEnv: []
+  # - name: CUSTOM_VAR
+  #   value: "custom-value"
+  # - name: SECRET_VAR
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: password
 
 # EC2 StatusCheck Rebooter configuration
 rebooter:
@@ -126,6 +155,44 @@ resources:
     cpu: 100m
     # -- (string) Memory request
     memory: 64Mi
+
+# -- (list) Container resize policy for CPU and memory
+# Allows in-place resource updates without pod restart (beta since Kubernetes 1.33)
+resizePolicy: []
+  # - resourceName: cpu
+  #   restartPolicy: NotRequired
+  # - resourceName: memory
+  #   restartPolicy: RestartContainer
+
+# -- (string) DNS policy for the pod
+# Options: Default, ClusterFirst (default), ClusterFirstWithHostNet, None
+dnsPolicy: ""
+
+# -- (object) DNS configuration for the pod
+dnsConfig: {}
+  # nameservers:
+  #   - 8.8.8.8
+  # searches:
+  #   - svc.cluster.local
+  # options:
+  #   - name: ndots
+  #     value: "2"
+
+# -- (list) Additional volumes for the pod
+volumes: []
+  # - name: tmp
+  #   emptyDir: {}
+  # - name: config
+  #   configMap:
+  #     name: my-config
+
+# -- (list) Additional volume mounts for the container
+volumeMounts: []
+  # - name: tmp
+  #   mountPath: /tmp
+  # - name: config
+  #   mountPath: /etc/config
+  #   readOnly: true
 
 # -- (object) Node labels for pod assignment
 nodeSelector: {}
