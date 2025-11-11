@@ -34,7 +34,7 @@ spec:
         image: {{ include "redis-console.image" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command:
-          - /bin/bash
+          - /bin/sh
         stdin: true
         tty: true
         {{- with .Values.env }}

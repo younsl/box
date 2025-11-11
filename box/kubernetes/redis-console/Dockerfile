@@ -36,11 +36,7 @@ LABEL maintainer="younsl"
 LABEL description="Redis console TUI for managing multiple Redis clusters"
 
 # Install runtime dependencies
-RUN apk add --no-cache \
-    bash \
-    ca-certificates \
-    redis \
-    aws-cli
+RUN apk add --no-cache ca-certificates
 
 # Create non-root user
 RUN addgroup -g 1000 redis-console && \
