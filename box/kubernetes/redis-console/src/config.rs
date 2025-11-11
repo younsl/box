@@ -49,16 +49,11 @@ pub struct Config {
 }
 
 /// Configuration source
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum ConfigSource {
     File(String),
+    #[default]
     Empty,
-}
-
-impl Default for ConfigSource {
-    fn default() -> Self {
-        ConfigSource::Empty
-    }
 }
 
 impl Config {
