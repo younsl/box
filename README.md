@@ -14,4 +14,4 @@ Production-ready tools, controllers, and automation resources for Kubernetes and
 - **[terraform](./box/terraform/)** - Infrastructure modules
 - **[actions](./box/actions/)** - Reusable workflow templates
 - **[scripts](./box/scripts/)** - AWS, GitHub, and K8s automation
-- **[til](./box/til/)** - Engineering notes
+- **[note](./box/note/)** - Engineering notes

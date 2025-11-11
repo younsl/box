@@ -131,7 +131,7 @@ box/
 ├── terraform/             # Infrastructure as Code
 │   └── vault/irsa/        # Vault auto-unseal with AWS KMS
 ├── actions/               # GitHub Actions reusable workflows
-└── til/                   # Engineering notes and learnings
+└── note/                  # Engineering notes and learnings
 ```
 
 ### Architectural Patterns
