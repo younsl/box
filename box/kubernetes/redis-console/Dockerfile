@@ -30,7 +30,7 @@ RUN touch src/main.rs && \
     cargo build --release --locked
 
 # Runtime stage
-FROM alpine:3.23
+FROM alpine:3.22 as runtime
 
 LABEL maintainer="younsl"
 LABEL description="Redis console TUI for managing multiple Redis clusters"
