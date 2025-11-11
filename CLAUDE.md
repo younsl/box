@@ -42,7 +42,7 @@ make clean          # Remove build artifacts
 
 ### Rust Projects
 
-Standard Makefile patterns for Rust tools (kk, qg, s3vget, podver, promdrop, filesystem-cleaner, elasticache-backup, ec2-statuscheck-rebooter):
+Standard Makefile patterns for Rust tools (kk, qg, s3vget, podver, promdrop, filesystem-cleaner, elasticache-backup, ec2-statuscheck-rebooter, redis-console):
 
 ```bash
 # Core build commands
@@ -110,6 +110,7 @@ box/
 │   ├── elasticache-backup/# ElastiCache S3 backup automation (Rust, container)
 │   ├── podver/            # Pod Version Scanner (Rust, container)
 │   ├── promdrop/          # Prometheus metric filter generator (Rust, CLI + container)
+│   ├── redis-console/     # Interactive Redis cluster management CLI (Rust, CLI + container)
 │   └── policies/          # Kyverno and CEL admission policies
 ├── tools/                 # CLI utilities
 │   ├── cocd/              # GitHub Actions deployment monitor (Go, TUI)
@@ -487,6 +488,82 @@ helm install ec2-statuscheck-rebooter ./charts/ec2-statuscheck-rebooter \
 
 **Important**: NOT for EKS worker node management - use AWS Node Termination Handler or Karpenter instead.
 
+### redis-console - Interactive Redis Cluster Management CLI (Rust)
+
+An interactive REPL for managing multiple Redis and AWS ElastiCache clusters from a single terminal session.
+
+```bash
+# Local usage with default config
+redis-console
+
+# Specify custom config
+redis-console --config /path/to/config.yaml
+
+# Container usage
+docker run --rm -it \
+  -v $(pwd)/config.yaml:/etc/redis/clusters/config.yaml \
+  ghcr.io/younsl/redis-console:latest
+
+# Kubernetes deployment
+kubectl exec -it -n redis-console redis-console-xxxxxx -- redis-console
+```
+
+**Configuration Format** (`~/.config/redis-console/config.yaml` or `/etc/redis/clusters/config.yaml` in containers):
+
+```yaml
+clusters:
+  - alias: production
+    host: redis-prod.example.com
+    port: 6379
+    password: ""           # Optional
+    tls: false            # Optional
+    cluster_mode: false   # Optional
+    description: "Production Redis"
+
+  - alias: staging
+    host: redis-staging.example.com
+    port: 6379
+    password: "my-password"
+    tls: true
+    cluster_mode: false
+
+aws_region: ap-northeast-2  # For ElastiCache
+```
+
+**REPL Commands**:
+- `help`, `h` - Show help message
+- `list`, `ls`, `l` - List all clusters with health status
+- `connect <id|name>`, `c` - Connect to cluster by ID or alias
+- `info` - Show Redis server info (when connected)
+- `quit`, `exit`, `q` - Disconnect or exit
+- Any Redis command when connected (e.g., `GET key`, `SET key value`, `KEYS *`)
+
+**Technical Details**:
+- Built with rustyline for REPL interface
+- Multi-cluster management with seamless switching
+- Health monitoring with Redis version and mode detection
+- Command history navigation (↑/↓ keys)
+- Colorized output with tabled formatting
+- TLS and Redis Cluster mode support
+- TTY detection for Kubernetes compatibility
+- AWS ElastiCache integration via IRSA
+
+**Build Commands**:
+```bash
+make build      # Debug build
+make release    # Optimized release build
+make run        # Build and run
+make install    # Install to ~/.cargo/bin/
+```
+
+**Deployment** (Kubernetes with IRSA for ElastiCache):
+```bash
+helm install redis-console ./charts/redis-console \
+  --namespace redis-console \
+  --create-namespace \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT:role/redis-console-role
+```
+
 ## Performance & API Guidelines
 
 ### GitHub API Constraints
@@ -542,6 +619,7 @@ git tag actions-runner/1.0.0 && git push --tags
 # - qg (QR code generator)
 # - s3vget (S3 object version downloader)
 # - podver (Pod version scanner - has Makefile docker-build/push targets)
+# - redis-console (Redis cluster management CLI - has Makefile docker-build/push targets)
 ```
 
 ## Testing Guidelines
