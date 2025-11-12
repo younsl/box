@@ -6,6 +6,8 @@ Kubernetes and automation CLI tools.
 
 Built on the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy): "Do One Thing and Do It Well". Each CLI tool solves one specific operational problem, and internally, the application architecture follows the same principle with small, focused modules.
 
+All CLI tools except cocd are built with [Rust](https://github.com/rust-lang/rust) 1.91+. Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
+
 ## Tool List
 
 | Category | Name | Language | Description |
