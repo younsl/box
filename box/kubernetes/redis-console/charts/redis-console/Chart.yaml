@@ -6,11 +6,14 @@ version: 0.1.0
 appVersion: "0.1.0"
 home: https://github.com/younsl/o
 sources:
-  - https://github.com/younsl/box/tree/main/kubernetes/redis-console
+  - https://github.com/younsl/o/edit/main/box/kubernetes/redis-console
 maintainers:
   - name: younsl
+    email: cysl@kakao.com
+    url: https://github.com/younsl
 keywords:
   - redis
   - console
   - elasticache
   - debugging
+  - administration
