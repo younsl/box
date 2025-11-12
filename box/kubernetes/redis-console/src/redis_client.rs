@@ -33,25 +33,40 @@ impl RedisClient {
         Ok(info)
     }
 
-    /// Get Redis server version and mode from INFO
-    pub async fn get_server_info(&mut self) -> Result<(String, String)> {
+    /// Get Redis server engine, version and mode from INFO
+    /// Returns (engine, version, mode) tuple
+    /// Engine is "valkey" if valkey_version exists, "redis" if redis_version exists
+    /// valkey_version takes precedence over redis_version if both exist
+    pub async fn get_server_info(&mut self) -> Result<(String, String, String)> {
         let info: String = redis::cmd("INFO")
             .arg("server")
             .query_async(&mut self.manager)
             .await
             .context("Failed to execute INFO server command")?;
 
+        let mut engine = "unknown".to_string();
         let mut version = "unknown".to_string();
         let mut mode = "standalone".to_string();
+        let mut redis_version_found: Option<String> = None;
+        let mut valkey_version_found: Option<String> = None;
 
         for line in info.lines() {
-            if line.starts_with("redis_version:") {
-                version = line
-                    .split(':')
-                    .nth(1)
-                    .unwrap_or("unknown")
-                    .trim()
-                    .to_string();
+            if line.starts_with("valkey_version:") {
+                valkey_version_found = Some(
+                    line.split(':')
+                        .nth(1)
+                        .unwrap_or("unknown")
+                        .trim()
+                        .to_string(),
+                );
+            } else if line.starts_with("redis_version:") {
+                redis_version_found = Some(
+                    line.split(':')
+                        .nth(1)
+                        .unwrap_or("unknown")
+                        .trim()
+                        .to_string(),
+                );
             } else if line.starts_with("redis_mode:") {
                 mode = line
                     .split(':')
@@ -62,7 +77,16 @@ impl RedisClient {
             }
         }
 
-        Ok((version, mode))
+        // valkey_version takes precedence over redis_version
+        if let Some(v) = valkey_version_found {
+            engine = "valkey".to_string();
+            version = v;
+        } else if let Some(v) = redis_version_found {
+            engine = "redis".to_string();
+            version = v;
+        }
+
+        Ok((engine, version, mode))
     }
 
     /// Execute custom command

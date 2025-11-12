@@ -36,6 +36,8 @@ struct ClusterRow {
     host: String,
     #[tabled(rename = "Port")]
     port: u16,
+    #[tabled(rename = "Engine")]
+    engine: String,
     #[tabled(rename = "Version")]
     version: String,
     #[tabled(rename = "Mode")]
@@ -248,18 +250,19 @@ async fn check_health(config: &Config) {
     let mut rows = Vec::new();
 
     for (i, cluster) in config.clusters.iter().enumerate() {
-        let (status, version, mode) = match timeout(
+        let (status, engine, version, mode) = match timeout(
             Duration::from_secs(2),
             RedisClient::connect(cluster.clone()),
         )
         .await
         {
             Ok(Ok(mut client)) => {
-                // Get version and mode info
+                // Get engine, version and mode info
                 match client.get_server_info().await {
-                    Ok((v, m)) => ("Healthy".to_string(), v, m),
+                    Ok((e, v, m)) => ("Healthy".to_string(), e, v, m),
                     Err(_) => (
                         "Healthy".to_string(),
+                        "unknown".to_string(),
                         "unknown".to_string(),
                         "unknown".to_string(),
                     ),
@@ -269,8 +272,14 @@ async fn check_health(config: &Config) {
                 format!("Unhealthy: {}", e),
                 "-".to_string(),
                 "-".to_string(),
+                "-".to_string(),
             ),
-            Err(_) => ("Timeout".to_string(), "-".to_string(), "-".to_string()),
+            Err(_) => (
+                "Timeout".to_string(),
+                "-".to_string(),
+                "-".to_string(),
+                "-".to_string(),
+            ),
         };
 
         rows.push(ClusterRow {
@@ -278,6 +287,7 @@ async fn check_health(config: &Config) {
             alias: cluster.alias.clone(),
             host: cluster.host.clone(),
             port: cluster.port,
+            engine,
             version,
             mode,
             tls: if cluster.tls { "Yes" } else { "No" }.to_string(),
