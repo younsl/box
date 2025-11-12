@@ -1,6 +1,5 @@
 # Default values for redis-console
 
-# -- Container image configuration
 image:
   # -- (string) Container image registry
   registry: ghcr.io
@@ -22,7 +21,6 @@ deployment:
   # -- (int) Number of replicas
   replicas: 1
 
-# -- Service Account configuration
 serviceAccount:
   # -- (bool) Specifies whether a service account should be created
   create: true
@@ -34,6 +32,11 @@ serviceAccount:
     # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/redis-console-role
   # -- (bool) Automatically mount service account token in pods
   automountServiceAccountToken: true
+  # -- (list) Image pull secrets to attach to the service account
+  # @default -- `[]`
+  imagePullSecrets: []
+    # - name: ghcr-secret
+    # - name: ecr-secret
 
 config:
   # -- (bool) Create Secret for cluster configuration
@@ -73,13 +76,13 @@ resources:
   # -- (object) Resource requests
   requests:
     # -- (string) Memory request
-    memory: "128Mi"
+    memory: "30Mi"
     # -- (string) CPU request
-    cpu: "100m"
+    cpu: "20m"
   # -- (object) Resource limits
   limits:
     # -- (string) Memory limit
-    memory: "256Mi"
+    memory: "60Mi"
 
 # -- Container-level security context configuration
 # This security context applies to the container, not the pod

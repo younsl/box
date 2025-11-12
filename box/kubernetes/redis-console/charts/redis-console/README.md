@@ -20,7 +20,6 @@ A Helm chart for Redis console container to manage multiple Redis clusters
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| image | object | `{"pullPolicy":"Always","registry":"ghcr.io","repository":"younsl/redis-console","tag":""}` | Container image configuration |
 | image.registry | string | `"ghcr.io"` | Container image registry |
 | image.repository | string | `"younsl/redis-console"` | Container image repository |
 | image.tag | string | `""` | Container image tag (overrides the image tag whose default is the chart appVersion) |
@@ -28,21 +27,21 @@ A Helm chart for Redis console container to manage multiple Redis clusters
 | imagePullSecrets | list | `[]` | Image pull secrets for private container registries |
 | deployment | object | `{"replicas":1}` | Deployment configuration |
 | deployment.replicas | int | `1` | Number of replicas |
-| serviceAccount | object | `{"annotations":{},"automountServiceAccountToken":true,"create":true,"name":"redis-console"}` | Service Account configuration |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `"redis-console"` | The name of the service account to use |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account (e.g., IRSA for AWS permissions) |
 | serviceAccount.automountServiceAccountToken | bool | `true` | Automatically mount service account token in pods |
+| serviceAccount.imagePullSecrets | list | `[]` | Image pull secrets to attach to the service account |
 | config.create | bool | `true` | Create Secret for cluster configuration |
 | config.existingSecretName | string | `""` | Use existing Secret instead of creating a new one If set, config.create is ignored and this Secret will be used The Secret must contain a key named "config.yaml" |
 | config.clusters | list | See example below | Redis cluster configurations Creates a Secret containing config.yaml at /etc/redis/clusters/config.yaml |
 | config.awsRegion | string | `""` | AWS region for ElastiCache operations (optional) |
 | resources | object | See below | Resource requests and limits |
-| resources.requests | object | `{"cpu":"100m","memory":"128Mi"}` | Resource requests |
-| resources.requests.memory | string | `"128Mi"` | Memory request |
-| resources.requests.cpu | string | `"100m"` | CPU request |
-| resources.limits | object | `{"memory":"256Mi"}` | Resource limits |
-| resources.limits.memory | string | `"256Mi"` | Memory limit |
+| resources.requests | object | `{"cpu":"20m","memory":"30Mi"}` | Resource requests |
+| resources.requests.memory | string | `"30Mi"` | Memory request |
+| resources.requests.cpu | string | `"20m"` | CPU request |
+| resources.limits | object | `{"memory":"60Mi"}` | Resource limits |
+| resources.limits.memory | string | `"60Mi"` | Memory limit |
 | securityContext | object | See below | Container-level security context configuration This security context applies to the container, not the pod |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether a process can gain more privileges than its parent process |
 | securityContext.runAsNonRoot | bool | `true` | Run container as non-root user |
