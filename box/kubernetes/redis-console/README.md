@@ -15,7 +15,20 @@ An interactive CLI administration tool for managing multiple Redis and AWS Elast
 
 Redis Console is designed for **DevOps Engineers and SREs** managing Redis and AWS ElastiCache clusters. It provides an **easy-to-use REPL** (Read-Eval-Print Loop) for connecting to and administering multiple Redis clusters across different environments (production, staging, development).
 
+When deployed in Kubernetes, it acts as a **bastion server** for Redis operations. Use it for executing Redis commands, health checks, version inventory, and troubleshooting across multiple clusters via `kubectl exec`.
+
 Built with Rust using [rustyline](https://github.com/kkawakam/rustyline), it offers a fast, efficient command-line interface similar to `redis-cli` but with multi-cluster support and Kubernetes deployment capabilities.
+
+## Architecture
+
+![Redis Console Architecture](docs/assets/1.png)
+
+The diagram shows how redis-console operates in a Kubernetes environment:
+- Cluster admins connect via `kubectl exec` to the redis-console pod
+- The pod can access both in-cluster Redis pods and external ElastiCache clusters via Redis client
+- **All Redis clusters must be manually configured** in the `config.yaml` file (see [Configuration](#configuration) section)
+- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) on Redis pods can optionally restrict ingress traffic from redis-console
+- Security groups control external access to ElastiCache clusters
 
 ## Features
 
@@ -182,16 +195,19 @@ List all configured clusters with health status:
 tty.redis-console> ls
 Checking 3 clusters from ~/.config/redis-console/config.yaml
 
-┌────┬────────────┬─────────────────────────────┬──────┬─────────┬────────────┬─────┬────────────┐
-│ ID │ Alias      │ Host                        │ Port │ Version │ Mode       │ TLS │ Status     │
-├────┼────────────┼─────────────────────────────┼──────┼─────────┼────────────┼─────┼────────────┤
-│ 0  │ production │ redis-prod.example.com      │ 6379 │ 7.2.4   │ standalone │ No  │ Healthy    │
-│ 1  │ staging    │ redis-staging.example.com   │ 6379 │ 7.2.4   │ standalone │ Yes │ Healthy    │
-│ 2  │ local      │ localhost                   │ 6379 │ 7.2.4   │ standalone │ No  │ Healthy    │
-└────┴────────────┴─────────────────────────────┴──────┴─────────┴────────────┴─────┴────────────┘
+┌────┬────────────┬─────────────────────────────┬──────┬────────┬─────────┬────────────┬─────┬────────────┐
+│ ID │ Alias      │ Host                        │ Port │ Engine │ Version │ Mode       │ TLS │ Status     │
+├────┼────────────┼─────────────────────────────┼──────┼────────┼─────────┼────────────┼─────┼────────────┤
+│ 0  │ production │ redis-prod.example.com      │ 6379 │ redis  │ 7.2.4   │ standalone │ No  │ Healthy    │
+│ 1  │ staging    │ redis-staging.example.com   │ 6379 │ valkey │ 8.0.1   │ standalone │ Yes │ Healthy    │
+│ 2  │ local      │ localhost                   │ 6379 │ redis  │ 7.2.4   │ standalone │ No  │ Healthy    │
+└────┴────────────┴─────────────────────────────┴──────┴────────┴─────────┴────────────┴─────┴────────────┘
 ```
 
-**Note**: Only redis clusters with "Healthy" status can be connected. Unhealthy clusters will fail to connect.
+**Note**:
+- Health checks are performed only when running the `ls` command (2-second timeout per cluster)
+- Only clusters with "Healthy" status can be connected. Unhealthy clusters will fail to connect.
+- The `connect` command attempts connection immediately without pre-checking health status
 
 Connect to a cluster by ID or alias:
 
@@ -263,10 +279,18 @@ make docker-push    # Push to registry
 ### Cross-Platform Build
 
 ```bash
-make build-all      # Build for linux/darwin (amd64/arm64)
+make build-all      # Build for multiple platforms
 ```
 
-## Architecture
+Supported platforms and architectures:
+
+| Build Type | Platform | Architecture | Support |
+|------------|----------|--------------|---------|
+| Binary | Linux | x86_64, ARM64 | ✅ |
+| Binary | macOS | x86_64, ARM64 (Apple Silicon) | ✅ |
+| Container (ghcr.io) | Linux | x86_64, ARM64 | ✅ |
+
+## Implementation Details
 
 ### Project Structure
 
@@ -326,7 +350,7 @@ While Redis Console is designed as a CLI tool, you can also deploy it as a long-
 
 - Kubernetes cluster
 - Helm 3.x
-- AWS credentials (optional, for ElastiCache access)
+- AWS credentials for ElastiCache access (**Optional**)
 
 ### Installation with IRSA for AWS ElastiCache
 
@@ -351,11 +375,11 @@ kubectl exec -it -n redis-console redis-console-xxxxxx -- redis-console
 
 ### Connection Timeout
 
-If you experience connection timeouts, check:
-- Network connectivity to Redis host
-- Firewall rules
+If you experience connection timeouts when running ls command (health checks) or connect command, check:
+- Network connectivity and firewall rules
 - Redis server configuration (`bind` directive)
-- TLS configuration if enabled
+- Redis TLS configuration if enabled
+- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) (for in-cluster Redis pods)
 
 ### Configuration Not Found
 
