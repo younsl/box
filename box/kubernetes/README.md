@@ -8,6 +8,8 @@ This directory contains [Kubernetes](https://kubernetes.io/) related resources i
 
 Built on the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy): "Do One Thing and Do It Well". Each Kubernetes addon solves one specific operational problem, and internally, the application architecture follows the same principle with small, focused modules.
 
+All applications are built with **[Rust](https://github.com/rust-lang/rust) 1.91+**. Rust provides key operational benefits: minimal container sizes, low memory footprint, single static binaries with no runtime dependencies, memory safety preventing null pointer and buffer overflow crashes, and compile-time guarantees ensuring system stability in production.
+
 ## List of Contents
 
 Kubernetes tools, policy resources, and architecture documentation organized by category.
