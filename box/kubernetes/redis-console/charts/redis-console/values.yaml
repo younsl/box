@@ -81,15 +81,18 @@ resources:
     # -- (string) Memory limit
     memory: "256Mi"
 
-# -- Security context for the container
+# -- Container-level security context configuration
+# This security context applies to the container, not the pod
 # @default -- See below
 securityContext:
   # -- (bool) Whether a process can gain more privileges than its parent process
   allowPrivilegeEscalation: false
   # -- (bool) Run container as non-root user
-  runAsNonRoot: false
-  # -- (int) User ID to run the container
-  runAsUser: 0
+  runAsNonRoot: true
+  # -- (int) User ID to run the container (matches Dockerfile USER directive)
+  runAsUser: 1000
+  # -- (int) Group ID to run the container (matches Dockerfile group)
+  runAsGroup: 1000
   # -- (object) Linux capabilities to drop
   capabilities:
     # -- (list) Drop all capabilities

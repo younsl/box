@@ -43,10 +43,11 @@ A Helm chart for Redis console container to manage multiple Redis clusters
 | resources.requests.cpu | string | `"100m"` | CPU request |
 | resources.limits | object | `{"memory":"256Mi"}` | Resource limits |
 | resources.limits.memory | string | `"256Mi"` | Memory limit |
-| securityContext | object | See below | Security context for the container |
+| securityContext | object | See below | Container-level security context configuration This security context applies to the container, not the pod |
 | securityContext.allowPrivilegeEscalation | bool | `false` | Whether a process can gain more privileges than its parent process |
-| securityContext.runAsNonRoot | bool | `false` | Run container as non-root user |
-| securityContext.runAsUser | int | `0` | User ID to run the container |
+| securityContext.runAsNonRoot | bool | `true` | Run container as non-root user |
+| securityContext.runAsUser | int | `1000` | User ID to run the container (matches Dockerfile USER directive) |
+| securityContext.runAsGroup | int | `1000` | Group ID to run the container (matches Dockerfile group) |
 | securityContext.capabilities | object | `{"drop":["ALL"]}` | Linux capabilities to drop |
 | securityContext.capabilities.drop | list | `["ALL"]` | Drop all capabilities |
 | env | object | `{}` | Environment variables |
