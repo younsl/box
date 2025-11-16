@@ -260,15 +260,17 @@ kubectl create job --from=cronjob/elasticache-backup manual-backup-$(date +%s)
 
 ### Configuration Options
 
-| Argument | Environment Variable | Default | Description |
-|----------|---------------------|---------|-------------|
-| `--cache-cluster-id` | `CACHE_CLUSTER_ID` | - | ElastiCache cluster ID (required) |
-| `--s3-bucket-name` | `S3_BUCKET_NAME` | - | S3 bucket for backups (required) |
-| `--region` | `AWS_REGION` | `ap-northeast-2` | AWS region |
-| `--snapshot-timeout` | - | `1800` | Max wait time for snapshot creation (seconds, 30 min) |
-| `--export-timeout` | - | `300` | Max wait time for S3 export (seconds, 5 min) |
-| `--check-interval` | - | `30` | Status check interval (seconds) |
-| `--retention-count` | `RETENTION_COUNT` | `0` | Number of snapshots to retain (0 = unlimited) |
+You can set options using command-line flags or environment variables. Command-line flags take priority.
+
+| Argument | Environment Variable | Default | Required | Description |
+|----------|---------------------|---------|----------|-------------|
+| `--cache-cluster-id` | `CACHE_CLUSTER_ID` | - | Required | ElastiCache cluster ID |
+| `--s3-bucket-name` | `S3_BUCKET_NAME` | - | Required | S3 bucket for backups |
+| `--region` | `AWS_REGION` | `ap-northeast-2` | Optional | AWS region |
+| `--snapshot-timeout` | - | `1800` | Optional | Max wait time for snapshot creation (seconds, 30 min) |
+| `--export-timeout` | - | `300` | Optional | Max wait time for S3 export (seconds, 5 min) |
+| `--check-interval` | - | `30` | Optional | Status check interval (seconds) |
+| `--retention-count` | `RETENTION_COUNT` | `0` | Optional | Number of snapshots to retain (0 = unlimited) |
 
 **Additional Environment Variables:**
 
