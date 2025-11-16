@@ -1,10 +1,10 @@
-name: Release elasticache-backup Helm Chart
-run-name: Release elasticache-backup chart ${{ github.ref_name }}
+name: Release redis-console Helm Chart
+run-name: Release redis-console chart ${{ github.ref_name }}
 
 on:
   push:
     tags:
-      - 'elasticache-backup/charts/[0-9]+.[0-9]+.[0-9]+'
+      - 'redis-console/charts/[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
     inputs:
       version:
@@ -13,8 +13,8 @@ on:
         default: "x.y.z"
 
 env:
-  CHART_NAME: elasticache-backup
-  CHART_PATH: box/kubernetes/elasticache-backup/charts/elasticache-backup
+  CHART_NAME: redis-console
+  CHART_PATH: box/kubernetes/redis-console/charts/redis-console
   REGISTRY: ghcr.io
   REGISTRY_PATH: ghcr.io/younsl/charts
 
@@ -28,8 +28,8 @@ jobs:
         id: get-version
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            # Extract version from tag (elasticache-backup/charts/1.0.0 -> 1.0.0)
-            VERSION="${GITHUB_REF#refs/tags/elasticache-backup/charts/}"
+            # Extract version from tag (redis-console/charts/1.0.0 -> 1.0.0)
+            VERSION="${GITHUB_REF#refs/tags/redis-console/charts/}"
           else
             # Use manual input version
             VERSION="${{ inputs.version }}"
@@ -97,7 +97,7 @@ jobs:
       - name: Run chart-testing (lint)
         run: |
           ct lint --target-branch ${{ github.event.repository.default_branch }} \
-            --chart-dirs box/kubernetes/elasticache-backup/charts \
+            --chart-dirs box/kubernetes/redis-console/charts \
             --charts ${{ env.CHART_PATH }}
 
       - name: Validate chart version matches release version

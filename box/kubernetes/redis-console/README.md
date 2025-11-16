@@ -1,6 +1,7 @@
 # Redis Console
 
 [![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-redis--console-black?style=flat-square&logo=docker&logoColor=white)](https://github.com/younsl/o/pkgs/container/redis-console)
+[![Helm Chart](https://img.shields.io/badge/ghcr.io-charts%2Fredis--console-black?style=flat-square&logo=helm&logoColor=white)](https://github.com/younsl/o/pkgs/container/charts%2Fredis-console)
 [![Rust](https://img.shields.io/badge/rust-1.91-black?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![GitHub license](https://img.shields.io/github/license/younsl/o?style=flat-square&color=black)](https://github.com/younsl/o/blob/main/LICENSE)
 
